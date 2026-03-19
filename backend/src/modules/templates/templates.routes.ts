@@ -8,7 +8,10 @@ import { CreateTemplateSchema, UpdateTemplateSchema, PatchTemplateStatusSchema }
 const router = Router();
 router.use(authenticate);
 
-router.get('/', authorize('super_admin', 'hr_agent', 'manager', 'employee'), templatesController.getTemplates);
+// Static routes first
+router.get('/active', authorize('super_admin', 'hr_agent'), templatesController.getActiveTemplates);
+
+router.get('/', authorize('super_admin', 'hr_agent'), templatesController.getTemplates);
 router.get('/:id', authorize('super_admin', 'hr_agent'), templatesController.getTemplateById);
 router.post('/', authorize('super_admin', 'hr_agent'), validate(CreateTemplateSchema), templatesController.createTemplate);
 router.put('/:id', authorize('super_admin', 'hr_agent'), validate(UpdateTemplateSchema), templatesController.updateTemplate);

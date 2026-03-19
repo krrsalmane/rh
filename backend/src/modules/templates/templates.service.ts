@@ -1,10 +1,14 @@
 import * as templatesRepository from './templates.repository';
-import { CreateTemplateInput, UpdateTemplateInput } from './templates.schema';
+import { CreateTemplateInput, UpdateTemplateInput, TemplateFiltersInput } from './templates.schema';
 import { AppError } from '../../shared/utils/AppError';
 import { auditLog } from '../../shared/utils/auditLogger';
 
-export async function getTemplates(companyId: string, page: number = 1, limit: number = 20) {
-  return templatesRepository.findAll(companyId, page, limit);
+export async function getTemplates(companyId: string, filters: TemplateFiltersInput) {
+  return templatesRepository.findAll(companyId, filters);
+}
+
+export async function getActiveTemplates(companyId: string) {
+  return templatesRepository.findActive(companyId);
 }
 
 export async function getTemplateById(id: string, companyId: string) {
@@ -14,30 +18,88 @@ export async function getTemplateById(id: string, companyId: string) {
 }
 
 export async function createTemplate(input: CreateTemplateInput, companyId: string, userId: string) {
+  // Validate unique name
+  const existing = await templatesRepository.findByName(input.name, companyId);
+  if (existing) throw new AppError('Un modèle avec ce nom existe déjà', 409);
+
+  // Validate variable names are unique within schema
+  if (input.variableSchema && input.variableSchema.length > 0) {
+    const names = input.variableSchema.map((v) => v.name);
+    const uniqueNames = new Set(names);
+    if (uniqueNames.size !== names.length) {
+      throw new AppError('Les noms de variables doivent être uniques', 400);
+    }
+  }
+
   const template = await templatesRepository.create(input, companyId, userId);
-  await auditLog({ userId, companyId, action: 'CREATE', entity: 'template', entityId: template.id, newValue: { name: input.name, category: input.category } });
+  await auditLog({
+    userId, companyId, action: 'CREATE', entity: 'template', entityId: template.id,
+    newValue: { name: input.name, category: input.category },
+  });
   return template;
 }
 
 export async function updateTemplate(id: string, input: UpdateTemplateInput, companyId: string, userId: string) {
   const existing = await templatesRepository.findById(id, companyId);
   if (!existing) throw new AppError('Template not found', 404);
+  if (existing.status === 'archived') throw new AppError('Cannot update an archived template', 400);
+
+  // Check duplicate name if changing
+  if (input.name && input.name !== existing.name) {
+    const duplicate = await templatesRepository.findByName(input.name, companyId, id);
+    if (duplicate) throw new AppError('Un modèle avec ce nom existe déjà', 409);
+  }
+
   const updated = await templatesRepository.update(id, input, companyId);
-  await auditLog({ userId, companyId, action: 'UPDATE', entity: 'template', entityId: id, oldValue: existing as unknown as Record<string, unknown>, newValue: input as unknown as Record<string, unknown> });
+  await auditLog({
+    userId, companyId, action: 'UPDATE', entity: 'template', entityId: id,
+    oldValue: { version: existing.version } as unknown as Record<string, unknown>,
+    newValue: input as unknown as Record<string, unknown>,
+  });
   return updated;
 }
 
 export async function patchTemplateStatus(id: string, status: string, companyId: string, userId: string) {
   const existing = await templatesRepository.findById(id, companyId);
   if (!existing) throw new AppError('Template not found', 404);
+
+  // Status transition rules
+  const transitions: Record<string, string[]> = {
+    draft: ['active'],
+    active: ['archived'],
+    archived: ['active'],
+  };
+
+  const allowed = transitions[existing.status] || [];
+  if (!allowed.includes(status)) {
+    throw new AppError(`Transition de ${existing.status} vers ${status} non autorisée`, 400);
+  }
+
   const updated = await templatesRepository.patchStatus(id, status, companyId);
-  await auditLog({ userId, companyId, action: 'PATCH_STATUS', entity: 'template', entityId: id, oldValue: { status: existing.status }, newValue: { status } });
+  await auditLog({
+    userId, companyId, action: 'STATUS_CHANGE', entity: 'template', entityId: id,
+    oldValue: { status: existing.status }, newValue: { status },
+  });
   return updated;
 }
 
 export async function deleteTemplate(id: string, companyId: string, userId: string) {
   const existing = await templatesRepository.findById(id, companyId);
   if (!existing) throw new AppError('Template not found', 404);
+
+  // Can only delete draft templates with no usage
+  if (existing.status !== 'draft') {
+    throw new AppError('Seuls les modèles en brouillon peuvent être supprimés', 400);
+  }
+
+  const usageCount = await templatesRepository.countUsage(id);
+  if (usageCount > 0) {
+    throw new AppError('Impossible de supprimer un modèle qui a été utilisé pour générer des documents', 400);
+  }
+
   await templatesRepository.remove(id, companyId);
-  await auditLog({ userId, companyId, action: 'DELETE', entity: 'template', entityId: id, oldValue: existing as unknown as Record<string, unknown> });
+  await auditLog({
+    userId, companyId, action: 'DELETE', entity: 'template', entityId: id,
+    oldValue: existing as unknown as Record<string, unknown>,
+  });
 }

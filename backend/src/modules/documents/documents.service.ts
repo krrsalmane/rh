@@ -1,18 +1,26 @@
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
 import * as documentsRepository from './documents.repository';
 import * as templatesRepository from '../templates/templates.repository';
 import * as employeesRepository from '../employees/employees.repository';
-import { compileTemplate } from './templateEngine';
+import { buildTemplateData, compileTemplate } from './templateEngine';
 import { renderPDF } from './pdfRenderer';
 import { getStoragePath, ensureDirectoryExists } from '../../config/storage';
 import { AppError } from '../../shared/utils/AppError';
 import { auditLog } from '../../shared/utils/auditLogger';
-import { GenerateDocumentInput } from './documents.schema';
-import fs from 'fs';
+import { GenerateDocumentInput, DocumentFiltersInput } from './documents.schema';
+import { query } from '../../config/database';
 
-export async function getDocuments(companyId: string, page: number = 1, limit: number = 20) {
-  return documentsRepository.findAll(companyId, page, limit);
+async function getCompany(companyId: string) {
+  const result = await query<{ id: string; name: string; address: string | null; logo_url: string | null }>(
+    'SELECT id, name, address, logo_url FROM companies WHERE id = $1',
+    [companyId]
+  );
+  return result.rows[0] || null;
+}
+
+export async function getDocuments(companyId: string, filters: DocumentFiltersInput) {
+  return documentsRepository.findAll(companyId, filters);
 }
 
 export async function getDocumentById(id: string, companyId: string) {
@@ -22,58 +30,107 @@ export async function getDocumentById(id: string, companyId: string) {
 }
 
 export async function generateDocument(input: GenerateDocumentInput, companyId: string, userId: string) {
+  // 1. Fetch template — must be active
   const template = await templatesRepository.findById(input.templateId, companyId);
   if (!template) throw new AppError('Template not found', 404);
+  if (template.status !== 'active') throw new AppError('Le modèle doit être actif pour générer un document', 400);
 
+  // 2. Fetch employee
   const employee = await employeesRepository.findById(input.employeeId, companyId);
   if (!employee) throw new AppError('Employee not found', 404);
 
-  const templateData: Record<string, unknown> = {
-    employee_first_name: employee.first_name,
-    employee_last_name: employee.last_name,
-    employee_full_name: `${employee.first_name} ${employee.last_name}`,
-    employee_cin: employee.cin,
-    employee_cne: employee.cne,
-    employee_email: employee.email,
-    employee_phone: employee.phone,
-    employee_department: employee.department,
-    employee_function: employee.function,
-    employee_contract_type: employee.contract_type,
-    employee_hire_date: employee.hire_date,
-    employee_salary: employee.salary,
-    employee_address: employee.address,
-    current_date: new Date().toISOString().split('T')[0],
-    ...input.formData,
-  };
+  // 3. Fetch company
+  const company = await getCompany(companyId);
+  if (!company) throw new AppError('Company not found', 404);
 
-  const html = compileTemplate(template.body, templateData);
-  const pdfBuffer = await renderPDF(html);
+  // 4. Build template data
+  const data = buildTemplateData(employee, company, input.formData);
 
-  const documentsDir = getStoragePath('documents');
+  // 5. Compile HTML
+  const html = compileTemplate(template.body, data);
+
+  // 6. Generate filename (sanitize employee name)
+  const safeName = `${employee.last_name}_${employee.first_name}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const safeTplName = template.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `${safeName}_${safeTplName}_${Date.now()}.pdf`;
+
+  // 7. Output path (per company, prevent traversal)
+  const documentsDir = getStoragePath('documents', companyId);
   ensureDirectoryExists(documentsDir);
+  const outputPath = path.join(documentsDir, filename);
 
-  const filename = `${uuidv4()}.pdf`;
-  const filePath = path.join(documentsDir, filename);
-  fs.writeFileSync(filePath, pdfBuffer);
+  // Path traversal guard
+  const resolvedPath = path.resolve(outputPath);
+  const resolvedDir = path.resolve(documentsDir);
+  if (!resolvedPath.startsWith(resolvedDir)) {
+    throw new AppError('Invalid file path', 400);
+  }
 
+  // 8. Generate PDF
+  const pdfBuffer = await renderPDF(html);
+  fs.writeFileSync(outputPath, pdfBuffer);
+
+  // 9. Save record
   const document = await documentsRepository.create(
     companyId, input.templateId, input.employeeId,
-    template.version, templateData, filePath, userId
+    template.version, data, outputPath, userId
   );
 
+  // 10. Audit log
   await auditLog({
     userId, companyId, action: 'GENERATE', entity: 'document', entityId: document.id,
-    newValue: { templateId: input.templateId, employeeId: input.employeeId },
+    newValue: { templateId: input.templateId, employeeId: input.employeeId, filename },
   });
 
   return document;
 }
 
-export async function getDocumentFile(id: string, companyId: string): Promise<string> {
+export async function getDocumentFile(id: string, companyId: string): Promise<{ filePath: string; filename: string }> {
   const doc = await documentsRepository.findById(id, companyId);
   if (!doc) throw new AppError('Document not found', 404);
   if (!doc.pdf_path || !fs.existsSync(doc.pdf_path)) {
-    throw new AppError('Document file not found on disk', 404);
+    throw new AppError('Le fichier PDF est introuvable sur le serveur', 404);
   }
-  return doc.pdf_path;
+
+  // Path traversal guard
+  const storagePath = path.resolve(getStoragePath('documents'));
+  const resolvedPath = path.resolve(doc.pdf_path);
+  if (!resolvedPath.startsWith(storagePath)) {
+    throw new AppError('Invalid file path', 400);
+  }
+
+  const filename = path.basename(doc.pdf_path);
+  return { filePath: doc.pdf_path, filename };
+}
+
+export async function archiveDocument(id: string, companyId: string, userId: string) {
+  const doc = await documentsRepository.findById(id, companyId);
+  if (!doc) throw new AppError('Document not found', 404);
+
+  const updated = await documentsRepository.patchStatus(id, 'archived', companyId);
+  await auditLog({
+    userId, companyId, action: 'ARCHIVE', entity: 'document', entityId: id,
+    oldValue: { status: doc.status }, newValue: { status: 'archived' },
+  });
+  return updated;
+}
+
+export async function deleteDocument(id: string, companyId: string, userId: string) {
+  const doc = await documentsRepository.findById(id, companyId);
+  if (!doc) throw new AppError('Document not found', 404);
+
+  // Delete PDF file if exists
+  if (doc.pdf_path && fs.existsSync(doc.pdf_path)) {
+    const storagePath = path.resolve(getStoragePath('documents'));
+    const resolvedPath = path.resolve(doc.pdf_path);
+    if (resolvedPath.startsWith(storagePath)) {
+      fs.unlinkSync(doc.pdf_path);
+    }
+  }
+
+  await documentsRepository.remove(id, companyId);
+  await auditLog({
+    userId, companyId, action: 'DELETE', entity: 'document', entityId: id,
+    oldValue: doc as unknown as Record<string, unknown>,
+  });
 }

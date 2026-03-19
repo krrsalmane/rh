@@ -52,12 +52,11 @@ export function Sidebar({ collapsed }: SidebarProps) {
       >
         {!collapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-sky-500/30">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <span className="text-white font-bold text-lg tracking-tight whitespace-nowrap">
-              Maya <span className="text-sky-400">HR</span>
-            </span>
+            <img 
+              src="/assets/images/mayagroup-logo.png" 
+              alt="Maya Group" 
+              className="h-24 object-contain"
+            />
           </div>
         )}
 

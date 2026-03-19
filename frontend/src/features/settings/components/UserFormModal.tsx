@@ -120,7 +120,7 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in-up">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in-up text-gray-900">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">
@@ -146,9 +146,9 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
                 placeholder="utilisateur@entreprise.com"
                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all ${
                   errors.email
-                    ? 'border-red-300 bg-red-50 focus:ring-2 focus:ring-red-200'
-                    : 'border-gray-200 bg-gray-50 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white'
-                }`}
+                    ? 'border-red-300 bg-red-50 focus:ring-2 focus:ring-red-200 text-red-900'
+                    : 'border-gray-200 bg-gray-50 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white text-gray-900'
+                } transition-all`}
               />
             </div>
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
@@ -168,9 +168,9 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
                 placeholder="••••••••"
                 className={`w-full pl-10 pr-12 py-2.5 rounded-xl border text-sm outline-none transition-all ${
                   errors.password
-                    ? 'border-red-300 bg-red-50'
-                    : 'border-gray-200 bg-gray-50 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white'
-                }`}
+                    ? 'border-red-300 bg-red-50 text-red-900'
+                    : 'border-gray-200 bg-gray-50 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white text-gray-900'
+                } transition-all`}
               />
               <button
                 type="button"
@@ -206,10 +206,12 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
             <div className="relative">
               <select
                 {...register('role')}
-                className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white transition-all pr-10"
+                className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white transition-all pr-10"
               >
                 {ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+                  <option key={r.value} value={r.value} className="text-gray-900 bg-white">
+                    {r.label}
+                  </option>
                 ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -225,11 +227,11 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
               <div className="relative">
                 <select
                   {...register('employeeId')}
-                  className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white transition-all pr-10"
+                  className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white transition-all pr-10"
                 >
-                  <option value="">Aucun</option>
+                  <option value="" className="text-gray-500 bg-white">Aucun</option>
                   {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
+                    <option key={emp.id} value={emp.id} className="text-gray-900 bg-white">
                       {emp.first_name} {emp.last_name} — {emp.department || 'N/A'}
                     </option>
                   ))}

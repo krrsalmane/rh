@@ -62,13 +62,12 @@ export const LoginPage: React.FC = () => {
 
         <div className="relative z-10">
           {/* Brand */}
-          <div className="flex items-center gap-3 mb-14">
-            <div className="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
-              <span className="text-white font-bold text-lg">M</span>
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">
-              Maya <span className="text-sky-400">HR</span>
-            </span>
+          <div className="mb-14">
+            <img 
+              src="/assets/images/mayagroup-logo.png" 
+              alt="Maya Group" 
+              className="h-24 object-contain"
+            />
           </div>
 
           <h2 className="text-4xl font-bold text-white mb-3 leading-tight">
@@ -105,13 +104,12 @@ export const LoginPage: React.FC = () => {
       <div className="flex-1 bg-white flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center">
-              <span className="text-white font-bold">M</span>
-            </div>
-            <span className="text-xl font-bold text-slate-900">
-              Maya <span className="text-sky-500">HR</span>
-            </span>
+          <div className="mb-8 lg:hidden">
+            <img 
+              src="/assets/images/mayagroup-logo.png" 
+              alt="Maya Group" 
+              className="h-10 object-contain"
+            />
           </div>
 
           {/* Header */}

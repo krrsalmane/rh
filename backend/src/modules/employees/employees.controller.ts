@@ -10,8 +10,8 @@ export const getEmployees = asyncHandler(async (req: Request, res: Response): Pr
 });
 
 export const getEmployeeById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const employee = await employeesService.getEmployeeById(req.params.id, req.user!.companyId);
-  res.json({ status: 'success', data: employee });
+  const { employee, leaveBalances } = await employeesService.getEmployeeById(req.params.id, req.user!.companyId);
+  res.json({ status: 'success', data: { ...employee, leaveBalances } });
 });
 
 export const createEmployee = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -31,7 +31,12 @@ export const deleteEmployee = asyncHandler(async (req: Request, res: Response): 
   res.json({ status: 'success', message: 'Employee deleted successfully' });
 });
 
-export const deactivateEmployee = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const employee = await employeesService.deactivateEmployee(req.params.id, req.user!.companyId, req.user!.id);
-  res.json({ status: 'success', data: employee });
+export const getDepartments = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const departments = await employeesService.getDepartments(req.user!.companyId);
+  res.json({ status: 'success', data: departments });
+});
+
+export const getLeaveBalances = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const balances = await employeesService.getLeaveBalances(req.params.id, req.user!.companyId);
+  res.json({ status: 'success', data: balances });
 });

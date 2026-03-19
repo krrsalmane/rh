@@ -30,13 +30,12 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
   if (isInitializing) {
     return (
       <div className="fixed inset-0 bg-gray-50 flex flex-col items-center justify-center z-[9999]">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
-            <span className="text-white font-bold text-xl">M</span>
-          </div>
-          <span className="text-gray-900 font-bold text-2xl tracking-tight">
-            Maya <span className="text-sky-500">HR</span>
-          </span>
+        <div className="flex flex-col items-center gap-6 mb-8">
+          <img 
+            src="/assets/images/mayagroup-logo.png" 
+            alt="Maya Group" 
+            className="h-24 object-contain"
+          />
         </div>
         <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-4" />
         <p className="text-gray-500 font-medium">Chargement...</p>

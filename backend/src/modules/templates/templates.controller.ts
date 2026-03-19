@@ -1,13 +1,17 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../shared/utils/asyncHandler';
 import * as templatesService from './templates.service';
-import { CreateTemplateSchema, UpdateTemplateSchema, PatchTemplateStatusSchema } from './templates.schema';
+import { CreateTemplateSchema, UpdateTemplateSchema, PatchTemplateStatusSchema, TemplateFiltersSchema } from './templates.schema';
 
 export const getTemplates = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 20;
-  const result = await templatesService.getTemplates(req.user!.companyId, page, limit);
+  const filters = TemplateFiltersSchema.parse(req.query);
+  const result = await templatesService.getTemplates(req.user!.companyId, filters);
   res.json({ status: 'success', data: result.items, pagination: result.pagination });
+});
+
+export const getActiveTemplates = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const templates = await templatesService.getActiveTemplates(req.user!.companyId);
+  res.json({ status: 'success', data: templates });
 });
 
 export const getTemplateById = asyncHandler(async (req: Request, res: Response): Promise<void> => {

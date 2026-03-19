@@ -1,5 +1,10 @@
 import React from 'react';
 
 export const LeaveRequestPage: React.FC = () => {
-  return <div>Leave Request</div>;
+  return (
+    <div className="flex flex-col items-center justify-center h-[60vh]">
+      <h2 className="text-xl font-semibold mb-2">Nouvelle demande de congé</h2>
+      <p className="text-gray-400">Page en cours de développement</p>
+    </div>
+  );
 };

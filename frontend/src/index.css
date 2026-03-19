@@ -26,8 +26,12 @@
 
 @layer base {
   body {
-    @apply bg-background text-slate-200 antialiased;
+    @apply bg-white text-gray-900 antialiased;
     font-family: 'Inter', sans-serif;
+  }
+
+  .dark body {
+    @apply bg-[#0f172a] text-slate-200;
   }
 
   ::selection {
@@ -49,7 +53,12 @@
   }
 
   .input-field {
-    @apply w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100;
+    @apply w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-slate-400 outline-none transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100;
+  }
+
+  /* Force select options color */
+  select option {
+    @apply text-gray-900 bg-white;
   }
 }
 
