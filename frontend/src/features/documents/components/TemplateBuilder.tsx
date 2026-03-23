@@ -57,10 +57,10 @@ const DEFAULT_FOOTER_CONFIG: FooterConfig = {
 };
 
 const generateHeaderHtml = (config: HeaderConfig) => {
-  const align = config.textAlign === 'between' ? 'space-between' : 
-               config.textAlign === 'center' ? 'center' : 
-               config.textAlign === 'right' ? 'flex-end' : 'flex-start';
-  
+  const align = config.textAlign === 'between' ? 'space-between' :
+    config.textAlign === 'center' ? 'center' :
+      config.textAlign === 'right' ? 'flex-end' : 'flex-start';
+
   return `
 <div style="display:flex;justify-content:${align};align-items:center;padding-bottom:16px;${config.showDivider ? 'border-bottom:2px solid #0ea5e9;' : ''}margin-bottom:24px;font-family:sans-serif;">
   <div style="display:flex;${config.textAlign === 'right' ? 'flex-direction:row-reverse;' : 'flex-direction:row;'}align-items:center;gap:12px;">
@@ -151,17 +151,17 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
   const [variableSchema, setVariableSchema] = useState<VariableSchema[]>(template?.variableSchema || []);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [liveHtml, setLiveHtml] = useState(template?.body || '');
-  
+
   // Header/Footer Zones
   const [showHeader, setShowHeader] = useState(false);
   const [showFooter, setShowFooter] = useState(false);
-  
+
   const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(DEFAULT_HEADER_CONFIG);
   const [footerConfig, setFooterConfig] = useState<FooterConfig>(DEFAULT_FOOTER_CONFIG);
-  
+
   const [headerHtml, setHeaderHtml] = useState(generateHeaderHtml(DEFAULT_HEADER_CONFIG));
   const [footerHtml, setFooterHtml] = useState(generateFooterHtml(DEFAULT_FOOTER_CONFIG));
-  
+
   const [editingZone, setEditingZone] = useState<'header' | 'body' | 'footer'>('body');
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -237,9 +237,6 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
     reader.readAsDataURL(file);
   };
 
-  const updateHeaderLogoSize = (size: number) => {
-    setHeaderConfig(prev => ({ ...prev, logoSize: size }));
-  };
 
   const editor = useEditor({
     extensions: [
@@ -263,17 +260,21 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
   useEffect(() => {
     if (template && editor) {
       const { header, body, footer } = parseTemplateParts(template.body || '');
-      
+
       if (header) {
         setHeaderHtml(header);
         setShowHeader(true);
         // Extract logo from header if exists
         const logoMatch = header.match(/src="([^"]+)"/);
-        if (logoMatch && !logoMatch[1].includes('{{logoUrl}}')) setLogoUrl(logoMatch[1]);
+        if (logoMatch && !logoMatch[1].includes('{{logoUrl}}')) {
+          setHeaderConfig(prev => ({ ...prev, logoUrl: logoMatch[1] }));
+        }
         const sizeMatch = header.match(/height:(\d+)px/);
-        if (sizeMatch) setLogoSize(parseInt(sizeMatch[1]));
+        if (sizeMatch) {
+          setHeaderConfig(prev => ({ ...prev, logoSize: parseInt(sizeMatch[1]) }));
+        }
       }
-      
+
       if (footer) {
         setFooterHtml(footer);
         setShowFooter(true);
@@ -282,7 +283,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       if (editor.getHTML() !== body) {
         editor.commands.setContent(body || '');
       }
-      
+
       // Load configs from HTML
       if (header) {
         setHeaderConfig(parseConfigFromHtml(header, 'header'));
@@ -290,7 +291,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       if (footer) {
         setFooterConfig(parseConfigFromHtml(footer, 'footer'));
       }
-      
+
       setName(template.name || '');
       setCategory(template.category || 'attestation');
       setLanguage(template.language || 'fr');
@@ -336,7 +337,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
     e.stopPropagation();
     const target = e.target as HTMLElement;
     const field = target.closest('[data-field]')?.getAttribute('data-field');
-    
+
     setEditingZone(zone);
     if (field) {
       setFocusedField(field);
@@ -360,7 +361,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const html = ev.target?.result as string;
-      
+
       // Store full HTML for iframe rendering
       setImportedHtml(html);
       setEditorMode('html');
@@ -484,7 +485,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
           {/* THE DOCUMENT CONTAINER */}
           <div className="bg-white shadow-2xl rounded-sm border border-slate-200 min-h-[1123px] flex flex-col transition-all duration-300 overflow-hidden">
-            
+
             {/* 1. HEADER ZONE */}
             <div className={clsx(
               "relative transition-all duration-300 border-b border-dashed",
@@ -500,7 +501,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                 color="sky"
                 icon={Layout}
               />
-              <div 
+              <div
                 onClick={(e) => { if (showHeader) onElementClick(e, 'header'); }}
                 className={clsx(
                   "p-10 overflow-hidden cursor-pointer group/header relative",
@@ -516,7 +517,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                     </div>
                   </div>
                 )}
-                
+
                 {showHeader ? (
                   <div className="relative z-0" dangerouslySetInnerHTML={{ __html: previewZone(headerHtml) }} />
                 ) : (
@@ -536,7 +537,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                 title="Corps du document (Body)"
                 active={editingZone === 'body'}
                 enabled={true}
-                onToggle={() => {}}
+                onToggle={() => { }}
                 onEdit={() => setEditingZone('body')}
                 color="emerald"
                 icon={Type}
@@ -545,25 +546,13 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
               {editorMode === 'html' && importedHtml ? (
                 <div className="p-10">
-                   <div className="flex items-center justify-between px-4 py-3 bg-amber-50 border border-amber-200 rounded-t-xl mb-0">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse"></span>
-                      <span className="text-xs text-amber-800 font-bold uppercase tracking-wider">Mode HTML Importé</span>
-                    </div>
-                    <button
-                      onClick={() => { if (confirm('Retour au mode visuel ?')) setEditorMode('tiptap'); }}
-                      className="text-[10px] font-bold text-amber-600 hover:text-amber-800 underline"
-                      type="button"
-                    >
-                      Retour au mode visuel
-                    </button>
-                  </div>
-                  <iframe
-                    srcDoc={importedHtml}
-                    className="w-full border border-t-0 border-slate-200 rounded-b-xl bg-white shadow-inner"
-                    style={{ height: '500px' }}
-                    sandbox="allow-same-origin"
-                    title="Template HTML Importé"
+                  <HtmlLiveEditor
+                    initialHtml={importedHtml}
+                    onChange={(newHtml: string) => {
+                      setImportedHtml(newHtml);
+                      setLiveHtml(newHtml);
+                    }}
+                    onExit={() => setEditorMode('tiptap')}
                   />
                 </div>
               ) : (
@@ -579,7 +568,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                       <span className="w-px h-4 bg-slate-200 mx-1" />
                       <ToolbarBtn active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()} icon={AlignCenter} title="Centrer" />
                       <ToolbarBtn active={false} onClick={() => editor.chain().focus().undo().run()} icon={Undo2} title="Annuler" />
-                      
+
                       <div className="ml-auto">
                         <button onClick={() => setIsPreviewOpen(true)} className="p-1.5 text-sky-600 hover:bg-sky-50 rounded-lg transition-all" title="Aperçu plein écran" type="button">
                           <Eye className="w-4 h-4" />
@@ -607,7 +596,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                 color="slate"
                 icon={Layers}
               />
-              <div 
+              <div
                 onClick={(e) => { if (showFooter) onElementClick(e, 'footer'); }}
                 className={clsx(
                   "p-10 overflow-hidden cursor-pointer group/footer relative",
@@ -640,7 +629,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
       {/* ── Sidebar Column ── */}
       <div className="w-full lg:w-80 space-y-6">
-        
+
         {/* Conditional Zone Editor */}
         {(editingZone === 'header' || editingZone === 'footer') ? (
           <ZoneEditor
@@ -789,6 +778,123 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
 // ── Helper Components ──
 
+// ── Interactive HTML Live Editor ──
+
+interface HtmlLiveEditorProps {
+  initialHtml: string;
+  onChange: (html: string) => void;
+  onExit: () => void;
+}
+
+function HtmlLiveEditor({ initialHtml, onChange, onExit }: HtmlLiveEditorProps) {
+  const [view, setView] = useState<'visual' | 'code'>('visual');
+  const [html, setHtml] = useState(initialHtml);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const skipNextIframeSync = useRef(false);
+
+  // Sync state to parent
+  useEffect(() => {
+    onChange(html);
+  }, [html, onChange]);
+
+  // Handle Visual Mode Logic (designMode in iFrame)
+  useEffect(() => {
+    if (view === 'visual' && iframeRef.current) {
+      const doc = iframeRef.current.contentDocument;
+      if (!doc) return;
+
+      if (!skipNextIframeSync.current) {
+        doc.open();
+        doc.write(html);
+        doc.close();
+        doc.designMode = 'on';
+      }
+      skipNextIframeSync.current = false;
+
+      const handleInput = () => {
+        const newHtml = doc.documentElement.outerHTML;
+        skipNextIframeSync.current = true;
+        setHtml(newHtml);
+      };
+
+      doc.addEventListener('input', handleInput);
+      return () => doc.removeEventListener('input', handleInput);
+    }
+  }, [view, html]);
+
+  return (
+    <div className="flex flex-col border border-amber-200 rounded-xl overflow-hidden bg-white shadow-xl animate-fade-in">
+      {/* Interactive Toolbar */}
+      <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.5)]"></span>
+            <span className="text-[10px] text-amber-900 font-black uppercase tracking-widest">Éditeur HTML Dynamique</span>
+          </div>
+          <div className="h-4 w-px bg-amber-200" />
+          <div className="flex bg-white/50 p-0.5 rounded-lg border border-amber-200/50 shadow-sm">
+            <button
+              onClick={() => setView('visual')}
+              className={clsx(
+                "px-3 py-1 text-[9px] font-black uppercase tracking-tighter rounded-md transition-all",
+                view === 'visual' ? "bg-amber-500 text-white shadow-sm" : "text-amber-600 hover:bg-amber-100"
+              )}
+            >
+              Visuel
+            </button>
+            <button
+              onClick={() => setView('code')}
+              className={clsx(
+                "px-3 py-1 text-[9px] font-black uppercase tracking-tighter rounded-md transition-all",
+                view === 'code' ? "bg-amber-500 text-white shadow-sm" : "text-amber-600 hover:bg-amber-100"
+              )}
+            >
+              Code Source
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={onExit}
+          className="text-[9px] font-black text-amber-600 hover:text-amber-800 underline uppercase tracking-tighter transition-colors"
+          type="button"
+        >
+          Quitter le mode HTML
+        </button>
+      </div>
+
+      {/* Editing Area */}
+      <div className="relative min-h-[600px] flex flex-col bg-slate-900 shadow-inner">
+        {view === 'visual' ? (
+          <iframe
+            ref={iframeRef}
+            className="w-full flex-1 bg-white"
+            title="HTML Visual Editor"
+            sandbox="allow-same-origin allow-scripts"
+          />
+        ) : (
+          <textarea
+            value={html}
+            onChange={(e) => setHtml(e.target.value)}
+            className="w-full flex-1 p-6 font-mono text-[11px] leading-relaxed bg-slate-900 text-sky-300 focus:outline-none custom-scrollbar outline-none resize-none"
+            spellCheck={false}
+          />
+        )}
+
+        {/* Floating Hint */}
+        {view === 'visual' && (
+          <div className="absolute bottom-4 right-4 bg-amber-100/90 backdrop-blur-sm border border-amber-200 px-3 py-1.5 rounded-full shadow-lg pointer-events-none animate-bounce-subtle">
+            <p className="text-[10px] font-bold text-amber-800 flex items-center gap-2">
+              <MousePointer2 className="w-3 h-3" />
+              Édition directe activée
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ZoneBar({ title, active, enabled, onToggle, onEdit, color, icon: Icon, hideToggle }: any) {
   const colorMap: any = {
     sky: "bg-sky-500",
@@ -838,8 +944,8 @@ function ZoneBar({ title, active, enabled, onToggle, onEdit, color, icon: Icon, 
   );
 }
 
-function ZoneEditor({ 
-  zone, config, setConfig, html, setHtml, onClose, onLogoUpload, insertVariable, focusedField, onResetHtml 
+function ZoneEditor({
+  zone, config, setConfig, html, setHtml, onClose, onLogoUpload, focusedField, onResetHtml
 }: any) {
   const [tab, setTab] = useState<'visual' | 'code'>('visual');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -893,12 +999,12 @@ function ZoneEditor({
             {zone === 'header' ? (
               <>
                 <FieldWrapper label="Identité du Document" field="title">
-                  <input 
+                  <input
                     value={config.title} onChange={(e) => updateField('title', e.target.value)}
                     className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-sky-100 transition-all"
                     placeholder="Titre du document..."
                   />
-                  <input 
+                  <input
                     value={config.subtitle} onChange={(e) => updateField('subtitle', e.target.value)}
                     className="w-full px-3 py-2 text-[10px] bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-sky-100 transition-all mt-1"
                     placeholder="Sous-titre / Entreprise..."
@@ -911,7 +1017,7 @@ function ZoneEditor({
                       {config.logoUrl ? <img src={config.logoUrl} className="max-w-full max-h-full object-contain" /> : <ImageIcon className="w-5 h-5 text-slate-300" />}
                     </div>
                     <div className="flex-1 space-y-1.5">
-                      <button 
+                      <button
                         onClick={() => fileInputRef.current?.click()}
                         className="w-full py-2 px-3 text-[10px] font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                       >
@@ -926,8 +1032,8 @@ function ZoneEditor({
                   {config.logoUrl && (
                     <div className="mt-3">
                       <div className="flex justify-between text-[8px] font-black text-slate-400 mb-1">TAILLE PROPORTIONNELLE <span>{config.logoSize}px</span></div>
-                      <input 
-                        type="range" min="30" max="150" value={config.logoSize} 
+                      <input
+                        type="range" min="30" max="150" value={config.logoSize}
                         onChange={(e) => updateField('logoSize', parseInt(e.target.value))}
                         className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900"
                       />
@@ -936,7 +1042,7 @@ function ZoneEditor({
                 </FieldWrapper>
 
                 <FieldWrapper label="Coordonnées / Info" field="infoLine">
-                  <input 
+                  <input
                     value={config.infoLine} onChange={(e) => updateField('infoLine', e.target.value)}
                     className="w-full px-3 py-2 text-[10px] font-medium bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-sky-100 transition-all"
                     placeholder="Ville, Date, etc..."
@@ -967,13 +1073,13 @@ function ZoneEditor({
             ) : (
               <>
                 <FieldWrapper label="Texte Gauche" field="leftText">
-                  <input 
+                  <input
                     value={config.leftText} onChange={(e) => updateField('leftText', e.target.value)}
                     className="w-full px-3 py-2 text-[10px] font-bold bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all"
                   />
                 </FieldWrapper>
                 <FieldWrapper label="Texte Droit" field="rightText">
-                  <textarea 
+                  <textarea
                     value={config.rightText} onChange={(e) => updateField('rightText', e.target.value)}
                     className="w-full px-3 py-2 text-[10px] bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all h-20 resize-none"
                   />
@@ -992,11 +1098,11 @@ function ZoneEditor({
             )}
 
             <div className="pt-2 border-t border-slate-50">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Variables Rapides</label>
-               <div className="flex flex-wrap gap-1.5">
-                  <button onClick={() => updateField(zone === 'header' ? 'title' : 'leftText', config[zone === 'header' ? 'title' : 'leftText'] + ' {{company.name}}')} className="px-2 py-1 text-[9px] bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 font-bold transition-all text-slate-600">Société</button>
-                  <button onClick={() => updateField('infoLine', config.infoLine + ' {{meta.generatedAt}}')} className="px-2 py-1 text-[9px] bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 font-bold transition-all text-slate-600">Date</button>
-               </div>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Variables Rapides</label>
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => updateField(zone === 'header' ? 'title' : 'leftText', config[zone === 'header' ? 'title' : 'leftText'] + ' {{company.name}}')} className="px-2 py-1 text-[9px] bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 font-bold transition-all text-slate-600">Société</button>
+                <button onClick={() => updateField('infoLine', config.infoLine + ' {{meta.generatedAt}}')} className="px-2 py-1 text-[9px] bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 font-bold transition-all text-slate-600">Date</button>
+              </div>
             </div>
           </div>
         ) : (

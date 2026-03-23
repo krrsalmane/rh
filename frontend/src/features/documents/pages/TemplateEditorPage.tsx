@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { templatesApi } from '../api';
@@ -66,8 +66,8 @@ export function TemplateEditorPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex items-center justify-between">
+    <div className="flex flex-col h-full bg-slate-50">
+      <header className="flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/templates')}
@@ -76,21 +76,21 @@ export function TemplateEditorPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              {isNew ? 'Nouveau modèle' : `Modifier: ${template?.name || ''}`}
+            <h1 className="text-xl font-bold text-slate-900 leading-none">
+              {isNew ? 'Nouveau modèle' : template?.name}
             </h1>
-            <p className="text-sm text-slate-500">
-              {isNew ? 'Créez un nouveau modèle de document avec des variables dynamiques.' : 'Modifiez le contenu et les paramètres de votre modèle.'}
+            <p className="text-xs text-slate-500 mt-1">
+              {isNew ? 'Création d\'un nouveau document' : 'Modification du modèle existant'}
             </p>
           </div>
         </div>
       </header>
 
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+      <div className="flex-1 min-h-0">
         <TemplateBuilder
           template={template || undefined}
           onSave={() => navigate('/templates')}
-          isSaving={false} // TemplateBuilder handles its own save state internally if needed, or we could lift it
+          isSaving={false}
         />
       </div>
     </div>

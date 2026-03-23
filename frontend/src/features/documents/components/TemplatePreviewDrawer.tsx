@@ -27,31 +27,31 @@ const categoryColors: Record<string, string> = {
 const langFlags: Record<string, React.ReactNode> = {
   fr: (
     <svg viewBox="0 0 3 2" className="w-4 h-3 rounded-sm shadow-sm">
-      <rect width="3" height="2" fill="#ED2939"/>
-      <rect width="2" height="2" fill="#fff"/>
-      <rect width="1" height="2" fill="#002395"/>
+      <rect width="3" height="2" fill="#ED2939" />
+      <rect width="2" height="2" fill="#fff" />
+      <rect width="1" height="2" fill="#002395" />
     </svg>
   ),
   ar: (
     <svg viewBox="0 0 3 2" className="w-4 h-3 rounded-sm shadow-sm">
-      <rect width="3" height="2" fill="#c1272d"/>
-      <circle cx="1.5" cy="1" r="0.4" fill="#006233"/>
+      <rect width="3" height="2" fill="#c1272d" />
+      <circle cx="1.5" cy="1" r="0.4" fill="#006233" />
     </svg>
   ),
   en: (
     <svg viewBox="0 0 3 2" className="w-4 h-3 rounded-sm shadow-sm">
-      <rect width="3" height="2" fill="#00247d"/>
-      <path d="M0,0 L3,2 M3,0 L0,2" stroke="#fff" strokeWidth="0.6"/>
-      <path d="M0,0 L3,2 M3,0 L0,2" stroke="#cf142b" strokeWidth="0.4"/>
-      <path d="M1.5,0 L1.5,2 M0,1 L3,1" stroke="#fff" strokeWidth="1"/>
-      <path d="M1.5,0 L1.5,2 M0,1 L3,1" stroke="#cf142b" strokeWidth="0.6"/>
+      <rect width="3" height="2" fill="#00247d" />
+      <path d="M0,0 L3,2 M3,0 L0,2" stroke="#fff" strokeWidth="0.6" />
+      <path d="M0,0 L3,2 M3,0 L0,2" stroke="#cf142b" strokeWidth="0.4" />
+      <path d="M1.5,0 L1.5,2 M0,1 L3,1" stroke="#fff" strokeWidth="1" />
+      <path d="M1.5,0 L1.5,2 M0,1 L3,1" stroke="#cf142b" strokeWidth="0.6" />
     </svg>
   ),
   de: (
     <svg viewBox="0 0 3 2" className="w-4 h-3 rounded-sm shadow-sm">
-      <rect width="3" height="2" fill="#FFCE00"/>
-      <rect width="3" height="1.33" fill="#DD0000"/>
-      <rect width="3" height="0.66" fill="#000"/>
+      <rect width="3" height="2" fill="#FFCE00" />
+      <rect width="3" height="1.33" fill="#DD0000" />
+      <rect width="3" height="0.66" fill="#000" />
     </svg>
   ),
 };
@@ -95,7 +95,7 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className={cn(
           "fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -104,7 +104,7 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
       />
 
       {/* Drawer */}
-      <div 
+      <div
         className={cn(
           "fixed top-0 right-0 h-full w-[480px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col",
           isOpen ? "translate-x-0" : "translate-x-full"
@@ -125,7 +125,7 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
                 <span className="text-[10px] text-slate-400 font-medium">v{template.version}</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             >
@@ -145,8 +145,8 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
                   "flex items-center gap-2 pb-3 text-sm font-medium transition-all relative",
-                  activeTab === tab.id 
-                    ? "text-slate-900" 
+                  activeTab === tab.id
+                    ? "text-slate-900"
                     : "text-slate-400 hover:text-slate-600"
                 )}
               >
@@ -276,14 +276,14 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
 
         {/* Footer Actions */}
         <div className="p-6 border-t border-slate-100 space-y-3 bg-white">
-          <button 
+          <button
             onClick={() => onEdit(template)}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             <Pencil className="w-4 h-4" />
             Modifier le modèle
           </button>
-          <button 
+          <button
             onClick={() => onGenerate(template)}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
           >

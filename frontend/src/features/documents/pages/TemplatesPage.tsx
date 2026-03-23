@@ -18,11 +18,11 @@ export const TemplatesPage: React.FC = () => {
     statusMutation.mutate({ id: tpl.id, status });
   };
   const handleDelete = (tpl: Template) => {
-    deleteMutation.mutate(tpl.id);
+    deleteMutation.mutate({ id: tpl.id });
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in px-4 pb-10" id="templates-page">
+    <div className="space-y-6 animate-fade-in px-8 py-6 h-full flex flex-col" id="templates-page">
       {/* Header Row */}
       <div className="flex items-end justify-between">
         <div>
