@@ -84,22 +84,31 @@ export async function patchTemplateStatus(id: string, status: string, companyId:
 }
 
 export async function deleteTemplate(id: string, companyId: string, userId: string) {
-  const existing = await templatesRepository.findById(id, companyId);
-  if (!existing) throw new AppError('Template not found', 404);
+  console.log('Delete template request:', id, 'company:', companyId);
+  
+  const template = await templatesRepository.findById(id, companyId);
+  if (!template) throw new AppError('Modèle introuvable', 404);
 
-  // Can only delete draft templates with no usage
-  if (existing.status !== 'draft') {
-    throw new AppError('Seuls les modèles en brouillon peuvent être supprimés', 400);
-  }
-
-  const usageCount = await templatesRepository.countUsage(id);
+  const usageCount = await templatesRepository.getUsageCount(id);
+  console.log('Usage count for template:', id, '=', usageCount);
+  
   if (usageCount > 0) {
-    throw new AppError('Ce modèle a des documents générés et ne peut pas être supprimé', 400);
+    throw new AppError(
+      `Ce modèle a été utilisé ${usageCount} fois. Archivez-le plutôt que de le supprimer.`,
+      400
+    );
   }
 
-  await templatesRepository.remove(id, companyId);
+  await templatesRepository.deleteTemplateRecord(id, companyId);
+
   await auditLog({
-    userId, companyId, action: 'DELETE', entity: 'template', entityId: id,
-    oldValue: existing as unknown as Record<string, unknown>,
+    userId,
+    companyId,
+    action: 'DELETE',
+    entity: 'template',
+    entityId: id,
+    oldValue: { name: template.name },
   });
+
+  return { message: 'Modèle supprimé avec succès' };
 }

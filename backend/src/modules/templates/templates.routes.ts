@@ -16,6 +16,6 @@ router.get('/:id', authorize('super_admin', 'hr_agent'), templatesController.get
 router.post('/', authorize('super_admin', 'hr_agent'), validate(CreateTemplateSchema), templatesController.createTemplate);
 router.put('/:id', authorize('super_admin', 'hr_agent'), validate(UpdateTemplateSchema), templatesController.updateTemplate);
 router.patch('/:id/status', authorize('super_admin', 'hr_agent'), validate(PatchTemplateStatusSchema), templatesController.patchTemplateStatus);
-router.delete('/:id', authorize('super_admin'), templatesController.deleteTemplate);
+router.delete('/:id', authorize('super_admin', 'hr_agent'), templatesController.deleteTemplate);
 
 export default router;

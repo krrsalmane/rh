@@ -34,26 +34,21 @@ function extractVariables(body: string): string[] {
   return [...new Set(matches.map(m => m.replace(/\{\{|\}\}/g, '').trim()))];
 }
 
-function renderPreview(body: string): string {
-  if (!body) return '<p style="color:#9ca3af;text-align:center;padding:40px 0;font-style:italic">Aucun contenu dans ce modèle.</p>';
+function buildPreviewHtml(body: string): string {
+  if (!body) return '<div style="color:#9ca3af;text-align:center;padding:40px;font-style:italic;font-family:sans-serif;">Aucun contenu dans ce modèle.</div>';
   
-  let rendered = body;
-  rendered = rendered.replace(/\{\{([^}]+)\}\}/g, (_, varName) => {
+  return body.replace(/\{\{([^}]+)\}\}/g, (_, varName) => {
     const key = varName.trim();
-    if (key.startsWith('employee.')) {
-      return `<mark style="background:#dbeafe;color:#1e40af;padding:0 5px;border-radius:4px;font-weight:600;font-style:normal">${SAMPLE_DATA[key] || key}</mark>`;
+    if (SAMPLE_DATA[key]) {
+      let bg = '#dbeafe';
+      let co = '#1e40af';
+      if (key.startsWith('company.')) { bg = '#f1f5f9'; co = '#475569'; }
+      if (key.startsWith('meta.')) { bg = '#d1fae5'; co = '#065f46'; }
+      
+      return `<mark style="background:${bg};color:${co};padding:0 4px;border-radius:3px;font-weight:bold;font-style:normal;font-family:sans-serif;font-size:0.9em;">${SAMPLE_DATA[key]}</mark>`;
     }
-    if (key.startsWith('company.')) {
-      return `<mark style="background:#f1f5f9;color:#475569;padding:0 5px;border-radius:4px;font-weight:600;font-style:normal">${SAMPLE_DATA[key] || key}</mark>`;
-    }
-    if (key.startsWith('meta.')) {
-      return `<mark style="background:#d1fae5;color:#065f46;padding:0 5px;border-radius:4px;font-weight:600;font-style:normal">${SAMPLE_DATA[key] || key}</mark>`;
-    }
-    // form.xxx
-    const fieldName = key.replace('form.', '');
-    return `<mark style="background:#fef3c7;color:#92400e;padding:0 5px;border-radius:4px;font-style:italic">[${fieldName} à remplir]</mark>`;
+    return `<mark style="background:#fef3c7;color:#92400e;padding:0 4px;border-radius:3px;font-style:italic;font-family:sans-serif;font-size:0.9em;">[${key.replace('form.','')}]</mark>`;
   });
-  return rendered;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -245,11 +240,13 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
                   </div>
                 </div>
 
-                {/* Document Body */}
-                <div
-                  className="flex-1 px-16 py-12 text-slate-700"
-                  style={{ fontFamily: 'Arial, sans-serif', fontSize: '13px', lineHeight: '1.9' }}
-                  dangerouslySetInnerHTML={{ __html: renderPreview(body) }}
+                {/* Document Body (Iframe for style preservation) */}
+                <iframe
+                  srcDoc={buildPreviewHtml(body)}
+                  className="flex-1 w-full border-none"
+                  style={{ background: 'white' }}
+                  sandbox="allow-same-origin"
+                  title="Aperçu du document"
                 />
 
                 {/* Signature area */}

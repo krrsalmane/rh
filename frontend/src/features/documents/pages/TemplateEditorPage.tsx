@@ -14,6 +14,14 @@ export function TemplateEditorPage() {
   const [loading, setLoading] = useState(!isNew);
   const [error, setError] = useState<string | null>(null);
 
+  // Redirect /templates/:id to /templates/:id/edit if it's exactly the base path
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    if (id && id !== 'new' && !currentPath.endsWith('/edit')) {
+      navigate(`/templates/${id}/edit`, { replace: true });
+    }
+  }, [id, navigate]);
+
   useEffect(() => {
     if (!isNew && id) {
       console.log('TemplateEditorPage — Loading template:', id);
@@ -79,8 +87,8 @@ export function TemplateEditorPage() {
       </header>
 
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-        <TemplateBuilder 
-          template={template || undefined} 
+        <TemplateBuilder
+          template={template || undefined}
           onSave={() => navigate('/templates')}
           isSaving={false} // TemplateBuilder handles its own save state internally if needed, or we could lift it
         />

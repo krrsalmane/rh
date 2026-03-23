@@ -29,6 +29,7 @@ export async function findAll(companyId: string, filters: TemplateFiltersInput):
   if (filters.status) { conditions.push(`t.status = $${idx}`); params.push(filters.status); idx++; }
   if (filters.category) { conditions.push(`t.category = $${idx}`); params.push(filters.category); idx++; }
   if (filters.language) { conditions.push(`t.language = $${idx}`); params.push(filters.language); idx++; }
+  if (filters.search) { conditions.push(`t.name ILIKE $${idx}`); params.push(`%${filters.search}%`); idx++; }
 
   const whereClause = conditions.join(' AND ');
 
@@ -81,7 +82,7 @@ export async function create(input: CreateTemplateInput, companyId: string, user
     `INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
     [companyId, input.name, input.category, input.language, input.body,
-     JSON.stringify(input.variableSchema || []), input.status || 'draft', userId]
+      JSON.stringify(input.variableSchema || []), input.status || 'draft', userId]
   );
   return result.rows[0];
 }
@@ -124,7 +125,11 @@ export async function remove(id: string, companyId: string): Promise<boolean> {
   return (result.rowCount ?? 0) > 0;
 }
 
-export async function countUsage(templateId: string): Promise<number> {
+export async function getUsageCount(templateId: string): Promise<number> {
   const result = await query<{ count: string }>('SELECT COUNT(*) as count FROM generated_documents WHERE template_id = $1', [templateId]);
   return parseInt(result.rows[0].count, 10);
+}
+
+export async function deleteTemplateRecord(id: string, companyId: string): Promise<void> {
+  await query('DELETE FROM templates WHERE id = $1 AND company_id = $2', [id, companyId]);
 }

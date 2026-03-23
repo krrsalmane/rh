@@ -141,9 +141,8 @@ export const DocumentList: React.FC<Props> = ({ documents, isLoading, onPreview,
                   {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-2 py-1 text-slate-400">…</span>}
                   <button
                     onClick={() => onPageChange?.(p)}
-                    className={`min-w-[32px] h-8 rounded-lg text-sm font-medium transition-colors ${
-                      p === pagination.page ? 'bg-sky-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-                    }`}
+                    className={`min-w-[32px] h-8 rounded-lg text-sm font-medium transition-colors ${p === pagination.page ? 'bg-sky-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+                      }`}
                   >
                     {p}
                   </button>

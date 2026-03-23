@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useDocuments, useArchiveDocument, useDeleteDocument } from '../hooks/useDocuments';
 import { DocumentList } from '../components/DocumentList';
 import { PDFPreviewModal } from '../components/PDFPreviewModal';
@@ -37,23 +37,22 @@ export const DocumentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in-up" id="documents-page">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center">
-            <FileText className="w-5 h-5 text-sky-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Documents générés</h1>
-            {data?.pagination && <p className="text-sm text-slate-400">{data.pagination.total} document{data.pagination.total !== 1 ? 's' : ''}</p>}
-          </div>
+      {/* Secondary Header / Actions */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Historique des documents</h2>
+          {data?.pagination && (
+            <p className="text-xs text-slate-400 mt-1">
+              {data.pagination.total} document{data.pagination.total !== 1 ? 's' : ''} généré{data.pagination.total !== 1 ? 's' : ''}
+            </p>
+          )}
         </div>
         <button
           onClick={() => navigate('/documents/generate')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-sky-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-sky-500/20 hover:bg-sky-600 hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-xl font-bold text-xs transition-all shadow-lg shadow-sky-500/20 hover:bg-sky-600 hover:-translate-y-0.5"
           id="generate-doc-btn"
         >
-          <Zap className="w-4 h-4" /> Générer un document
+          <Zap className="w-3.5 h-3.5" /> Générer un document
         </button>
       </div>
 

@@ -37,6 +37,7 @@ export interface TemplateFilters {
   status?: string;
   category?: string;
   language?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }

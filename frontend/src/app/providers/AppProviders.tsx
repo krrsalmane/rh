@@ -17,21 +17,27 @@ export function AppProviders({ children }: AppProvidersProps) {
           {children}
         </AuthInitializer>
         <Toaster
-          position="top-right"
+          position="bottom-right"
           toastOptions={{
             duration: 4000,
+            className: 'border border-slate-200 shadow-lg font-medium',
             style: {
-              background: '#1e293b',
-              color: '#f1f5f9',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: '#ffffff',
+              color: '#0f172a',
               borderRadius: '12px',
+              padding: '12px 16px',
               fontSize: '14px',
             },
             success: {
-              iconTheme: { primary: '#0ea5e9', secondary: '#fff' },
+              iconTheme: { primary: '#10b981', secondary: '#fff' },
             },
             error: {
               iconTheme: { primary: '#ef4444', secondary: '#fff' },
+              style: {
+                background: '#fff',
+                border: '1px solid #fee2e2',
+                color: '#991b1b',
+              }
             },
           }}
         />

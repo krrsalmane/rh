@@ -77,7 +77,10 @@ export function useDeleteTemplate() {
       toast.success('Modèle supprimé avec succès');
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Impossible de supprimer ce modèle');
+      const message = err?.response?.data?.error 
+        || err?.response?.data?.message 
+        || 'Impossible de supprimer ce modèle';
+      toast.error(message);
     },
   });
 }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -10,10 +10,10 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import {
-  Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered,
+  Bold, Italic, Underline as UnderlineIcon, List, ListOrdered,
   AlignLeft, AlignCenter, AlignRight, Undo2, Redo2, Table as TableIcon,
   Heading1, Heading2, Heading3, Plus, Trash2, GripVertical, Save, Send, Eye, Zap,
-  Upload, Download,
+  Upload, Code,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCreateTemplate, useUpdateTemplate } from '../hooks/useTemplates';
@@ -30,20 +30,6 @@ const LABEL_MAP: Record<string, string> = {
   'company.address': "Adresse de l'entreprise", 'meta.generatedAt': 'Date de génération',
   'meta.generatedYear': 'Année',
 };
-
-const EXAMPLE_HTML = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"></head>
-<body>
-<h2 style="text-align:center">ATTESTATION DE TRAVAIL</h2>
-<p>Je soussigné(e), {{form.signataireName}}, agissant en qualité de {{form.signaireFunction}} de la société {{company.name}}, dont le siège social est situé à {{company.address}},</p>
-<p>Atteste que Monsieur/Madame <strong>{{employee.fullName}}</strong>, titulaire de la CIN n° {{employee.cin}}, occupe le poste de <strong>{{employee.function}}</strong> au sein du département {{employee.department}}, depuis le {{employee.hireDate}}.</p>
-<p>Cette attestation est délivrée pour : <strong>{{form.purpose}}</strong></p>
-<p>Fait à {{company.address}}, le {{meta.generatedAt}}</p>
-<br/><br/>
-<p>Signature : ___________________</p>
-<p>{{form.signataireName}}</p>
-</body></html>`;
-
 
 interface Props {
   template?: Template;
@@ -71,6 +57,13 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
   const [variableSchema, setVariableSchema] = useState<VariableSchema[]>(template?.variableSchema || []);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [liveHtml, setLiveHtml] = useState(template?.body || '');
+  const [editorMode, setEditorMode] = useState<'tiptap' | 'html'>(
+    (template?.body && template.body.includes('<html')) ? 'html' : 'tiptap'
+  );
+  const [importedHtml, setImportedHtml] = useState<string | null>(
+    (template?.body && template.body.includes('<html')) ? template.body : null
+  );
+  const [showHtmlEditor, setShowHtmlEditor] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const createMutation = useCreateTemplate();
@@ -114,28 +107,20 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
     }
   }, [editor]);
 
-  const downloadExample = () => {
-    const blob = new Blob([EXAMPLE_HTML], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'exemple-template-mayahr.html';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const handleImportHTML = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const html = ev.target?.result as string;
-      // Extract body content if full HTML document
-      const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-      const bodyContent = bodyMatch ? bodyMatch[1] : html;
+      
+      // Store full HTML for iframe rendering
+      setImportedHtml(html);
+      setEditorMode('html');
+      setLiveHtml(html);
 
-      // Auto-detect all {{variables}}
-      const varMatches = bodyContent.match(/\{\{([^}]+)\}\}/g) || [];
+      // Detect all {{variables}} from the full HTML
+      const varMatches = html.match(/\{\{([^}]+)\}\}/g) || [];
       const unique = [...new Set(varMatches.map(v => v.replace(/\{\{|\}\}/g, '').trim()))];
 
       const schema: VariableSchema[] = unique.map(varName => {
@@ -153,15 +138,10 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
         return { name: varName, label, type, required: !isAutoFill, autoFill: isAutoFill };
       });
 
-      editor?.commands.setContent(bodyContent);
-      setLiveHtml(bodyContent);
       setVariableSchema(schema);
 
-      const formVars = unique.filter(v => v.startsWith('form.'));
-      const autoVars = unique.filter(v => !v.startsWith('form.'));
-      console.log('Variables détectées:', unique);
       toast.success(
-        `✅ Template importé ! ${unique.length} variable(s) : ${autoVars.length} auto-remplie(s), ${formVars.length} à remplir.`,
+        `✅ Template importé ! ${unique.length} variable(s) détectée(s).`,
         { duration: 5000 }
       );
     };
@@ -186,7 +166,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
   };
 
   const handleSave = (status: 'draft' | 'active') => {
-    const body = editor?.getHTML() || '';
+    const body = editorMode === 'html' ? (importedHtml || '') : (editor?.getHTML() || '');
 
     // Auto-detect variables if schema is minimal
     let finalSchema = variableSchema;
@@ -227,15 +207,6 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
             {/* Import / Download buttons */}
             <div className="flex items-center gap-2">
               <button
-                onClick={downloadExample}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all"
-                type="button"
-                title="Télécharger un fichier HTML d'exemple"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Exemple HTML
-              </button>
-              <button
                 onClick={() => fileInputRef.current?.click()}
                 className="flex items-center gap-1.5 px-2.5 py-1 text-xs border border-dashed border-sky-300 rounded-lg hover:border-sky-500 hover:bg-sky-50 text-sky-600 transition-all font-semibold"
                 type="button"
@@ -269,47 +240,104 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
           </div>
         </div>
 
-        {/* TipTap Container */}
-        <div className="space-y-4">
-          {/* TipTap Toolbar */}
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <div className="flex flex-wrap items-center gap-0.5 p-2 bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
-              <ToolbarBtn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} icon={Bold} title="Gras" />
-              <ToolbarBtn active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} icon={Italic} title="Italique" />
-              <ToolbarBtn active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} icon={UnderlineIcon} title="Souligné" />
-              <span className="w-px h-5 bg-slate-200 mx-1" />
-              <ToolbarBtn active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} icon={Heading1} title="H1" />
-              <ToolbarBtn active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} icon={Heading2} title="H2" />
-              <ToolbarBtn active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} icon={Heading3} title="H3" />
-              <span className="w-px h-5 bg-slate-200 mx-1" />
-              <ToolbarBtn active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()} icon={AlignLeft} title="Gauche" />
-              <ToolbarBtn active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()} icon={AlignCenter} title="Centre" />
-              <ToolbarBtn active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()} icon={AlignRight} title="Droite" />
-              <span className="w-px h-5 bg-slate-200 mx-1" />
-              <ToolbarBtn active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} icon={List} title="List" />
-              <ToolbarBtn active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} icon={ListOrdered} title="Numbers" />
-              <span className="w-px h-5 bg-slate-200 mx-1" />
-              <ToolbarBtn active={false} onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} icon={TableIcon} title="Tableau" />
-              <span className="w-px h-5 bg-slate-200 mx-1" />
-              <ToolbarBtn active={false} onClick={() => editor.chain().focus().undo().run()} icon={Undo2} title="Annuler" />
-              <ToolbarBtn active={false} onClick={() => editor.chain().focus().redo().run()} icon={Redo2} title="Rétablir" />
-
-              <div className="ml-auto flex gap-2">
-                <button
-                  onClick={() => setIsPreviewOpen(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-sky-600 bg-sky-50 hover:bg-sky-100 border border-sky-100 rounded-xl transition-all"
-                  type="button"
-                >
-                  <Eye className="w-4 h-4" /> Aperçu HD
-                </button>
+            {editorMode === 'html' && importedHtml ? (
+              <div className="relative">
+                {/* Mode indicator */}
+                <div className="flex items-center justify-between px-4 py-3 bg-amber-50 border border-amber-200 rounded-t-2xl">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse"></span>
+                    <span className="text-xs text-amber-800 font-bold uppercase tracking-wider">Mode HTML Importé</span>
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => {
+                        setShowHtmlEditor(!showHtmlEditor);
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-900 transition-colors"
+                      type="button"
+                    >
+                      <Code className="w-3.5 h-3.5" />
+                      {showHtmlEditor ? 'Voir l\'aperçu' : 'Modifier le HTML'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Voulez-vous repasser en mode éditeur visuel ? Cela pourrait perdre certains styles HTML complexes.')) {
+                          setEditorMode('tiptap');
+                          setShowHtmlEditor(false);
+                        }
+                      }}
+                      className="text-xs font-bold text-amber-600 hover:text-amber-800 underline decoration-amber-200"
+                      type="button"
+                    >
+                      Retour au mode visuel
+                    </button>
+                  </div>
+                </div>
+                
+                {showHtmlEditor ? (
+                  <textarea
+                    value={importedHtml}
+                    onChange={(e) => {
+                      const newHtml = e.target.value;
+                      setImportedHtml(newHtml);
+                      setLiveHtml(newHtml);
+                      // Re-detect variables
+                      const varMatches = newHtml.match(/\{\{([^}]+)\}\}/g) || [];
+                      const unique = [...new Set(varMatches.map(v => v.replace(/\{\{|\}\}/g, '').trim()))];
+                      console.log('Variables détectées (update):', unique);
+                    }}
+                    className="w-full h-[700px] font-mono text-xs p-6 bg-slate-900 text-sky-300 border border-slate-700 rounded-b-2xl focus:outline-none custom-scrollbar"
+                    spellCheck={false}
+                  />
+                ) : (
+                  <iframe
+                    srcDoc={importedHtml}
+                    className="w-full border border-t-0 border-slate-200 rounded-b-2xl bg-white shadow-inner"
+                    style={{ height: '700px' }}
+                    sandbox="allow-same-origin"
+                    title="Template HTML Importé"
+                  />
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <div className="flex flex-wrap items-center gap-0.5 p-2 bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+                  <ToolbarBtn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} icon={Bold} title="Gras" />
+                  <ToolbarBtn active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} icon={Italic} title="Italique" />
+                  <ToolbarBtn active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} icon={UnderlineIcon} title="Souligné" />
+                  <span className="w-px h-5 bg-slate-200 mx-1" />
+                  <ToolbarBtn active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} icon={Heading1} title="H1" />
+                  <ToolbarBtn active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} icon={Heading2} title="H2" />
+                  <ToolbarBtn active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} icon={Heading3} title="H3" />
+                  <span className="w-px h-5 bg-slate-200 mx-1" />
+                  <ToolbarBtn active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()} icon={AlignLeft} title="Gauche" />
+                  <ToolbarBtn active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()} icon={AlignCenter} title="Centre" />
+                  <ToolbarBtn active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()} icon={AlignRight} title="Droite" />
+                  <span className="w-px h-5 bg-slate-200 mx-1" />
+                  <ToolbarBtn active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} icon={List} title="List" />
+                  <ToolbarBtn active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} icon={ListOrdered} title="Numbers" />
+                  <span className="w-px h-5 bg-slate-200 mx-1" />
+                  <ToolbarBtn active={false} onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} icon={TableIcon} title="Tableau" />
+                  <span className="w-px h-5 bg-slate-200 mx-1" />
+                  <ToolbarBtn active={false} onClick={() => editor.chain().focus().undo().run()} icon={Undo2} title="Annuler" />
+                  <ToolbarBtn active={false} onClick={() => editor.chain().focus().redo().run()} icon={Redo2} title="Rétablir" />
 
-            <div className="bg-slate-50/30 p-8 min-h-[700px]">
-              <EditorContent editor={editor} />
-            </div>
-          </div>
-        </div>
+                  <div className="ml-auto flex gap-2">
+                    <button
+                      onClick={() => setIsPreviewOpen(true)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-sky-600 bg-sky-50 hover:bg-sky-100 border border-sky-100 rounded-xl transition-all"
+                      type="button"
+                    >
+                      <Eye className="w-4 h-4" /> Aperçu HD
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/30 p-8 min-h-[700px]">
+                  <EditorContent editor={editor} />
+                </div>
+              </div>
+            )}
       </div>
 
       {/* ── Sidebar Column ── */}

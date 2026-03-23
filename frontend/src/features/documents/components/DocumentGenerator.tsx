@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/shared/utils/cn';
 import { CheckCircle2, ChevronRight, FileText, User, ClipboardCheck, Download, Loader2, ArrowLeft, Zap } from 'lucide-react';
 import { useActiveTemplates } from '../hooks/useTemplates';
 import { useGenerateDocument } from '../hooks/useDocuments';
@@ -137,9 +138,10 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
           return (
             <React.Fragment key={s.key}>
               {i > 0 && <ChevronRight className="w-4 h-4 text-slate-300 mx-1" />}
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                isActive ? 'bg-sky-100 text-sky-700' : isDone ? 'bg-emerald-50 text-emerald-600' : 'text-slate-400'
-              }`}>
+              <div className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors border",
+                isActive ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : isDone ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'text-slate-400 border-transparent'
+              )}>
                 <Icon className="w-4 h-4" />
                 <span className="hidden sm:inline">{s.label}</span>
               </div>
@@ -167,11 +169,12 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
                     <button
                       key={tpl.id}
                       onClick={() => setSelectedTemplate(tpl)}
-                      className={`text-left p-4 rounded-xl border-2 transition-all ${
+                      className={cn(
+                        "text-left p-4 rounded-xl border-2 transition-all group",
                         selectedTemplate?.id === tpl.id
-                          ? 'border-sky-500 bg-sky-50 shadow-sm'
-                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
+                          ? 'border-slate-900 bg-slate-50/50 shadow-sm'
+                          : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                      )}
                       id={`gen-tpl-${tpl.id}`}
                     >
                       <div className="flex items-center gap-2 mb-2">
@@ -291,13 +294,13 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
             <button
               onClick={handleGenerate}
               disabled={generateMutation.isPending}
-              className="w-full px-6 py-3 text-sm font-semibold text-white bg-sky-500 hover:bg-sky-600 rounded-xl transition-colors shadow-lg shadow-sky-500/20 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              className="w-full px-6 py-4 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-lg shadow-slate-900/10 disabled:opacity-50 inline-flex items-center justify-center gap-2"
               id="gen-generate-btn"
             >
               {generateMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Génération en cours...</>
               ) : (
-                <><Zap className="w-4 h-4" /> Générer le PDF</>
+                <><Zap className="w-4 h-4 fill-white" /> Générer le document</>
               )}
             </button>
           </div>
@@ -314,14 +317,14 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleDownload}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sky-500 hover:bg-sky-600 rounded-xl transition-colors shadow-lg shadow-sky-500/20"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-lg shadow-slate-900/10"
                 id="gen-download-btn"
               >
-                <Download className="w-4 h-4" /> Télécharger PDF
+                <Download className="w-4 h-4" /> Télécharger le document
               </button>
               <button
                 onClick={() => { setStep(0); setSelectedTemplate(null); setSelectedEmployeeId(''); setEmployeeSearch(''); setFormData({}); setGeneratedDocId(null); }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-slate-600 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl transition-all"
               >
                 <Zap className="w-4 h-4" /> Générer un autre
               </button>
@@ -341,7 +344,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
         <div className="flex items-center justify-between">
           <button
             onClick={() => step > 0 ? setStep(step - 1) : onClose?.()}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-slate-600 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl transition-all shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" /> {step === 0 ? 'Annuler' : 'Retour'}
           </button>
@@ -349,7 +352,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
             <button
               onClick={() => setStep(step + 1)}
               disabled={!canGoNext()}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sky-500 hover:bg-sky-600 rounded-xl transition-colors shadow-lg shadow-sky-500/20 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-lg shadow-slate-900/10 disabled:opacity-50"
             >
               Suivant <ChevronRight className="w-4 h-4" />
             </button>

@@ -55,6 +55,7 @@ export async function fetchTemplates(filters: TemplateFilters = {}) {
   if (filters.status) params.set('status', filters.status);
   if (filters.category) params.set('category', filters.category);
   if (filters.language) params.set('language', filters.language);
+  if (filters.search) params.set('search', filters.search);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
 
@@ -109,7 +110,8 @@ export async function patchTemplateStatus(id: string, status: 'draft' | 'active'
 }
 
 export async function deleteTemplate(id: string) {
-  await axios.delete(`/templates/${id}`);
+  const res = await axios.delete(`/templates/${id}`);
+  return res.data;
 }
 
 // ============ Documents API ============
@@ -162,5 +164,5 @@ export const templatesApi = {
   create: (data: CreateTemplateDto) => createTemplate(data),
   update: (id: string, data: Partial<CreateTemplateDto>) => updateTemplate(id, data),
   updateStatus: (id: string, status: 'draft' | 'active' | 'archived') => patchTemplateStatus(id, status),
-  delete: (id: string) => deleteTemplate(id),
+  delete: (id: string) => axios.delete(`/templates/${id}`).then(r => r.data),
 };

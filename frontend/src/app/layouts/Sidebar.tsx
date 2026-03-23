@@ -52,9 +52,9 @@ export function Sidebar({ collapsed }: SidebarProps) {
       >
         {!collapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <img 
-              src="/assets/images/mayagroup-logo.png" 
-              alt="Maya Group" 
+            <img
+              src="/assets/images/mayagroup-logo.png"
+              alt="Maya Group"
               className="h-24 object-contain"
             />
           </div>

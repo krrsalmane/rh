@@ -29,6 +29,7 @@ export const TemplateFiltersSchema = z.object({
   status: z.enum(['draft', 'active', 'archived']).optional(),
   category: z.enum(['contract', 'attestation', 'letter', 'custom']).optional(),
   language: z.enum(['fr', 'ar', 'en', 'de']).optional(),
+  search: z.string().optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });

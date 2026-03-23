@@ -48,10 +48,10 @@ export function AppLayout() {
       <Sidebar collapsed={sidebarCollapsed} />
 
       {/* ── Main column ── */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-white">
         {/* ── Topbar ── */}
-        <header className={`h-16 border-b shadow-sm flex items-center justify-between px-6 flex-shrink-0 z-40 transition-colors ${
-          theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-200'
+        <header className={`h-14 border-b flex items-center justify-between px-6 flex-shrink-0 z-40 transition-colors ${
+          theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100'
         }`}>
           {/* Left: mobile menu + page title */}
           <div className="flex items-center gap-4">
@@ -129,8 +129,8 @@ export function AppLayout() {
         </header>
 
         {/* ── Main content ── */}
-        <main className={`flex-1 overflow-y-auto p-6 transition-colors ${theme === 'dark' ? 'bg-slate-950' : 'bg-gray-50'}`}>
-          <div className="max-w-7xl mx-auto animate-fade-in-up">
+        <main className={`flex-1 overflow-y-auto p-8 transition-colors ${theme === 'dark' ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
+          <div className="w-full animate-fade-in-up">
             <Outlet />
           </div>
         </main>
