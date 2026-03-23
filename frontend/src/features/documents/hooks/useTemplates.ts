@@ -71,7 +71,7 @@ export function usePatchTemplateStatus() {
 export function useDeleteTemplate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.deleteTemplate(id),
+    mutationFn: ({ id, force }: { id: string; force?: boolean }) => api.deleteTemplate(id, force),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['templates'] });
       toast.success('Modèle supprimé avec succès');

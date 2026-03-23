@@ -109,8 +109,8 @@ export async function patchTemplateStatus(id: string, status: 'draft' | 'active'
   return mapTemplate(res.data.data);
 }
 
-export async function deleteTemplate(id: string) {
-  const res = await axios.delete(`/templates/${id}`);
+export async function deleteTemplate(id: string, force = false) {
+  const res = await axios.delete(`/templates/${id}${force ? '?force=true' : ''}`);
   return res.data;
 }
 
@@ -164,5 +164,5 @@ export const templatesApi = {
   create: (data: CreateTemplateDto) => createTemplate(data),
   update: (id: string, data: Partial<CreateTemplateDto>) => updateTemplate(id, data),
   updateStatus: (id: string, status: 'draft' | 'active' | 'archived') => patchTemplateStatus(id, status),
-  delete: (id: string) => axios.delete(`/templates/${id}`).then(r => r.data),
+  delete: (id: string, force = false) => axios.delete(`/templates/${id}${force ? '?force=true' : ''}`).then(r => r.data),
 };

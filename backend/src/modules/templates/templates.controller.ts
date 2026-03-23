@@ -38,6 +38,7 @@ export const patchTemplateStatus = asyncHandler(async (req: Request, res: Respon
 });
 
 export const deleteTemplate = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  await templatesService.deleteTemplate(req.params.id, req.user!.companyId, req.user!.id);
+  const force = req.query.force === 'true';
+  await templatesService.deleteTemplate(req.params.id, req.user!.companyId, req.user!.id, force);
   res.json({ status: 'success', message: 'Template deleted successfully' });
 });

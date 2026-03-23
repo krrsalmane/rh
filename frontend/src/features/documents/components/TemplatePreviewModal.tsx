@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Eye, Code, Pencil, Rocket, Copy, Check, Tag, Hash } from 'lucide-react';
+import { X, Eye, Code, Pencil, Copy, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Template } from '../types';
 
@@ -29,15 +29,37 @@ const SAMPLE_DATA: Record<string, string> = {
   'meta.generatedYear': new Date().getFullYear().toString(),
 };
 
-function extractVariables(body: string): string[] {
-  const matches = body.match(/\{\{([^}]+)\}\}/g) || [];
-  return [...new Set(matches.map(m => m.replace(/\{\{|\}\}/g, '').trim()))];
+function parseTemplateParts(fullBody: string) {
+  const parts = {
+    header: '',
+    body: fullBody,
+    footer: '',
+    showHeader: false,
+    showFooter: false
+  };
+
+  if (fullBody.includes('<!-- HEADER -->')) {
+    const headerMatch = fullBody.match(/<!-- HEADER -->([\s\S]*?)<!-- END_HEADER -->/);
+    if (headerMatch) {
+      parts.header = headerMatch[1].trim();
+      parts.showHeader = !fullBody.includes('<!-- HEADER_HIDDEN -->');
+    }
+    const bodyMatch = fullBody.match(/<!-- BODY -->([\s\S]*?)<!-- END_BODY -->/);
+    if (bodyMatch) parts.body = bodyMatch[1].trim();
+    const footerMatch = fullBody.match(/<!-- FOOTER -->([\s\S]*?)<!-- END_FOOTER -->/);
+    if (footerMatch) {
+      parts.footer = footerMatch[1].trim();
+      parts.showFooter = !fullBody.includes('<!-- FOOTER_HIDDEN -->');
+    }
+  }
+
+  return parts;
 }
 
-function buildPreviewHtml(body: string): string {
-  if (!body) return '<div style="color:#9ca3af;text-align:center;padding:40px;font-style:italic;font-family:sans-serif;">Aucun contenu dans ce modèle.</div>';
+function buildPreviewHtml(html: string): string {
+  if (!html) return '';
   
-  return body.replace(/\{\{([^}]+)\}\}/g, (_, varName) => {
+  return html.replace(/\{\{([^}]+)\}\}/g, (_, varName) => {
     const key = varName.trim();
     if (SAMPLE_DATA[key]) {
       let bg = '#dbeafe';
@@ -63,9 +85,14 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
 
   console.log('TemplatePreviewModal — template:', template?.name, '| body length:', template?.body?.length ?? 0);
 
+  const { header, body, footer, showHeader, showFooter } = useMemo(() => {
+    return parseTemplateParts(template?.body || '');
+  }, [template?.body]);
+
   const variables = useMemo(() => {
     if (!template?.body) return [];
-    return extractVariables(template.body);
+    const matches = template.body.match(/\{\{([^}]+)\}\}/g) || [];
+    return [...new Set(matches.map(m => m.replace(/\{\{|\}\}/g, '').trim()))];
   }, [template?.body]);
 
   const handleCopy = () => {
@@ -76,8 +103,6 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
   };
 
   if (!isOpen || !template) return null;
-
-  const body = template.body || '';
 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-900 flex overflow-hidden">
@@ -98,25 +123,13 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
           </div>
         </div>
 
-        {/* Meta info */}
-        <div className="p-4 border-b border-slate-800 space-y-2">
-          <div className="flex items-center gap-2 text-slate-400 text-xs">
-            <Hash className="w-3.5 h-3.5 shrink-0" />
-            <span>Utilisé <strong className="text-slate-200">{template.usageCount || 0}</strong> fois</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-400 text-xs">
-            <Tag className="w-3.5 h-3.5 shrink-0" />
-            <span>Statut: <strong className="text-slate-200">{template.status}</strong></span>
-          </div>
-        </div>
-
         {/* Detected Variables */}
         <div className="p-4 border-b border-slate-800 flex-1">
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Variables détectées ({variables.length})</p>
           {variables.length === 0 ? (
             <p className="text-xs text-slate-600 italic">Aucune variable</p>
           ) : (
-            <div className="space-y-1.5 overflow-y-auto max-h-[300px]">
+            <div className="space-y-1.5 overflow-y-auto max-h-[300px] custom-scrollbar">
               {variables.map(v => {
                 let dotColor = 'bg-slate-500';
                 let textColor = 'text-slate-400';
@@ -145,12 +158,6 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
             <Pencil className="w-4 h-4" /> Modifier le modèle
           </button>
           <button
-            onClick={() => { onClose(); navigate(`/documents/generate?templateId=${template.id}`); }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold transition-all shadow-lg shadow-sky-500/25"
-          >
-            <Rocket className="w-4 h-4" /> Utiliser ce modèle
-          </button>
-          <button
             onClick={onClose}
             className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-slate-500 text-sm font-medium hover:text-slate-300 hover:bg-slate-800 transition-all"
           >
@@ -170,7 +177,7 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
                 activeTab === 'preview' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              <Eye className="w-4 h-4" /> Aperçu
+              <Eye className="w-4 h-4" /> Aperçu Document
             </button>
             <button
               onClick={() => setActiveTab('code')}
@@ -178,7 +185,7 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
                 activeTab === 'code' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              <Code className="w-4 h-4" /> HTML
+              <Code className="w-4 h-4" /> Code Source
             </button>
           </div>
 
@@ -220,51 +227,41 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
                   transformOrigin: 'top center',
                   marginBottom: zoom < 100 ? `-${(100 - zoom) * 11}px` : '0',
                 }}
-                className="bg-white shadow-2xl rounded-sm flex flex-col"
+                className="bg-white shadow-2xl rounded-sm flex flex-col overflow-hidden"
               >
-                {/* Company Letterhead */}
-                <div className="border-b-4 border-sky-500 px-16 py-10">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {/* Logo Placeholder */}
-                      <div style={{width:'56px',height:'56px',background:'#e0f2fe',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',color:'#0ea5e9',fontWeight:'900',fontSize:'22px',flexShrink:0}}>M</div>
-                      <div>
-                        <div style={{fontSize:'18px',fontWeight:'900',color:'#0f172a',letterSpacing:'-0.5px'}}>MAYA HR COMPANY</div>
-                        <div style={{fontSize:'11px',color:'#64748b',marginTop:'2px'}}>Casablanca, Maroc — contact@mayahr.ma</div>
-                      </div>
-                    </div>
-                    <div style={{textAlign:'right',fontSize:'11px',color:'#64748b'}}>
-                      <div style={{fontWeight:'700',color:'#0f172a',fontSize:'13px'}}>Fait à Casablanca</div>
-                      <div>Le {new Date().toLocaleDateString('fr-FR')}</div>
-                    </div>
-                  </div>
-                </div>
+                {/* 1. Dynamic Header */}
+                {showHeader && (
+                   <div 
+                    className="p-10 border-b-2 border-slate-100" 
+                    dangerouslySetInnerHTML={{ __html: buildPreviewHtml(header) }} 
+                  />
+                )}
 
-                {/* Document Body (Iframe for style preservation) */}
+                {/* 2. Document Body */}
                 <iframe
-                  srcDoc={buildPreviewHtml(body)}
+                  srcDoc={`
+                    <style>
+                      body { font-family: sans-serif; line-height: 1.6; color: #334155; padding: 40px 64px; }
+                      h1, h2, h3 { color: #0f172a; margin-top: 1.5em; }
+                      table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                      th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; }
+                      th { background: #f8fafc; font-weight: bold; }
+                    </style>
+                    ${buildPreviewHtml(body)}
+                  `}
                   className="flex-1 w-full border-none"
                   style={{ background: 'white' }}
                   sandbox="allow-same-origin"
                   title="Aperçu du document"
                 />
 
-                {/* Signature area */}
-                <div className="px-16 pb-10">
-                  <div style={{marginTop:'48px',paddingTop:'12px',display:'flex',justifyContent:'flex-start',gap:'80px'}}>
-                    <div style={{textAlign:'center'}}>
-                      <div style={{width:'160px',borderTop:'1px solid #cbd5e1',paddingTop:'6px',fontSize:'11px',color:'#94a3b8'}}>
-                        Signature &amp; Cachet
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div style={{background:'#f8fafc',borderTop:'1px solid #e2e8f0',padding:'10px 64px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <span style={{fontSize:'9px',color:'#94a3b8'}}>Ref: {template.id.slice(0,8)} — v{template.version}</span>
-                  <span style={{fontSize:'9px',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px'}}>Document généré via Maya HR Platform</span>
-                </div>
+                {/* 3. Dynamic Footer */}
+                {showFooter && (
+                  <div 
+                    className="p-8 bg-slate-50 border-t border-slate-200"
+                    dangerouslySetInnerHTML={{ __html: buildPreviewHtml(footer) }}
+                  />
+                )}
               </div>
             </div>
           ) : (

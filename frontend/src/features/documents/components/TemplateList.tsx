@@ -82,6 +82,7 @@ export const TemplateList: React.FC<Props> = ({
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteTemplateName, setDeleteTemplateName] = useState<string>('');
+  const [deleteUsageCount, setDeleteUsageCount] = useState<number>(0);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   const deleteTemplate = useDeleteTemplate();
@@ -234,6 +235,7 @@ export const TemplateList: React.FC<Props> = ({
                       e.stopPropagation();
                       setDeleteId(tpl.id);
                       setDeleteTemplateName(tpl.name);
+                      setDeleteUsageCount(tpl.usageCount);
                     }}
                     className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-slate-200 shadow-none hover:shadow-sm"
                     title="Supprimer"
@@ -259,24 +261,38 @@ export const TemplateList: React.FC<Props> = ({
         onClose={() => {
           setDeleteId(null);
           setDeleteTemplateName('');
+          setDeleteUsageCount(0);
         }}
         onConfirm={() => {
           if (deleteId) {
-            deleteTemplate.mutate(deleteId, {
+            deleteTemplate.mutate({ id: deleteId, force: deleteUsageCount > 0 }, {
               onSettled: () => {
                 setDeleteId(null);
                 setDeleteTemplateName('');
+                setDeleteUsageCount(0);
               }
             });
           }
         }}
-        title="Supprimer le modèle"
+        title={deleteUsageCount > 0 ? "Suppression permanente" : "Supprimer le modèle"}
         message={
           <>
             <p>Êtes-vous sûr de vouloir supprimer le modèle "{deleteTemplateName}" ? Cette action est irréversible.</p>
-            <p className="text-sm text-amber-600 mt-2">
-              ⚠️ Seuls les modèles sans documents générés peuvent être supprimés.
-            </p>
+            {deleteUsageCount > 0 ? (
+              <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-left">
+                <p className="text-sm text-red-700 font-semibold mb-1 flex items-center gap-2">
+                  ⚠️ Attention : Modèle utilisé {deleteUsageCount} fois
+                </p>
+                <p className="text-[11px] text-red-600 leading-relaxed">
+                  Ce modèle est lié à des documents existants. La suppression rompra ce lien 
+                  (les documents resteront accessibles mais leur référence au modèle sera effacée).
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 mt-2">
+                Ce modèle n'a jamais été utilisé et peut être supprimé en toute sécurité.
+              </p>
+            )}
           </>
         }
         confirmText="Supprimer"

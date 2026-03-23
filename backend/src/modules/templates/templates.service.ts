@@ -83,8 +83,8 @@ export async function patchTemplateStatus(id: string, status: string, companyId:
   return updated;
 }
 
-export async function deleteTemplate(id: string, companyId: string, userId: string) {
-  console.log('Delete template request:', id, 'company:', companyId);
+export async function deleteTemplate(id: string, companyId: string, userId: string, force = false) {
+  console.log('Delete template request:', id, 'company:', companyId, 'force:', force);
   
   const template = await templatesRepository.findById(id, companyId);
   if (!template) throw new AppError('Modèle introuvable', 404);
@@ -92,11 +92,16 @@ export async function deleteTemplate(id: string, companyId: string, userId: stri
   const usageCount = await templatesRepository.getUsageCount(id);
   console.log('Usage count for template:', id, '=', usageCount);
   
-  if (usageCount > 0) {
+  if (usageCount > 0 && !force) {
     throw new AppError(
       `Ce modèle a été utilisé ${usageCount} fois. Archivez-le plutôt que de le supprimer.`,
       400
     );
+  }
+
+  if (usageCount > 0 && force) {
+    console.log('Force delete: Detaching documents for template', id);
+    await templatesRepository.detachDocumentsFromTemplate(id, companyId);
   }
 
   await templatesRepository.deleteTemplateRecord(id, companyId);

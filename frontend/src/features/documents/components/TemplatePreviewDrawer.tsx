@@ -56,12 +56,41 @@ const langFlags: Record<string, React.ReactNode> = {
   ),
 };
 
+function parseTemplateParts(fullBody: string) {
+  const parts = {
+    header: '',
+    body: fullBody,
+    footer: '',
+    showHeader: false,
+    showFooter: false
+  };
+
+  if (fullBody.includes('<!-- HEADER -->')) {
+    const headerMatch = fullBody.match(/<!-- HEADER -->([\s\S]*?)<!-- END_HEADER -->/);
+    if (headerMatch) {
+      parts.header = headerMatch[1].trim();
+      parts.showHeader = !fullBody.includes('<!-- HEADER_HIDDEN -->');
+    }
+    const bodyMatch = fullBody.match(/<!-- BODY -->([\s\S]*?)<!-- END_BODY -->/);
+    if (bodyMatch) parts.body = bodyMatch[1].trim();
+    const footerMatch = fullBody.match(/<!-- FOOTER -->([\s\S]*?)<!-- END_FOOTER -->/);
+    if (footerMatch) {
+      parts.footer = footerMatch[1].trim();
+      parts.showFooter = !fullBody.includes('<!-- FOOTER_HIDDEN -->');
+    }
+  }
+
+  return parts;
+}
+
 export const TemplatePreviewDrawer: React.FC<Props> = ({
   template, isOpen, onClose, onEdit, onGenerate
 }) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'variables' | 'info'>('preview');
 
   if (!template) return null;
+
+  const { header, body, footer, showHeader, showFooter } = parseTemplateParts(template.body || '');
 
   return (
     <>
@@ -145,7 +174,22 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
                   </div>
                 </div>
                 <iframe
-                  srcDoc={template.body}
+                  srcDoc={`
+                    <style>
+                      body { font-family: sans-serif; line-height: 1.4; color: #334155; padding: 20px; margin: 0; }
+                      .zone-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
+                      .zone-footer { border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 15px; background: #f8fafc; font-size: 0.8em; }
+                      h1, h2, h3 { color: #0f172a; margin-top: 1em; }
+                      table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                      th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+                      th { background: #f8fafc; font-weight: bold; }
+                    </style>
+                    <div class="content">
+                      ${showHeader ? `<div class="zone-header">${header}</div>` : ''}
+                      <div class="zone-body">${body}</div>
+                      ${showFooter ? `<div class="zone-footer">${footer}</div>` : ''}
+                    </div>
+                  `}
                   title="Preview"
                   className="w-full h-full border-none bg-white"
                 />

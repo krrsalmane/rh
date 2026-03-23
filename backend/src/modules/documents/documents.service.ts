@@ -47,7 +47,7 @@ export async function generateDocument(input: GenerateDocumentInput, companyId: 
   const data = buildTemplateData(employee, company, input.formData);
 
   // 5. Compile HTML
-  const html = compileTemplate(template.body, data);
+  const { html, header, footer } = compileTemplate(template.body, data);
 
   // 6. Generate filename (sanitize employee name)
   const safeName = `${employee.last_name}_${employee.first_name}`.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -67,7 +67,7 @@ export async function generateDocument(input: GenerateDocumentInput, companyId: 
   }
 
   // 8. Generate PDF
-  const pdfBuffer = await renderPDF(html);
+  const pdfBuffer = await renderPDF(html, header, footer);
   fs.writeFileSync(outputPath, pdfBuffer);
 
   // 9. Save record
