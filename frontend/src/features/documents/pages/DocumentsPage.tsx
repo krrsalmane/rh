@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 import { useDocuments, useArchiveDocument, useDeleteDocument } from '../hooks/useDocuments';
 import { DocumentList } from '../components/DocumentList';
-import { PDFPreviewModal } from '../components/PDFPreviewModal';
 import type { GeneratedDocument, DocumentFilters } from '../types';
+import { ROUTES } from '@/shared/constants/routes';
 import axios from '@/shared/api/axiosInstance';
 
 export const DocumentsPage: React.FC = () => {
@@ -13,8 +13,6 @@ export const DocumentsPage: React.FC = () => {
   const { data, isLoading } = useDocuments(filters);
   const archiveMutation = useArchiveDocument();
   const deleteMutation = useDeleteDocument();
-
-  const [previewDoc, setPreviewDoc] = useState<GeneratedDocument | null>(null);
 
   const handleDownload = async (doc: GeneratedDocument) => {
     try {
@@ -60,20 +58,12 @@ export const DocumentsPage: React.FC = () => {
       <DocumentList
         documents={data?.data || []}
         isLoading={isLoading}
-        onPreview={setPreviewDoc}
+        onPreview={(doc) => navigate(ROUTES.DOCUMENT_VIEW.replace(':id', doc.id))}
         onDownload={handleDownload}
         onArchive={handleArchive}
         onDelete={handleDelete}
         pagination={data?.pagination}
         onPageChange={(page) => setFilters({ ...filters, page })}
-      />
-
-      {/* PDF Preview */}
-      <PDFPreviewModal
-        isOpen={!!previewDoc}
-        documentId={previewDoc?.id || null}
-        documentName={previewDoc?.templateName || undefined}
-        onClose={() => setPreviewDoc(null)}
       />
     </div>
   );

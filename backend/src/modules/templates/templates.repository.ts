@@ -130,8 +130,9 @@ export async function getUsageCount(templateId: string): Promise<number> {
   return parseInt(result.rows[0].count, 10);
 }
 
-export async function deleteTemplateRecord(id: string, companyId: string): Promise<void> {
-  await query('DELETE FROM templates WHERE id = $1 AND company_id = $2', [id, companyId]);
+export async function deleteTemplateRecord(id: string, companyId: string): Promise<boolean> {
+  const result = await query('DELETE FROM templates WHERE id = $1 AND company_id = $2', [id, companyId]);
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function detachDocumentsFromTemplate(id: string, companyId: string): Promise<void> {

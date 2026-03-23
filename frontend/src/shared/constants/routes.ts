@@ -23,4 +23,5 @@ export const ROUTES = {
   ABSENCE_DETAIL: '/absences/:id',
   LEAVE_REQUEST: '/leaves/request',
   LEAVE_TYPES: '/leave-types',
+  DOCUMENT_VIEW: '/documents/:id/view',
 };

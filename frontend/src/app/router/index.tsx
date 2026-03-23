@@ -15,6 +15,7 @@ import { DocumentsPage } from '@/features/documents/pages/DocumentsPage';
 import { TemplatesPage } from '@/features/documents/pages/TemplatesPage';
 import { TemplateEditorPage } from '@/features/documents/pages/TemplateEditorPage';
 import { GenerateDocumentPage } from '@/features/documents/pages/GenerateDocumentPage';
+import { DocumentViewPage } from '@/features/documents/pages/DocumentViewPage';
 import { TimeManagementPage } from '@/features/time/pages/TimeManagementPage';
 import { EmployeeTimePage } from '@/features/time/pages/EmployeeTimePage';
 import { WorkSchedulesPage } from '@/features/time/pages/WorkSchedulesPage';
@@ -53,6 +54,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.TEMPLATE_EDITOR_NEW, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplateEditorPage /></RoleGuard> },
           { path: ROUTES.TEMPLATE_EDITOR_EDIT, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplateEditorPage /></RoleGuard> },
           { path: ROUTES.GENERATE_DOCUMENT, element: <RoleGuard roles={['super_admin', 'hr_agent']}><GenerateDocumentPage /></RoleGuard> },
+          { path: ROUTES.DOCUMENT_VIEW, element: <RoleGuard roles={['super_admin', 'hr_agent']}><DocumentViewPage /></RoleGuard> },
           { path: ROUTES.AUDIT_LOGS, element: <RoleGuard roles={['super_admin', 'hr_agent']}><AuditLogsPage /></RoleGuard> },
           // all authenticated users
           { path: ROUTES.TIME, element: <TimeManagementPage /> },

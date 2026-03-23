@@ -104,7 +104,10 @@ export async function deleteTemplate(id: string, companyId: string, userId: stri
     await templatesRepository.detachDocumentsFromTemplate(id, companyId);
   }
 
-  await templatesRepository.deleteTemplateRecord(id, companyId);
+  const deleted = await templatesRepository.deleteTemplateRecord(id, companyId);
+  if (!deleted) {
+    throw new AppError("La suppression a échoué. Le modèle n'existe plus ou ne vous appartient pas.", 404);
+  }
 
   await auditLog({
     userId,
