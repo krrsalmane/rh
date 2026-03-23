@@ -1,4 +1,9 @@
 import Handlebars from 'handlebars';
+import { AppError } from '../../shared/utils/AppError';
+
+// Register helpers
+// ... (rest of imports/helpers)
+
 
 // Register helpers
 Handlebars.registerHelper('formatDate', (dateStr: string) => {
@@ -100,11 +105,25 @@ export function buildTemplateData(
   };
 }
 
-export function compileTemplate(templateBody: string, data: Record<string, unknown>): string {
-  const compiled = Handlebars.compile(templateBody);
-  const bodyHtml = compiled(data);
+function sanitizeTemplate(html: string): string {
+  // Remove HTML tags inside {{ }} placeholders
+  // Pattern: {{ anything with HTML tags }}
+  return html
+    // Remove HTML tags inside handlebars {{ }}
+    .replace(/\{\{([^}]*?)<[^>]*>([^}]*?)\}\}/g, '{{$1$2}}')
+    .replace(/\{\{([^}]*?)<\/[^>]*>([^}]*?)\}\}/g, '{{$1$2}}')
+    // Clean any remaining HTML inside {{ }}
+    .replace(/\{\{[^}]*\}\}/g, (match) => {
+      return match.replace(/<[^>]*>/g, '');
+    })
+    // Fix any double spaces in variable names
+    .replace(/\{\{\s+/g, '{{')
+    .replace(/\s+\}\}/g, '}}')
+    // Trim variable names
+    .replace(/\{\{(\s*)(.*?)(\s*)\}\}/g, '{{$2}}');
+}
 
-  // Wrap in full HTML document with professional styling
+function wrapInHtml(bodyHtml: string, data: any): string {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -137,19 +156,46 @@ export function compileTemplate(templateBody: string, data: Record<string, unkno
 <body>
   <div class="header">
     <div>
-      <div class="company-name">${Handlebars.Utils.escapeExpression(String((data as any)?.company?.name || ''))}</div>
-      <div class="company-address">${Handlebars.Utils.escapeExpression(String((data as any)?.company?.address || ''))}</div>
+      <div class="company-name">${Handlebars.Utils.escapeExpression(String(data?.company?.name || ''))}</div>
+      <div class="company-address">${Handlebars.Utils.escapeExpression(String(data?.company?.address || ''))}</div>
     </div>
     <div class="date-info">
-      Date: ${Handlebars.Utils.escapeExpression(String((data as any)?.meta?.generatedAtLong || ''))}
+      Date: ${Handlebars.Utils.escapeExpression(String(data?.meta?.generatedAtLong || ''))}
     </div>
   </div>
   <div class="document-body">
     ${bodyHtml}
   </div>
   <div class="footer">
-    Document généré le ${Handlebars.Utils.escapeExpression(String((data as any)?.meta?.generatedAt || ''))} via Maya HR Platform
+    Document généré le ${Handlebars.Utils.escapeExpression(String(data?.meta?.generatedAt || ''))} via Maya HR Platform
   </div>
 </body>
 </html>`;
+}
+
+export function compileTemplate(templateBody: string, data: Record<string, unknown>): string {
+  try {
+    // Step 1: Sanitize template (remove HTML inside variables)
+    const cleanTemplate = sanitizeTemplate(templateBody);
+
+    // Step 2: Compile with Handlebars
+    const template = Handlebars.compile(cleanTemplate);
+
+    // Step 3: Execute with data
+    const compiled = template(data);
+
+    // Step 4: Wrap in full HTML
+    return wrapInHtml(compiled, data);
+  } catch (error: any) {
+    console.error('Template compilation error:', error);
+    console.error('Template body (first 200 chars):', templateBody.substring(0, 200));
+    throw new AppError(`Erreur lors de la compilation du modèle: ${error.message}`, 500);
+  }
+}
+export function extractVariablesFromBody(body: string): string[] {
+  const matches = body.match(/\{\{([^}]+)\}\}/g) || [];
+  return matches
+    .map((m) => m.replace(/\{\{|\}\}/g, '').trim())
+    .filter((v, i, arr) => arr.indexOf(v) === i) // unique
+    .filter((v) => !v.startsWith('company.') && !v.startsWith('meta.'));
 }

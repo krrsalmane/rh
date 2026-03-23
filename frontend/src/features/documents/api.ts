@@ -66,8 +66,10 @@ export async function fetchTemplates(filters: TemplateFilters = {}) {
 }
 
 export async function fetchActiveTemplates() {
-  const res = await axios.get<{ data: Record<string, unknown>[] }>('/templates/active');
-  return res.data.data.map(mapTemplate);
+  // Use the same /templates endpoint with status=active filter
+  // This is more robust than /templates/active which requires backend restart
+  const result = await fetchTemplates({ status: 'active', limit: 100 });
+  return result.data;
 }
 
 export async function fetchTemplate(id: string) {
@@ -152,3 +154,13 @@ export async function archiveDocument(id: string) {
 export async function deleteDocument(id: string) {
   await axios.delete(`/documents/${id}`);
 }
+
+// Consolidated Templates API object
+export const templatesApi = {
+  getAll: (filters?: TemplateFilters) => fetchTemplates(filters),
+  getById: (id: string) => fetchTemplate(id),
+  create: (data: CreateTemplateDto) => createTemplate(data),
+  update: (id: string, data: Partial<CreateTemplateDto>) => updateTemplate(id, data),
+  updateStatus: (id: string, status: 'draft' | 'active' | 'archived') => patchTemplateStatus(id, status),
+  delete: (id: string) => deleteTemplate(id),
+};

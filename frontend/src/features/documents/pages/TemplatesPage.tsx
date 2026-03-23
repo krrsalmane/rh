@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Plus } from 'lucide-react';
-import { useTemplates, usePatchTemplateStatus, useDeleteTemplate } from '../hooks/useDocuments';
+import { useTemplates, usePatchTemplateStatus, useDeleteTemplate } from '../hooks/useTemplates';
 import { TemplateList } from '../components/TemplateList';
 import type { Template, TemplateFilters } from '../types';
 
@@ -18,9 +18,7 @@ export const TemplatesPage: React.FC = () => {
     statusMutation.mutate({ id: tpl.id, status });
   };
   const handleDelete = (tpl: Template) => {
-    if (window.confirm(`Supprimer le modèle "${tpl.name}" ?`)) {
-      deleteMutation.mutate(tpl.id);
-    }
+    deleteMutation.mutate(tpl.id);
   };
 
   return (
@@ -89,6 +87,7 @@ export const TemplatesPage: React.FC = () => {
         onDelete={handleDelete}
         onStatusChange={handleStatusChange}
         onGenerate={handleGenerate}
+        isDeleting={deleteMutation.isPending}
       />
     </div>
   );

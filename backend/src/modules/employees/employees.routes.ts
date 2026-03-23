@@ -8,7 +8,7 @@ import rateLimit from 'express-rate-limit';
 
 const employeesLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 60,
+  max: process.env.NODE_ENV === 'production' ? 60 : 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

@@ -16,6 +16,8 @@ export const ROUTES = {
   EMPLOYEE_CREATE: '/employees/create',
   EMPLOYEE_DETAIL: '/employees/:id',
   TEMPLATE_EDITOR: '/templates/:id',
+  TEMPLATE_EDITOR_NEW: '/templates/new',
+  TEMPLATE_EDITOR_EDIT: '/templates/:id/edit',
   GENERATE_DOCUMENT: '/documents/generate',
   EMPLOYEE_TIME: '/time/:id',
   ABSENCE_DETAIL: '/absences/:id',

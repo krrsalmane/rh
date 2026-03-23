@@ -94,7 +94,7 @@ export async function deleteTemplate(id: string, companyId: string, userId: stri
 
   const usageCount = await templatesRepository.countUsage(id);
   if (usageCount > 0) {
-    throw new AppError('Impossible de supprimer un modèle qui a été utilisé pour générer des documents', 400);
+    throw new AppError('Ce modèle a des documents générés et ne peut pas être supprimé', 400);
   }
 
   await templatesRepository.remove(id, companyId);

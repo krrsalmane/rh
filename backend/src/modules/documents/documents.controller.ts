@@ -17,8 +17,13 @@ export const getDocumentById = asyncHandler(async (req: Request, res: Response):
 
 export const generateDocument = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const input = GenerateDocumentSchema.parse(req.body);
-  const doc = await documentsService.generateDocument(input, req.user!.companyId, req.user!.id);
-  res.status(201).json({ status: 'success', data: doc });
+  try {
+    const doc = await documentsService.generateDocument(input, req.user!.companyId, req.user!.id);
+    res.status(201).json({ status: 'success', data: doc });
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    throw error;
+  }
 });
 
 export const streamDocumentPDF = asyncHandler(async (req: Request, res: Response): Promise<void> => {

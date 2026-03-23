@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ChevronRight, FileText, User, ClipboardCheck, Download, Loader2, ArrowLeft, Zap } from 'lucide-react';
-import { useActiveTemplates, useGenerateDocument } from '../hooks/useDocuments';
-import { useEmployees } from '@/features/employees/hooks/useEmployees';
+import { useActiveTemplates } from '../hooks/useTemplates';
+import { useGenerateDocument } from '../hooks/useDocuments';
+import { useEmployees, useEmployee } from '@/features/employees/hooks/useEmployees';
 import { DynamicDocumentForm } from './DynamicDocumentForm';
 import type { Template, GenerateDocumentDto } from '../types';
 import type { Employee } from '@/features/employees/types';
@@ -21,6 +22,26 @@ interface Props {
   onClose?: () => void;
 }
 
+const getEffectiveSchema = (template: Template) => {
+  if (template.variableSchema && template.variableSchema.length > 0) {
+    return template.variableSchema;
+  }
+  
+  // Fallback: extract from body
+  const matches = template.body?.match(/\{\{([^}]+)\}\}/g) || [];
+  const uniqueVars = matches
+    .map(m => m.replace(/\{\{|\}\}/g, '').trim())
+    .filter((v, i, arr) => arr.indexOf(v) === i);
+  
+  return uniqueVars.map(name => ({
+    name,
+    label: name.replace('employee.', '').replace('form.', '').replace('company.', '').replace('meta.', ''),
+    type: 'text' as const,
+    required: !name.startsWith('employee.') && !name.startsWith('company.') && !name.startsWith('meta.'),
+    autoFill: name.startsWith('employee.') || name.startsWith('company.') || name.startsWith('meta.'),
+  }));
+};
+
 export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, preselectedTemplateId, onClose }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(preselectedTemplateId ? 1 : 0);
@@ -29,8 +50,12 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [generatedDocId, setGeneratedDocId] = useState<string | null>(null);
-
   const { data: templates = [], isLoading: loadingTemplates } = useActiveTemplates();
+  
+  const effectiveSchema = useMemo(() => {
+    if (!selectedTemplate) return [];
+    return getEffectiveSchema(selectedTemplate);
+  }, [selectedTemplate]);
 
   // Pre-select template if provided via URL
   React.useEffect(() => {
@@ -40,10 +65,11 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
     }
   }, [preselectedTemplateId, templates, selectedTemplate]);
   const { data: employeesData } = useEmployees({ search: employeeSearch, page: 1, limit: 50 });
+  const { data: employeeDetails } = useEmployee(selectedEmployeeId || undefined);
   const generateMutation = useGenerateDocument();
 
   const employees = employeesData?.data || [];
-  const selectedEmployee = employees.find((e: Employee) => e.id === selectedEmployeeId);
+  const selectedEmployee = employeeDetails?.data || employees.find((e: Employee) => e.id === selectedEmployeeId);
 
   const employeeDataForForm = useMemo(() => {
     if (!selectedEmployee) return {};
@@ -132,26 +158,46 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-sky-500 animate-spin" /></div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {templates.map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    onClick={() => setSelectedTemplate(tpl)}
-                    className={`text-left p-4 rounded-xl border-2 transition-all ${
-                      selectedTemplate?.id === tpl.id
-                        ? 'border-sky-500 bg-sky-50 shadow-sm'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                    id={`gen-tpl-${tpl.id}`}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileText className="w-4 h-4 text-sky-500" />
-                      <span className="text-sm font-semibold text-slate-800">{tpl.name}</span>
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {tpl.variableSchema.filter((v) => !v.autoFill).length} champ(s) à remplir
-                    </p>
-                  </button>
-                ))}
+                {templates.map((tpl) => {
+                  const schema = getEffectiveSchema(tpl);
+                  const autoFillCount = schema.filter(v => v.autoFill).length;
+                  const manualCount = schema.length - autoFillCount;
+
+                  return (
+                    <button
+                      key={tpl.id}
+                      onClick={() => setSelectedTemplate(tpl)}
+                      className={`text-left p-4 rounded-xl border-2 transition-all ${
+                        selectedTemplate?.id === tpl.id
+                          ? 'border-sky-500 bg-sky-50 shadow-sm'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                      id={`gen-tpl-${tpl.id}`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="w-4 h-4 text-sky-500" />
+                        <span className="text-sm font-semibold text-slate-800">{tpl.name}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {autoFillCount > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-600 font-medium">
+                            {autoFillCount} auto-remplis
+                          </span>
+                        )}
+                        {manualCount > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-medium">
+                            {manualCount} à remplir
+                          </span>
+                        )}
+                        {schema.length === 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-400 font-medium">
+                            Variables auto-détectées
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -204,7 +250,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
             {/* Dynamic form */}
             {selectedEmployeeId && (
               <DynamicDocumentForm
-                variableSchema={selectedTemplate.variableSchema}
+                variableSchema={effectiveSchema}
                 employeeData={employeeDataForForm}
                 formData={formData}
                 onFormDataChange={setFormData}

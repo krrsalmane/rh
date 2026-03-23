@@ -1,6 +1,8 @@
-import React from 'react';
-import { FileText, FileSignature, Mail, Settings, Pencil, Trash2, Archive, RotateCcw, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, FileSignature, Mail, Settings, Pencil, Trash2, Archive, RotateCcw, Zap, Eye } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
+import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
+import { TemplatePreviewModal } from './TemplatePreviewModal';
 import type { Template } from '../types';
 
 interface Props {
@@ -10,6 +12,7 @@ interface Props {
   onDelete: (template: Template) => void;
   onStatusChange: (template: Template, status: 'active' | 'archived') => void;
   onGenerate: (template: Template) => void;
+  isDeleting?: boolean;
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -35,9 +38,14 @@ const statusColors: Record<string, string> = {
   archived: 'bg-slate-100 text-slate-500 border-slate-200',
 };
 
-export const TemplateList: React.FC<Props> = ({ templates, isLoading, onEdit, onDelete, onStatusChange, onGenerate }) => {
+export const TemplateList: React.FC<Props> = ({ 
+  templates, isLoading, onEdit, onDelete, onStatusChange, onGenerate, isDeleting = false 
+}) => {
   const userRole = useAppSelector((s) => s.auth.role);
   const isSuperAdmin = userRole === 'super_admin';
+  
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   if (isLoading) {
     return (
@@ -64,6 +72,8 @@ export const TemplateList: React.FC<Props> = ({ templates, isLoading, onEdit, on
       </div>
     );
   }
+
+  const selectedForDelete = templates.find(t => t.id === deleteId);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="templates-grid">
@@ -101,56 +111,90 @@ export const TemplateList: React.FC<Props> = ({ templates, isLoading, onEdit, on
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-1.5 pt-3 border-t border-slate-100">
+            <div className="flex items-center gap-1 pt-3 border-t border-slate-100">
               {tpl.status === 'active' && (
                 <button
                   onClick={() => onGenerate(tpl)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 rounded-xl transition-colors shadow-sm"
+                  className="mr-auto inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 rounded-xl transition-colors shadow-sm"
                   id={`template-use-${tpl.id}`}
                 >
                   <Zap className="w-3.5 h-3.5" />
                   Utiliser
                 </button>
               )}
-              <button
-                onClick={() => onEdit(tpl)}
-                className="p-2 rounded-xl text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                title="Modifier"
-                id={`template-edit-${tpl.id}`}
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              {tpl.status === 'active' && (
+              
+              <div className="flex items-center gap-0.5 ml-auto">
                 <button
-                  onClick={() => onStatusChange(tpl, 'archived')}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                  title="Archiver"
+                  onClick={() => setPreviewTemplate(tpl)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                  title="Aperçu"
                 >
-                  <Archive className="w-4 h-4" />
+                  <Eye className="w-4 h-4" />
                 </button>
-              )}
-              {tpl.status === 'archived' && (
                 <button
-                  onClick={() => onStatusChange(tpl, 'active')}
-                  className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                  title="Réactiver"
+                  onClick={() => onEdit(tpl)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                  title="Modifier"
+                  id={`template-edit-${tpl.id}`}
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <Pencil className="w-4 h-4" />
                 </button>
-              )}
-              {isSuperAdmin && tpl.status === 'draft' && (
-                <button
-                  onClick={() => onDelete(tpl)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                  title="Supprimer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
+                {tpl.status === 'active' && (
+                  <button
+                    onClick={() => onStatusChange(tpl, 'archived')}
+                    className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    title="Archiver"
+                  >
+                    <Archive className="w-4 h-4" />
+                  </button>
+                )}
+                {tpl.status === 'archived' && (
+                  <button
+                    onClick={() => onStatusChange(tpl, 'active')}
+                    className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    title="Réactiver"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                )}
+                {isSuperAdmin && tpl.status === 'draft' && (
+                  <button
+                    onClick={() => setDeleteId(tpl.id)}
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    title="Supprimer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         );
       })}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (selectedForDelete) {
+            onDelete(selectedForDelete);
+            setDeleteId(null);
+          }
+        }}
+        title="Supprimer le modèle"
+        message={`Êtes-vous sûr de vouloir supprimer "${selectedForDelete?.name}" ? Cette action est irréversible.`}
+        confirmText="Supprimer"
+        variant="danger"
+        isLoading={isDeleting}
+      />
+
+      {/* Preview Modal */}
+      <TemplatePreviewModal
+        template={previewTemplate}
+        isOpen={!!previewTemplate}
+        onClose={() => setPreviewTemplate(null)}
+      />
     </div>
   );
 };

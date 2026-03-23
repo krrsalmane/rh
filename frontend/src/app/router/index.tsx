@@ -50,6 +50,8 @@ export const router = createBrowserRouter([
           { path: ROUTES.DOCUMENTS, element: <RoleGuard roles={['super_admin', 'hr_agent']}><DocumentsPage /></RoleGuard> },
           { path: ROUTES.TEMPLATES, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplatesPage /></RoleGuard> },
           { path: ROUTES.TEMPLATE_EDITOR, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplateEditorPage /></RoleGuard> },
+          { path: ROUTES.TEMPLATE_EDITOR_NEW, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplateEditorPage /></RoleGuard> },
+          { path: ROUTES.TEMPLATE_EDITOR_EDIT, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplateEditorPage /></RoleGuard> },
           { path: ROUTES.GENERATE_DOCUMENT, element: <RoleGuard roles={['super_admin', 'hr_agent']}><GenerateDocumentPage /></RoleGuard> },
           { path: ROUTES.AUDIT_LOGS, element: <RoleGuard roles={['super_admin', 'hr_agent']}><AuditLogsPage /></RoleGuard> },
           // all authenticated users
