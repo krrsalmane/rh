@@ -1,5 +1,6 @@
 import { query } from '../../config/database';
 import { CreateTemplateInput, TemplateFiltersInput } from './templates.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface TemplateRow {
   id: string;
@@ -29,7 +30,7 @@ export async function findAll(companyId: string, filters: TemplateFiltersInput):
   if (filters.status) { conditions.push(`t.status = $${idx}`); params.push(filters.status); idx++; }
   if (filters.category) { conditions.push(`t.category = $${idx}`); params.push(filters.category); idx++; }
   if (filters.language) { conditions.push(`t.language = $${idx}`); params.push(filters.language); idx++; }
-  if (filters.search) { conditions.push(`t.name ILIKE $${idx}`); params.push(`%${filters.search}%`); idx++; }
+  if (filters.search) { conditions.push(`t.name LIKE $${idx}`); params.push(`%${filters.search}%`); idx++; }
 
   const whereClause = conditions.join(' AND ');
 
@@ -39,7 +40,7 @@ export async function findAll(companyId: string, filters: TemplateFiltersInput):
 
   const result = await query<TemplateRow>(
     `SELECT t.id, t.name, t.category, t.language, t.status, t.version, t.variable_schema, t.created_by, t.created_at,
-       (SELECT COUNT(*) FROM generated_documents WHERE template_id = t.id)::int as usage_count
+       (SELECT COUNT(*) FROM generated_documents WHERE template_id = t.id) as usage_count
      FROM templates t
      WHERE ${whereClause}
      ORDER BY t.created_at DESC
@@ -52,7 +53,7 @@ export async function findAll(companyId: string, filters: TemplateFiltersInput):
 
 export async function findActive(companyId: string): Promise<TemplateRow[]> {
   const result = await query<TemplateRow>(
-    `SELECT t.*, (SELECT COUNT(*) FROM generated_documents WHERE template_id = t.id)::int as usage_count
+    `SELECT t.*, (SELECT COUNT(*) FROM generated_documents WHERE template_id = t.id) as usage_count
      FROM templates t WHERE t.company_id = $1 AND t.status = 'active' ORDER BY t.name`,
     [companyId]
   );
@@ -61,7 +62,7 @@ export async function findActive(companyId: string): Promise<TemplateRow[]> {
 
 export async function findById(id: string, companyId: string): Promise<TemplateRow | null> {
   const result = await query<TemplateRow>(
-    `SELECT t.*, (SELECT COUNT(*) FROM generated_documents WHERE template_id = t.id)::int as usage_count
+    `SELECT t.*, (SELECT COUNT(*) FROM generated_documents WHERE template_id = t.id) as usage_count
      FROM templates t WHERE t.id = $1 AND t.company_id = $2`,
     [id, companyId]
   );
@@ -78,13 +79,14 @@ export async function findByName(name: string, companyId: string, excludeId?: st
 }
 
 export async function create(input: CreateTemplateInput, companyId: string, userId: string): Promise<TemplateRow> {
-  const result = await query<TemplateRow>(
-    `INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-    [companyId, input.name, input.category, input.language, input.body,
+  const id = uuidv4();
+  await query(
+    `INSERT INTO templates (id, company_id, name, category, language, body, variable_schema, status, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [id, companyId, input.name, input.category, input.language, input.body,
       JSON.stringify(input.variableSchema || []), input.status || 'draft', userId]
   );
-  return result.rows[0];
+  return (await findById(id, companyId))!;
 }
 
 export async function update(id: string, input: Partial<CreateTemplateInput>, companyId: string): Promise<TemplateRow | null> {
@@ -105,19 +107,19 @@ export async function update(id: string, input: Partial<CreateTemplateInput>, co
   fields.push(`version = version + 1`);
 
   values.push(id, companyId);
-  const result = await query<TemplateRow>(
-    `UPDATE templates SET ${fields.join(', ')} WHERE id = $${idx} AND company_id = $${idx + 1} RETURNING *`,
+  await query(
+    `UPDATE templates SET ${fields.join(', ')} WHERE id = $${idx} AND company_id = $${idx + 1}`,
     values
   );
-  return result.rows[0] || null;
+  return findById(id, companyId);
 }
 
 export async function patchStatus(id: string, status: string, companyId: string): Promise<TemplateRow | null> {
-  const result = await query<TemplateRow>(
-    'UPDATE templates SET status = $1 WHERE id = $2 AND company_id = $3 RETURNING *',
+  await query(
+    'UPDATE templates SET status = $1 WHERE id = $2 AND company_id = $3',
     [status, id, companyId]
   );
-  return result.rows[0] || null;
+  return findById(id, companyId);
 }
 
 export async function remove(id: string, companyId: string): Promise<boolean> {

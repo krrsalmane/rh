@@ -1,27 +1,21 @@
--- Seed 3 default templates
--- These are inserted for the first company found in the database
+-- ============================================================
+-- Seed 004: Default document templates
+-- Rewritten from PostgreSQL PL/pgSQL to valid MySQL
+-- ============================================================
+-- These templates use the default company ID. The created_by
+-- is set to the first user found for that company.
+-- ============================================================
 
-DO $$
-DECLARE
-  v_company_id UUID;
-  v_user_id UUID;
-BEGIN
-  SELECT id INTO v_company_id FROM companies LIMIT 1;
-  SELECT id INTO v_user_id FROM users WHERE company_id = v_company_id LIMIT 1;
+SET @company_id = '00000000-0000-0000-0000-000000000001';
+SELECT id INTO @creator_id FROM users WHERE company_id = @company_id LIMIT 1;
 
-  IF v_company_id IS NULL THEN
-    RAISE NOTICE 'No company found, skipping template seeds';
-    RETURN;
-  END IF;
-
-  -- 1. Attestation de travail
-  INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, version, created_by)
-  VALUES (
-    v_company_id,
-    'Attestation de travail',
-    'attestation',
-    'fr',
-    '<h1>ATTESTATION DE TRAVAIL</h1>
+-- 1. Attestation de travail
+INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, version, created_by)
+SELECT @company_id,
+  'Attestation de travail',
+  'attestation',
+  'fr',
+  '<h1>ATTESTATION DE TRAVAIL</h1>
 
 <p>Je soussigné(e), <strong>{{company.name}}</strong>, dont le siège social est situé au <strong>{{company.address}}</strong>, atteste par la présente que :</p>
 
@@ -39,28 +33,30 @@ BEGIN
     <div class="signature-line">Fait à ____________, le {{meta.generatedAtLong}}</div>
   </div>
 </div>',
-    '[
-      {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.cin", "label": "CIN", "type": "text", "required": false, "autoFill": true},
-      {"name": "employee.function", "label": "Fonction", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.department", "label": "Département", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.hireDate", "label": "Date d''embauche", "type": "date", "required": true, "autoFill": true},
-      {"name": "employee.contractType", "label": "Type de contrat", "type": "text", "required": true, "autoFill": true},
-      {"name": "form.purpose", "label": "Motif de la demande", "type": "text", "required": false, "autoFill": false}
-    ]'::jsonb,
-    'active',
-    1,
-    v_user_id
-  ) ON CONFLICT DO NOTHING;
+  '[
+    {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.cin", "label": "CIN", "type": "text", "required": false, "autoFill": true},
+    {"name": "employee.function", "label": "Fonction", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.department", "label": "Département", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.hireDate", "label": "Date d''embauche", "type": "date", "required": true, "autoFill": true},
+    {"name": "employee.contractType", "label": "Type de contrat", "type": "text", "required": true, "autoFill": true},
+    {"name": "form.purpose", "label": "Motif de la demande", "type": "text", "required": false, "autoFill": false}
+  ]',
+  'active',
+  1,
+  @creator_id
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1 FROM templates WHERE company_id = @company_id AND name = 'Attestation de travail'
+);
 
-  -- 2. Attestation de salaire
-  INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, version, created_by)
-  VALUES (
-    v_company_id,
-    'Attestation de salaire',
-    'attestation',
-    'fr',
-    '<h1>ATTESTATION DE SALAIRE</h1>
+-- 2. Attestation de salaire
+INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, version, created_by)
+SELECT @company_id,
+  'Attestation de salaire',
+  'attestation',
+  'fr',
+  '<h1>ATTESTATION DE SALAIRE</h1>
 
 <p>Je soussigné(e), <strong>{{company.name}}</strong>, dont le siège social est situé au <strong>{{company.address}}</strong>, atteste par la présente que :</p>
 
@@ -82,27 +78,29 @@ BEGIN
     <div class="signature-line">Fait le {{meta.generatedAtLong}}</div>
   </div>
 </div>',
-    '[
-      {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.cin", "label": "CIN", "type": "text", "required": false, "autoFill": true},
-      {"name": "employee.function", "label": "Fonction", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.hireDate", "label": "Date d''embauche", "type": "date", "required": true, "autoFill": true},
-      {"name": "employee.salary", "label": "Salaire", "type": "currency", "required": true, "autoFill": true},
-      {"name": "form.requestedBy", "label": "Destinataire", "type": "text", "required": true, "autoFill": false}
-    ]'::jsonb,
-    'active',
-    1,
-    v_user_id
-  ) ON CONFLICT DO NOTHING;
+  '[
+    {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.cin", "label": "CIN", "type": "text", "required": false, "autoFill": true},
+    {"name": "employee.function", "label": "Fonction", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.hireDate", "label": "Date d''embauche", "type": "date", "required": true, "autoFill": true},
+    {"name": "employee.salary", "label": "Salaire", "type": "currency", "required": true, "autoFill": true},
+    {"name": "form.requestedBy", "label": "Destinataire", "type": "text", "required": true, "autoFill": false}
+  ]',
+  'active',
+  1,
+  @creator_id
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1 FROM templates WHERE company_id = @company_id AND name = 'Attestation de salaire'
+);
 
-  -- 3. Contrat de travail CDI
-  INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, version, created_by)
-  VALUES (
-    v_company_id,
-    'Contrat de travail CDI',
-    'contract',
-    'fr',
-    '<h1>CONTRAT DE TRAVAIL À DURÉE INDÉTERMINÉE</h1>
+-- 3. Contrat de travail CDI
+INSERT INTO templates (company_id, name, category, language, body, variable_schema, status, version, created_by)
+SELECT @company_id,
+  'Contrat de travail CDI',
+  'contract',
+  'fr',
+  '<h1>CONTRAT DE TRAVAIL À DURÉE INDÉTERMINÉE</h1>
 
 <p><strong>Entre les soussignés :</strong></p>
 
@@ -149,21 +147,21 @@ BEGIN
     <div class="signature-line">Le Salarié</div>
   </div>
 </div>',
-    '[
-      {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.cin", "label": "CIN", "type": "text", "required": false, "autoFill": true},
-      {"name": "employee.address", "label": "Adresse du salarié", "type": "text", "required": false, "autoFill": true},
-      {"name": "employee.function", "label": "Fonction", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.department", "label": "Département", "type": "text", "required": true, "autoFill": true},
-      {"name": "employee.hireDate", "label": "Date d''embauche", "type": "date", "required": true, "autoFill": true},
-      {"name": "employee.salary", "label": "Salaire mensuel brut", "type": "currency", "required": true, "autoFill": true},
-      {"name": "form.trialPeriod", "label": "Période d''essai (mois)", "type": "number", "required": true, "autoFill": false, "defaultValue": "3"},
-      {"name": "form.workLocation", "label": "Lieu de travail", "type": "text", "required": true, "autoFill": false}
-    ]'::jsonb,
-    'active',
-    1,
-    v_user_id
-  ) ON CONFLICT DO NOTHING;
-
-  RAISE NOTICE 'Seeded 3 default templates successfully';
-END $$;
+  '[
+    {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.cin", "label": "CIN", "type": "text", "required": false, "autoFill": true},
+    {"name": "employee.address", "label": "Adresse du salarié", "type": "text", "required": false, "autoFill": true},
+    {"name": "employee.function", "label": "Fonction", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.department", "label": "Département", "type": "text", "required": true, "autoFill": true},
+    {"name": "employee.hireDate", "label": "Date d''embauche", "type": "date", "required": true, "autoFill": true},
+    {"name": "employee.salary", "label": "Salaire mensuel brut", "type": "currency", "required": true, "autoFill": true},
+    {"name": "form.trialPeriod", "label": "Période d''essai (mois)", "type": "number", "required": true, "autoFill": false, "defaultValue": "3"},
+    {"name": "form.workLocation", "label": "Lieu de travail", "type": "text", "required": true, "autoFill": false}
+  ]',
+  'active',
+  1,
+  @creator_id
+FROM DUAL
+WHERE NOT EXISTS (
+  SELECT 1 FROM templates WHERE company_id = @company_id AND name = 'Contrat de travail CDI'
+);

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import axiosInstance from '@/shared/api/axiosInstance';
 
 export interface LoginPayload {
@@ -10,6 +11,7 @@ export interface AuthUser {
   email: string;
   role: 'super_admin' | 'hr_agent' | 'manager' | 'employee';
   companyId: string;
+  employeeId?: string | null;
 }
 
 export interface LoginResponse {
@@ -36,7 +38,11 @@ export const authApi = {
   },
 
   refresh: async (): Promise<{ accessToken: string; user: AuthUser }> => {
-    const { data } = await axiosInstance.post<{ data: { accessToken: string; user: AuthUser } }>('/auth/refresh');
+    const { data } = await axios.post<{ data: { accessToken: string; user: AuthUser } }>(
+      `${import.meta.env.VITE_API_URL || '/api'}/auth/refresh`,
+      {},
+      { withCredentials: true }
+    );
     return data.data;
   },
 };

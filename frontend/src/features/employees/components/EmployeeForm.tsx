@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAppSelector } from '@/store/hooks';
 import { useDepartments } from '../hooks/useEmployees';
+import { useWorkSchedules } from '@/features/time/hooks/useTime';
 import type { CreateEmployeeDto, Employee } from '../types';
 
 const employeeFormSchema = z.object({
@@ -36,6 +37,8 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
   const userRole = useAppSelector((s) => s.auth.role);
   const isSuperAdmin = userRole === 'super_admin';
   const { data: departments = [] } = useDepartments();
+  const { data: schedulesResult } = useWorkSchedules();
+  const schedules = Array.isArray(schedulesResult) ? schedulesResult : [];
 
   const {
     register,
@@ -193,6 +196,15 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
               <option value="active">Actif</option>
               <option value="inactive">Inactif</option>
               <option value="terminated">Résilié</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Horaire de travail</label>
+            <select {...register('workScheduleId')} className="input-field" id="emp-workScheduleId">
+              <option value="">Par défaut (8h/jour)</option>
+              {schedules.map((s: any) => (
+                <option key={s.id} value={s.id}>{s.name} ({s.dailyHours || 8}h/j)</option>
+              ))}
             </select>
           </div>
         </div>

@@ -18,12 +18,15 @@ import usersRoutes from './modules/users/users.routes';
 import settingsRoutes from './modules/settings/settings.routes';
 import publicHolidaysRoutes from './modules/public-holidays/publicHolidays.routes';
 import auditLogsRoutes from './modules/audit-logs/auditLogs.routes';
+import tasksRoutes from './modules/tasks/tasks.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
+import notificationsRoutes from './modules/notifications/notifications.routes';
 
 export const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -43,6 +46,8 @@ app.use('/api/leave-types', leaveTypesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/public-holidays', publicHolidaysRoutes);
-app.use('/api/audit-logs', auditLogsRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/tasks', tasksRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.use(errorHandler);

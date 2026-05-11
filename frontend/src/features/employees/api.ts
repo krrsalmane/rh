@@ -9,6 +9,19 @@ import type {
   LeaveBalance,
 } from './types';
 
+// Helper to map leave balance fields
+function mapLeaveBalance(raw: any): LeaveBalance {
+  return {
+    id: raw.id,
+    employeeId: raw.employee_id || raw.employeeId,
+    leaveTypeId: raw.leave_type_id || raw.leaveTypeId,
+    year: raw.year,
+    totalDays: Number(raw.credited ?? raw.total_days ?? 0),
+    usedDays: Number(raw.taken ?? raw.used_days ?? 0),
+    remainingDays: Number(raw.remaining ?? raw.remaining_days ?? 0),
+  };
+}
+
 // Map snake_case API response to camelCase
 function mapEmployee(raw: Record<string, unknown>): Employee {
   return {
@@ -32,7 +45,7 @@ function mapEmployee(raw: Record<string, unknown>): Employee {
     weeklyHours: (raw.weekly_hours ?? raw.weeklyHours) as number | undefined,
     dailyHours: (raw.daily_hours ?? raw.dailyHours) as number | undefined,
     createdAt: (raw.created_at ?? raw.createdAt) as string,
-    leaveBalances: raw.leaveBalances as LeaveBalance[] | undefined,
+    leaveBalances: Array.isArray(raw.leaveBalances) ? raw.leaveBalances.map(mapLeaveBalance) : undefined,
   };
 }
 
@@ -79,6 +92,6 @@ export async function getDepartments() {
 }
 
 export async function getLeaveBalances(employeeId: string) {
-  const { data } = await axiosInstance.get<{ status: string; data: LeaveBalance[] }>(`/employees/${employeeId}/leave-balances`);
-  return data.data;
+  const { data } = await axiosInstance.get<{ status: string; data: any[] }>(`/employees/${employeeId}/leave-balances`);
+  return data.data.map(mapLeaveBalance);
 }

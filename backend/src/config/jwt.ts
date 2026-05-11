@@ -3,8 +3,10 @@ import { env } from './env';
 
 export interface TokenPayload {
   id: string;
+  email: string;
   companyId: string;
   role: string;
+  employeeId?: string;
 }
 
 export function signAccessToken(payload: TokenPayload): string {

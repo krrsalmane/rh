@@ -9,7 +9,7 @@ interface UiState {
 }
 
 const initialState: UiState = {
-  theme: (localStorage.getItem('theme') as Theme) || 'light',
+  theme: 'light',
   sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
   sidebarOpen: true,
 };

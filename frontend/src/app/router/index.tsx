@@ -28,6 +28,7 @@ import { SettingsPage } from '@/features/settings/pages/SettingsPage';
 import { UsersPage } from '@/features/users/pages/UsersPage';
 import { PublicHolidaysPage } from '@/features/holidays/pages/PublicHolidaysPage';
 import { AuditLogsPage } from '@/features/audit/pages/AuditLogsPage';
+import { TasksPage } from '@/features/tasks/pages/TasksPage';
 
 export const router = createBrowserRouter([
   {
@@ -45,9 +46,9 @@ export const router = createBrowserRouter([
         children: [
           { path: ROUTES.DASHBOARD, element: <DashboardPage /> },
           // super_admin + hr_agent only
-          { path: ROUTES.EMPLOYEES, element: <RoleGuard roles={['super_admin', 'hr_agent']}><EmployeesListPage /></RoleGuard> },
+          { path: ROUTES.EMPLOYEES, element: <RoleGuard roles={['super_admin', 'hr_agent', 'manager']}><EmployeesListPage /></RoleGuard> },
           { path: ROUTES.EMPLOYEE_CREATE, element: <RoleGuard roles={['super_admin', 'hr_agent']}><EmployeeCreatePage /></RoleGuard> },
-          { path: ROUTES.EMPLOYEE_DETAIL, element: <RoleGuard roles={['super_admin', 'hr_agent']}><EmployeeDetailPage /></RoleGuard> },
+          { path: ROUTES.EMPLOYEE_DETAIL, element: <EmployeeDetailPage /> }, // Component handles its own check
           { path: ROUTES.DOCUMENTS, element: <RoleGuard roles={['super_admin', 'hr_agent']}><DocumentsPage /></RoleGuard> },
           { path: ROUTES.TEMPLATES, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplatesPage /></RoleGuard> },
           { path: ROUTES.TEMPLATE_EDITOR, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplateEditorPage /></RoleGuard> },
@@ -55,20 +56,21 @@ export const router = createBrowserRouter([
           { path: ROUTES.TEMPLATE_EDITOR_EDIT, element: <RoleGuard roles={['super_admin', 'hr_agent']}><TemplateEditorPage /></RoleGuard> },
           { path: ROUTES.GENERATE_DOCUMENT, element: <RoleGuard roles={['super_admin', 'hr_agent']}><GenerateDocumentPage /></RoleGuard> },
           { path: ROUTES.DOCUMENT_VIEW, element: <RoleGuard roles={['super_admin', 'hr_agent']}><DocumentViewPage /></RoleGuard> },
-          { path: ROUTES.AUDIT_LOGS, element: <RoleGuard roles={['super_admin', 'hr_agent']}><AuditLogsPage /></RoleGuard> },
+          { path: ROUTES.AUDIT_LOGS, element: <RoleGuard roles={['super_admin']}><AuditLogsPage /></RoleGuard> },
+          { path: ROUTES.TASKS, element: <TasksPage /> },
           // all authenticated users
           { path: ROUTES.TIME, element: <TimeManagementPage /> },
           { path: ROUTES.EMPLOYEE_TIME, element: <EmployeeTimePage /> },
-          { path: ROUTES.WORK_SCHEDULES, element: <WorkSchedulesPage /> },
+          { path: ROUTES.WORK_SCHEDULES, element: <RoleGuard roles={['super_admin', 'hr_agent']}><WorkSchedulesPage /></RoleGuard> },
           { path: ROUTES.ABSENCES, element: <AbsencesPage /> },
           { path: ROUTES.ABSENCE_DETAIL, element: <AbsenceDetailPage /> },
           { path: ROUTES.LEAVES, element: <LeavesPage /> },
           { path: ROUTES.LEAVE_REQUEST, element: <LeaveRequestPage /> },
-          { path: ROUTES.LEAVE_TYPES, element: <LeaveTypesPage /> },
+          { path: ROUTES.LEAVE_TYPES, element: <RoleGuard roles={['super_admin', 'hr_agent']}><LeaveTypesPage /></RoleGuard> },
           // super_admin only
           { path: ROUTES.SETTINGS, element: <RoleGuard roles={['super_admin']}><SettingsPage /></RoleGuard> },
           { path: ROUTES.USERS, element: <RoleGuard roles={['super_admin']}><UsersPage /></RoleGuard> },
-          { path: ROUTES.PUBLIC_HOLIDAYS, element: <RoleGuard roles={['super_admin']}><PublicHolidaysPage /></RoleGuard> },
+          { path: ROUTES.PUBLIC_HOLIDAYS, element: <RoleGuard roles={['super_admin', 'hr_agent', 'manager', 'employee']}><PublicHolidaysPage /></RoleGuard> },
         ],
       },
     ],

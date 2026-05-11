@@ -1,19 +1,19 @@
 -- Moroccan public holidays for 2026
-INSERT INTO public_holidays (company_id, name, date, is_recurring)
-VALUES
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Jour de l''An', '2026-01-01', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Manifeste de l''Indépendance', '2026-01-11', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Fête du Travail', '2026-05-01', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Fête du Trône', '2026-07-30', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Oued Ed-Dahab', '2026-08-14', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Révolution du Roi et du Peuple', '2026-08-20', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Fête de la Jeunesse', '2026-08-21', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Marche Verte', '2026-11-06', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Fête de l''Indépendance', '2026-11-18', true),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Aïd Al Fitr', '2026-03-20', false),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Aïd Al Fitr (2ème jour)', '2026-03-21', false),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Aïd Al Adha', '2026-05-27', false),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Aïd Al Adha (2ème jour)', '2026-05-28', false),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '1er Moharram', '2026-06-17', false),
-  ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Aïd Al Mawlid', '2026-08-26', false)
-ON CONFLICT DO NOTHING;
+-- Fixed: correct company_id, valid MySQL syntax, added is_recurring column
+INSERT INTO public_holidays (company_id, name, date, year, is_recurring) VALUES
+  ('00000000-0000-0000-0000-000000000001', 'Jour de l''An',                    '2026-01-01', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Manifeste de l''Indépendance',     '2026-01-11', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Fête du Travail',                  '2026-05-01', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Fête du Trône',                    '2026-07-30', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Oued Ed-Dahab',                    '2026-08-14', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Révolution du Roi et du Peuple',   '2026-08-20', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Fête de la Jeunesse',              '2026-08-21', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Marche Verte',                     '2026-11-06', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Fête de l''Indépendance',          '2026-11-18', 2026, 1),
+  ('00000000-0000-0000-0000-000000000001', 'Aïd Al Fitr',                      '2026-03-20', 2026, 0),
+  ('00000000-0000-0000-0000-000000000001', 'Aïd Al Fitr (2ème jour)',          '2026-03-21', 2026, 0),
+  ('00000000-0000-0000-0000-000000000001', 'Aïd Al Adha',                      '2026-05-27', 2026, 0),
+  ('00000000-0000-0000-0000-000000000001', 'Aïd Al Adha (2ème jour)',          '2026-05-28', 2026, 0),
+  ('00000000-0000-0000-0000-000000000001', '1er Moharram',                     '2026-06-17', 2026, 0),
+  ('00000000-0000-0000-0000-000000000001', 'Aïd Al Mawlid',                    '2026-08-26', 2026, 0)
+ON DUPLICATE KEY UPDATE name = VALUES(name), is_recurring = VALUES(is_recurring);

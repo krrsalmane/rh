@@ -21,9 +21,7 @@ export async function updateCompanySettings(input: UpdateSettingsInput, companyI
   if (input.logoUrl !== undefined) { fields.push(`logo_url = $${idx}`); values.push(input.logoUrl); idx++; }
   if (fields.length === 0) return existing;
   values.push(companyId);
-  const result = await query<typeof existing>(
-    `UPDATE companies SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`, values
-  );
+  await query(`UPDATE companies SET ${fields.join(', ')} WHERE id = $${idx}`, values);
   await auditLog({ userId, companyId, action: 'UPDATE', entity: 'company', entityId: companyId, oldValue: existing as unknown as Record<string, unknown>, newValue: input as unknown as Record<string, unknown> });
-  return result.rows[0];
+  return getCompanySettings(companyId);
 }

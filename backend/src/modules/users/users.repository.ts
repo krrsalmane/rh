@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { query } from '../../config/database';
 import { CreateUserInput, UpdateUserInput } from './users.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface UserRow {
   id: string;
@@ -10,8 +11,8 @@ export interface UserRow {
   employee_id: string | null;
   is_active: boolean;
   created_at: string;
-  last_login: string | null;
-  must_change_password: boolean;
+  // last_login: string | null;
+  // must_change_password: boolean;
   employee_name: string | null;
   department: string | null;
   function: string | null;
@@ -24,9 +25,9 @@ interface FindAllFilters {
 }
 
 const USER_SELECT = `
-  u.id, u.company_id, u.email, u.role, u.employee_id,
-  u.is_active, u.created_at, u.last_login, u.must_change_password,
-  CASE WHEN e.id IS NOT NULL THEN e.first_name || ' ' || e.last_name ELSE NULL END as employee_name,
+  u.id, u.company_id, u.email, u.\`role\`, u.employee_id,
+  u.is_active, u.created_at, -- u.last_login, u.must_change_password (missing columns)
+  CASE WHEN e.id IS NOT NULL THEN CONCAT(e.first_name, ' ', e.last_name) ELSE NULL END as employee_name,
   e.department,
   e.function
 `;
@@ -42,12 +43,12 @@ export async function findAll(companyId: string, filters: FindAllFilters, page: 
   let idx = 2;
 
   if (filters.search) {
-    conditions.push(`u.email ILIKE '%' || $${idx} || '%'`);
-    params.push(filters.search);
+    conditions.push(`u.email LIKE $${idx}`);
+    params.push(`%${filters.search}%`);
     idx++;
   }
   if (filters.role) {
-    conditions.push(`u.role = $${idx}`);
+    conditions.push(`u.\`role\` = $${idx}`);
     params.push(filters.role);
     idx++;
   }
@@ -95,14 +96,13 @@ export async function findByEmail(email: string, companyId: string): Promise<Use
 
 export async function create(input: CreateUserInput, companyId: string): Promise<UserRow> {
   const passwordHash = await bcrypt.hash(input.password, 12);
-  const result = await query<UserRow>(
-    `INSERT INTO users (company_id, email, password_hash, role, employee_id)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, company_id, email, role, employee_id, is_active, created_at, last_login, must_change_password`,
-    [companyId, input.email.toLowerCase().trim(), passwordHash, input.role, input.employeeId || null]
+  const id = uuidv4();
+  await query(
+    `INSERT INTO users (id, company_id, email, password_hash, \`role\`, employee_id)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [id, companyId, input.email.toLowerCase().trim(), passwordHash, input.role, input.employeeId || null]
   );
-  // Re-fetch with join to get employee_name
-  return (await findById(result.rows[0].id, companyId))!;
+  return (await findById(id, companyId))!;
 }
 
 export async function update(id: string, input: UpdateUserInput, companyId: string): Promise<UserRow | null> {
@@ -116,7 +116,7 @@ export async function update(id: string, input: UpdateUserInput, companyId: stri
     idx++;
   }
   if (input.role !== undefined) {
-    fields.push(`role = $${idx}`);
+    fields.push(`\`role\` = $${idx}`);
     values.push(input.role);
     idx++;
   }
@@ -183,7 +183,7 @@ export async function getPasswordHash(id: string, companyId: string): Promise<st
 
 export async function countByRole(companyId: string, role: string): Promise<number> {
   const result = await query<{ count: string }>(
-    'SELECT COUNT(*) as count FROM users WHERE company_id = $1 AND role = $2',
+    'SELECT COUNT(*) as count FROM users WHERE company_id = $1 AND `role` = $2',
     [companyId, role]
   );
   return parseInt(result.rows[0].count, 10);

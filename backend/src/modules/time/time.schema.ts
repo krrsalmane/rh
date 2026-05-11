@@ -18,6 +18,7 @@ export const TimeEntryFiltersSchema = z.object({
   endDate: z.string().optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
+  managerId: z.string().uuid().optional(),
 });
 
 export type CreateTimeEntryInput = z.infer<typeof CreateTimeEntrySchema>;

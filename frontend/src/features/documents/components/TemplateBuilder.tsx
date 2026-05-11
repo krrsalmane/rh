@@ -9,6 +9,7 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+import Placeholder from '@tiptap/extension-placeholder';
 import clsx from 'clsx';
 import {
   Bold, Italic, Underline as UnderlineIcon, List,
@@ -244,8 +245,12 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Table.configure({ resizable: true }),
       TableRow, TableHeader, TableCell,
+      Placeholder.configure({
+        placeholder: 'Commencez à rédiger votre modèle ici...',
+        emptyNodeClass: 'is-empty',
+      }),
     ],
-    content: template?.body || '<p>Commencez à rédiger votre modèle ici...</p>',
+    content: template?.body || '',
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[500px] p-0 bg-white',

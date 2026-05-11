@@ -1,5 +1,6 @@
 import { query } from '../../config/database';
 import { CreateLeaveTypeInput } from './leaveTypes.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface LeaveTypeRow {
   id: string;
@@ -26,11 +27,12 @@ export async function findById(id: string, companyId: string): Promise<LeaveType
 }
 
 export async function create(input: CreateLeaveTypeInput, companyId: string): Promise<LeaveTypeRow> {
-  const result = await query<LeaveTypeRow>(
-    'INSERT INTO leave_types (company_id, name, annual_days, accrual_rule, carry_over_max, requires_approval) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',
-    [companyId, input.name, input.annualDays || null, input.accrualRule || null, input.carryOverMax, input.requiresApproval]
+  const id = uuidv4();
+  await query(
+    'INSERT INTO leave_types (id, company_id, name, annual_days, accrual_rule, carry_over_max, requires_approval) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    [id, companyId, input.name, input.annualDays || null, input.accrualRule || null, input.carryOverMax, input.requiresApproval]
   );
-  return result.rows[0];
+  return (await findById(id, companyId))!;
 }
 
 export async function update(id: string, input: Partial<CreateLeaveTypeInput>, companyId: string): Promise<LeaveTypeRow | null> {
@@ -44,8 +46,8 @@ export async function update(id: string, input: Partial<CreateLeaveTypeInput>, c
   if (input.requiresApproval !== undefined) { fields.push(`requires_approval = $${idx}`); values.push(input.requiresApproval); idx++; }
   if (fields.length === 0) return findById(id, companyId);
   values.push(id, companyId);
-  const result = await query<LeaveTypeRow>(`UPDATE leave_types SET ${fields.join(', ')} WHERE id = $${idx} AND company_id = $${idx + 1} RETURNING *`, values);
-  return result.rows[0] || null;
+  await query(`UPDATE leave_types SET ${fields.join(', ')} WHERE id = $${idx} AND company_id = $${idx + 1}`, values);
+  return findById(id, companyId);
 }
 
 export async function remove(id: string, companyId: string): Promise<boolean> {

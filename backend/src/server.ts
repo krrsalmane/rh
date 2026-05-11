@@ -1,7 +1,9 @@
 import { env } from './config/env';
 import { app } from './app';
 import { initializeStorage } from './config/storage';
-import pool from './config/database';
+import { getClient } from './config/database';
+import { createServer } from 'http';
+import { initializeNotifications } from './modules/notifications/notifications.service';
 
 const PORT = env.PORT;
 
@@ -9,11 +11,14 @@ initializeStorage();
 
 async function startServer() {
   try {
-    const client = await pool.connect();
+    const client = await getClient();
     console.log('✅ Database connected');
     client.release();
 
-    app.listen(PORT, () => {
+    const server = createServer(app);
+    initializeNotifications(server);
+
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📦 Environment: ${env.NODE_ENV}`);
     });

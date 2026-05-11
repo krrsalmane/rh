@@ -1,5 +1,6 @@
 import { query } from '../../config/database';
 import { CreateEmployeeInput, UpdateEmployeeInput, EmployeeFiltersInput } from './employees.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface EmployeeRow {
   id: string;
@@ -21,6 +22,7 @@ export interface EmployeeRow {
   work_schedule_name: string | null;
   weekly_hours: number | null;
   daily_hours: number | null;
+  manager_id: string | null;
   created_at: string;
 }
 
@@ -40,13 +42,19 @@ export async function findAll(filters: EmployeeFiltersInput, companyId: string):
   let idx = 2;
 
   if (filters.search) {
-    conditions.push(`(e.first_name ILIKE $${idx} OR e.last_name ILIKE $${idx} OR e.email ILIKE $${idx} OR e.cin ILIKE $${idx})`);
-    params.push(`%${filters.search}%`);
+    if (filters.search.length === 36) {
+      conditions.push(`e.id = $${idx}`);
+      params.push(filters.search);
+    } else {
+      conditions.push(`(e.first_name LIKE $${idx} OR e.last_name LIKE $${idx} OR e.email LIKE $${idx} OR e.cin LIKE $${idx})`);
+      params.push(`%${filters.search}%`);
+    }
     idx++;
   }
   if (filters.department) { conditions.push(`e.department = $${idx}`); params.push(filters.department); idx++; }
   if (filters.status) { conditions.push(`e.status = $${idx}`); params.push(filters.status); idx++; }
   if (filters.contractType) { conditions.push(`e.contract_type = $${idx}`); params.push(filters.contractType); idx++; }
+  if (filters.managerId) { conditions.push(`e.manager_id = $${idx}`); params.push(filters.managerId); idx++; }
 
   const whereClause = conditions.join(' AND ');
 
@@ -108,10 +116,12 @@ export async function findByEmail(email: string, companyId: string, excludeId?: 
 }
 
 export async function create(input: CreateEmployeeInput, companyId: string): Promise<EmployeeRow> {
-  const result = await query<EmployeeRow>(
-    `INSERT INTO employees (company_id, first_name, last_name, cne, cin, address, phone, email, hire_date, contract_type, "function", department, salary, status, work_schedule_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+  const id = uuidv4();
+  await query(
+    `INSERT INTO employees (id, company_id, first_name, last_name, cne, cin, address, phone, email, hire_date, contract_type, \`function\`, department, salary, status, work_schedule_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
     [
+      id,
       companyId,
       input.firstName,
       input.lastName,
@@ -129,7 +139,7 @@ export async function create(input: CreateEmployeeInput, companyId: string): Pro
       input.workScheduleId || null,
     ]
   );
-  return result.rows[0];
+  return (await findById(id, companyId))!;
 }
 
 export async function update(id: string, input: UpdateEmployeeInput, companyId: string): Promise<EmployeeRow | null> {
@@ -140,7 +150,7 @@ export async function update(id: string, input: UpdateEmployeeInput, companyId: 
   const fieldMap: Record<string, string> = {
     firstName: 'first_name', lastName: 'last_name', cne: 'cne', cin: 'cin',
     address: 'address', phone: 'phone', email: 'email', hireDate: 'hire_date',
-    contractType: 'contract_type', function: '"function"', department: 'department',
+    contractType: 'contract_type', function: '`function`', department: 'department',
     salary: 'salary', status: 'status', workScheduleId: 'work_schedule_id',
   };
 
@@ -155,11 +165,8 @@ export async function update(id: string, input: UpdateEmployeeInput, companyId: 
   if (fields.length === 0) return findById(id, companyId);
   values.push(id, companyId);
 
-  const result = await query<EmployeeRow>(
-    `UPDATE employees SET ${fields.join(', ')} WHERE id = $${idx} AND company_id = $${idx + 1} RETURNING *`,
-    values
-  );
-  return result.rows[0] || null;
+  await query(`UPDATE employees SET ${fields.join(', ')} WHERE id = $${idx} AND company_id = $${idx + 1}`, values);
+  return findById(id, companyId);
 }
 
 export async function remove(id: string, companyId: string): Promise<boolean> {
@@ -188,14 +195,14 @@ export interface LeaveBalanceRow {
   employee_id: string;
   leave_type_id: string;
   year: number;
-  total_days: number;
-  used_days: number;
-  remaining_days: number;
+  credited: number;
+  taken: number;
+  remaining: number;
 }
 
 export async function getLeaveBalances(employeeId: string): Promise<LeaveBalanceRow[]> {
   const result = await query<LeaveBalanceRow>(
-    `SELECT * FROM leave_balances WHERE employee_id = $1 AND year = EXTRACT(YEAR FROM NOW())`,
+    `SELECT * FROM leave_balances WHERE employee_id = $1 AND year = YEAR(CURRENT_DATE())`,
     [employeeId]
   );
   return result.rows;

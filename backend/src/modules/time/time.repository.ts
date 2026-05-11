@@ -1,5 +1,6 @@
 import { query } from '../../config/database';
 import { CreateTimeEntryInput, TimeEntryFiltersInput } from './time.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface TimeEntryRow {
   id: string;
@@ -18,13 +19,12 @@ export interface TimeEntryRow {
   created_at: string;
 }
 
-function calculateHours(clockIn?: string, clockOut?: string): { totalHours: number; overtime: number; deficit: number } {
+function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8): { totalHours: number; overtime: number; deficit: number } {
   if (!clockIn || !clockOut) return { totalHours: 0, overtime: 0, deficit: 0 };
   const [inH, inM] = clockIn.split(':').map(Number);
   const [outH, outM] = clockOut.split(':').map(Number);
   const totalMinutes = (outH * 60 + outM) - (inH * 60 + inM);
   const totalHours = Math.max(0, totalMinutes / 60);
-  const expectedHours = 8;
   const overtime = Math.max(0, totalHours - expectedHours);
   const deficit = Math.max(0, expectedHours - totalHours);
   return { totalHours: Math.round(totalHours * 100) / 100, overtime: Math.round(overtime * 100) / 100, deficit: Math.round(deficit * 100) / 100 };
@@ -38,14 +38,21 @@ export async function findAll(filters: TimeEntryFiltersInput, companyId: string)
   if (filters.employeeId) { conditions.push(`te.employee_id = $${idx}`); params.push(filters.employeeId); idx++; }
   if (filters.startDate) { conditions.push(`te.date >= $${idx}`); params.push(filters.startDate); idx++; }
   if (filters.endDate) { conditions.push(`te.date <= $${idx}`); params.push(filters.endDate); idx++; }
+  if (filters.managerId) { conditions.push(`e.manager_id = $${idx}`); params.push(filters.managerId); idx++; }
 
   const whereClause = conditions.join(' AND ');
-  const countResult = await query<{ count: string }>(`SELECT COUNT(*) as count FROM time_entries te WHERE ${whereClause}`, params);
+  const countResult = await query<{ count: string }>(
+    `SELECT COUNT(*) as count 
+     FROM time_entries te 
+     JOIN employees e ON te.employee_id = e.id
+     WHERE ${whereClause}`, 
+    params
+  );
   const total = parseInt(countResult.rows[0].count, 10);
   const offset = (filters.page - 1) * filters.limit;
 
   const result = await query<TimeEntryRow>(
-    `SELECT te.*, e.first_name || ' ' || e.last_name as employee_name
+    `SELECT te.*, CONCAT(e.first_name, ' ', e.last_name) as employee_name
      FROM time_entries te
      JOIN employees e ON te.employee_id = e.id
      WHERE ${whereClause} ORDER BY te.date DESC, te.clock_in DESC LIMIT $${idx} OFFSET $${idx + 1}`,
@@ -61,14 +68,16 @@ export async function findById(id: string, companyId: string): Promise<TimeEntry
 }
 
 export async function create(input: CreateTimeEntryInput, companyId: string, userId: string): Promise<TimeEntryRow> {
-  const { totalHours, overtime, deficit } = calculateHours(input.clockIn, input.clockOut);
-  const result = await query<TimeEntryRow>(
-    `INSERT INTO time_entries (company_id, employee_id, date, clock_in, clock_out, total_hours, expected_hours, overtime, deficit, source, modified_by, reason)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-    [companyId, input.employeeId, input.date, input.clockIn || null, input.clockOut || null,
+  const expectedHours = input.expectedHours || 8;
+  const { totalHours, overtime, deficit } = calculateHours(input.clockIn, input.clockOut, expectedHours);
+  const id = uuidv4();
+  await query(
+    `INSERT INTO time_entries (id, company_id, employee_id, date, clock_in, clock_out, total_hours, expected_hours, overtime, deficit, source, modified_by, reason)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+    [id, companyId, input.employeeId, input.date, input.clockIn || null, input.clockOut || null,
      totalHours, input.expectedHours || 8, overtime, deficit, input.source, userId, input.reason || null]
   );
-  return result.rows[0];
+  return (await findById(id, companyId))!;
 }
 
 export async function update(id: string, input: Partial<CreateTimeEntryInput>, companyId: string, userId: string): Promise<TimeEntryRow | null> {
@@ -76,15 +85,16 @@ export async function update(id: string, input: Partial<CreateTimeEntryInput>, c
   if (!existing) return null;
   const clockIn = input.clockIn ?? existing.clock_in ?? undefined;
   const clockOut = input.clockOut ?? existing.clock_out ?? undefined;
-  const { totalHours, overtime, deficit } = calculateHours(clockIn, clockOut);
+  const expectedHours = input.expectedHours || existing.expected_hours || 8;
+  const { totalHours, overtime, deficit } = calculateHours(clockIn, clockOut, expectedHours);
 
-  const result = await query<TimeEntryRow>(
+  await query(
     `UPDATE time_entries SET clock_in = $1, clock_out = $2, total_hours = $3, expected_hours = $4, overtime = $5, deficit = $6, source = $7, modified_by = $8, reason = $9
-     WHERE id = $10 AND company_id = $11 RETURNING *`,
+     WHERE id = $10 AND company_id = $11`,
     [clockIn || null, clockOut || null, totalHours, input.expectedHours || existing.expected_hours || 8,
      overtime, deficit, input.source || existing.source, userId, input.reason || existing.reason, id, companyId]
   );
-  return result.rows[0] || null;
+  return findById(id, companyId);
 }
 
 export async function remove(id: string, companyId: string): Promise<boolean> {

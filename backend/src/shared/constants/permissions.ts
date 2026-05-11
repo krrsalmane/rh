@@ -1,4 +1,11 @@
-export type UserRole = 'super_admin' | 'hr_agent' | 'manager' | 'employee';
+export const ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  HR_AGENT: 'hr_agent',
+  MANAGER: 'manager',
+  EMPLOYEE: 'employee',
+} as const;
+
+export type UserRole = typeof ROLES[keyof typeof ROLES];
 
 export type Permission =
   | 'employees.list'

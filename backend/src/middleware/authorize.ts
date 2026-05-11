@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../shared/utils/AppError';
 
-type UserRole = 'super_admin' | 'hr_agent' | 'manager' | 'employee';
+import { UserRole } from '../shared/constants/permissions';
 
 export function authorize(...allowedRoles: UserRole[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {

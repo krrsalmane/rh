@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useAppSelector } from '@/store/hooks';
 import { useEmployee, useUpdateEmployee, useDeleteEmployee } from '../hooks/useEmployees';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeDigitalFile } from '../components/EmployeeDigitalFile';
@@ -11,6 +12,9 @@ import type { CreateEmployeeDto } from '../types';
 export const EmployeeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const auth = useAppSelector((s) => s.auth);
+  const canManage = auth.role === 'super_admin' || auth.role === 'hr_agent';
+  
   const { data, isLoading, error } = useEmployee(id);
   const updateMutation = useUpdateEmployee();
   const deleteMutation = useDeleteEmployee();
@@ -74,8 +78,8 @@ export const EmployeeDetailPage: React.FC = () => {
       {/* Employee Card */}
       <EmployeeCard
         employee={employee}
-        onEdit={() => setIsEditOpen(true)}
-        onDelete={() => setIsDeleteOpen(true)}
+        onEdit={canManage ? () => setIsEditOpen(true) : undefined}
+        onDelete={canManage ? () => setIsDeleteOpen(true) : undefined}
       />
 
       {/* Digital File Tabs */}

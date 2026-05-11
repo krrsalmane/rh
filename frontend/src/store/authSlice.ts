@@ -1,11 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { ROLES } from '@/shared/constants/permissions';
 
-export type UserRole = 'super_admin' | 'hr_agent' | 'manager' | 'employee';
+export type UserRole = typeof ROLES[keyof typeof ROLES];
 
 interface AuthUser {
   id: string;
   email: string;
   role: UserRole;
+  employeeId?: string | null;
 }
 
 interface AuthState {
@@ -35,6 +37,7 @@ const authSlice = createSlice({
         role: UserRole;
         accessToken: string;
         companyId: string;
+        employeeId?: string | null;
       }>
     ) => {
       state.user = action.payload.user;

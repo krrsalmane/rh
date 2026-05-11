@@ -1,5 +1,6 @@
 import { query } from '../../config/database';
 import { DocumentFiltersInput } from './documents.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface DocumentRow {
   id: string;
@@ -40,7 +41,7 @@ export async function findAll(companyId: string, filters: DocumentFiltersInput):
   const result = await query<DocumentRow>(
     `SELECT gd.*,
        t.name as template_name,
-       e.first_name || ' ' || e.last_name as employee_name,
+       CONCAT(e.first_name, ' ', e.last_name) as employee_name,
        u.email as generated_by_email
      FROM generated_documents gd
      LEFT JOIN templates t ON gd.template_id = t.id
@@ -59,7 +60,7 @@ export async function findById(id: string, companyId: string): Promise<DocumentR
   const result = await query<DocumentRow>(
     `SELECT gd.*,
        t.name as template_name,
-       e.first_name || ' ' || e.last_name as employee_name,
+       CONCAT(e.first_name, ' ', e.last_name) as employee_name,
        u.email as generated_by_email
      FROM generated_documents gd
      LEFT JOIN templates t ON gd.template_id = t.id
@@ -76,20 +77,21 @@ export async function create(
   templateVersion: number, formData: Record<string, unknown>,
   pdfPath: string, generatedBy: string
 ): Promise<DocumentRow> {
-  const result = await query<DocumentRow>(
-    `INSERT INTO generated_documents (company_id, template_id, employee_id, template_version, form_data, pdf_path, generated_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-    [companyId, templateId, employeeId, templateVersion, JSON.stringify(formData), pdfPath, generatedBy]
+  const id = uuidv4();
+  await query(
+    `INSERT INTO generated_documents (id, company_id, template_id, employee_id, template_version, form_data, pdf_path, generated_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [id, companyId, templateId, employeeId, templateVersion, JSON.stringify(formData), pdfPath, generatedBy]
   );
-  return result.rows[0];
+  return (await findById(id, companyId))!;
 }
 
 export async function patchStatus(id: string, status: string, companyId: string): Promise<DocumentRow | null> {
-  const result = await query<DocumentRow>(
-    'UPDATE generated_documents SET status = $1 WHERE id = $2 AND company_id = $3 RETURNING *',
+  await query(
+    'UPDATE generated_documents SET status = $1 WHERE id = $2 AND company_id = $3',
     [status, id, companyId]
   );
-  return result.rows[0] || null;
+  return findById(id, companyId);
 }
 
 export async function remove(id: string, companyId: string): Promise<boolean> {

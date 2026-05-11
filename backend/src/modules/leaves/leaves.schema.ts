@@ -1,11 +1,14 @@
 import { z } from 'zod';
 
 export const CreateLeaveRequestSchema = z.object({
-  employeeId: z.string().uuid(),
-  leaveTypeId: z.string().uuid(),
+  employeeId: z.string().or(z.literal('')).nullable().optional().transform(v => v === '' ? undefined : v),
+  leaveTypeId: z.string(),
   startDate: z.string(),
   endDate: z.string(),
-  workingDays: z.number().int().positive().optional(),
+  workingDays: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.number().int().positive().nullable().optional()
+  ),
 });
 
 export const ReviewLeaveSchema = z.object({
@@ -18,6 +21,8 @@ export const LeaveFiltersSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected', 'cancelled']).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
+  managerId: z.string().uuid().optional(),
+  excludeEmployeeId: z.string().uuid().optional(),
 });
 
 export type CreateLeaveRequestInput = z.infer<typeof CreateLeaveRequestSchema>;

@@ -43,7 +43,12 @@ axiosInstance.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 && 
+      !originalRequest._retry && 
+      !originalRequest.url?.includes('/auth/login') && 
+      !originalRequest.url?.includes('/auth/refresh')
+    ) {
       if (isRefreshing) {
         // Queue the request until refresh completes
         return new Promise<string>((resolve, reject) => {
@@ -73,7 +78,6 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         store.dispatch(clearCredentials());
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

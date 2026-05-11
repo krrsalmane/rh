@@ -41,8 +41,8 @@ function sanitizeUser(user: usersRepository.UserRow) {
     department: user.department,
     function: user.function,
     createdAt: user.created_at,
-    lastLogin: user.last_login,
-    mustChangePassword: user.must_change_password,
+    // lastLogin: user.last_login,
+    // mustChangePassword: user.must_change_password,
   };
 }
 

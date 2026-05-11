@@ -15,8 +15,10 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     const payload = verifyAccessToken(token);
     req.user = {
       id: payload.id,
+      email: payload.email,
       companyId: payload.companyId,
       role: payload.role as 'super_admin' | 'hr_agent' | 'manager' | 'employee',
+      employeeId: payload.employeeId,
     };
     next();
   } catch {

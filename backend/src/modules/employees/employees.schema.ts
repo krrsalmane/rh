@@ -29,6 +29,7 @@ export const EmployeeFiltersSchema = z.object({
   contractType: z.enum(['CDI', 'CDD', 'internship', 'freelance']).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
+  managerId: z.string().uuid().optional(),
 });
 
 export type CreateEmployeeInput = z.infer<typeof CreateEmployeeSchema>;

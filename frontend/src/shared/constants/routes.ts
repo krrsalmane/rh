@@ -12,6 +12,7 @@ export const ROUTES = {
   WORK_SCHEDULES: '/work-schedules',
   PUBLIC_HOLIDAYS: '/public-holidays',
   AUDIT_LOGS: '/audit-logs',
+  TASKS: '/tasks',
   FORGOT_PASSWORD: '/forgot-password',
   EMPLOYEE_CREATE: '/employees/create',
   EMPLOYEE_DETAIL: '/employees/:id',

@@ -1,3 +1,10 @@
+export const ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  HR_AGENT: 'hr_agent',
+  MANAGER: 'manager',
+  EMPLOYEE: 'employee',
+} as const;
+
 export const PERMISSIONS = {
   super_admin: [
     'dashboard.view',
