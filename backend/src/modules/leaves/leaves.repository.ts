@@ -16,6 +16,16 @@ export interface LeaveRequestRow {
   approval_note: string | null;
 }
 
+export async function getEmployeeInfo(employeeId: string, companyId: string) {
+  const result = await query<{ name: string }>(
+    `SELECT CONCAT(e.first_name, ' ', e.last_name) as name 
+     FROM employees e 
+     WHERE e.id = $1 AND e.company_id = $2`,
+    [employeeId, companyId]
+  );
+  return result.rows[0] || null;
+}
+
 export async function findAll(filters: LeaveFiltersInput, companyId: string) {
   const conditions: string[] = ['lr.company_id = $1'];
   const params: unknown[] = [companyId];
@@ -27,9 +37,6 @@ export async function findAll(filters: LeaveFiltersInput, companyId: string) {
   if (filters.excludeEmployeeId) { conditions.push(`lr.employee_id != $${idx}`); params.push(filters.excludeEmployeeId); idx++; }
 
   const whereClause = conditions.join(' AND ');
-  
-  // Debug logging
-  console.log('🔍 Leave Request Filters:', { filters, whereClause, params });
   
   const countResult = await query<{ count: string }>(
     `SELECT COUNT(*) as count 
@@ -49,8 +56,6 @@ export async function findAll(filters: LeaveFiltersInput, companyId: string) {
      WHERE ${whereClause} ORDER BY lr.requested_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
     [...params, filters.limit, offset]
   );
-  
-  console.log('📊 Leave Request Results:', { total: result.rows.length, items: result.rows });
   
   return { items: result.rows, pagination: { page: filters.page, limit: filters.limit, total, totalPages: Math.ceil(total / filters.limit) } };
 }
@@ -123,7 +128,23 @@ export async function adjustBalance(employeeId: string, leaveTypeId: string, yea
   await query(
     `INSERT INTO leave_balances (employee_id, leave_type_id, year, credited, remaining)
      VALUES ($1, $2, $3, $4, $4)
-     ON DUPLICATE KEY UPDATE credited = VALUES(credited), remaining = VALUES(credited) - taken, last_updated = NOW()`,
+     ON DUPLICATE KEY UPDATE credited = VALUES(credited), remaining = credited - taken, last_updated = NOW()`,
     [employeeId, leaveTypeId, year, credited]
+  );
+}
+
+export async function getLeaveTypesByCompany(companyId: string) {
+  const result = await query<{ id: string; name: string; annual_days: number }>(
+    'SELECT id, name, annual_days FROM leave_types WHERE company_id = $1 AND is_active = 1',
+    [companyId]
+  );
+  return result.rows;
+}
+
+export async function createBalance(employeeId: string, leaveTypeId: string, year: number, credited: number) {
+  const balanceId = uuidv4();
+  await query(
+    'INSERT INTO leave_balances (id, employee_id, leave_type_id, year, credited, taken, remaining, last_updated) VALUES ($1, $2, $3, $4, $5, 0, $5, NOW())',
+    [balanceId, employeeId, leaveTypeId, year, credited]
   );
 }
