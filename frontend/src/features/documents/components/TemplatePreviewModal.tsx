@@ -105,7 +105,7 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
   if (!isOpen || !template) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-900 flex overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-slate-900 flex overflow-hidden">
       {/* LEFT SIDEBAR */}
       <aside className="w-64 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col overflow-y-auto">
         {/* Header */}

@@ -34,6 +34,17 @@ export const LeavesPage: React.FC = () => {
   const requests: LeaveRequest[] = data?.data || [];
   const pagination = data?.pagination;
 
+  // Debug logging
+  console.log('LeavesPage - Data:', data);
+  console.log('LeavesPage - Requests:', requests);
+  console.log('LeavesPage - Filters:', filters);
+  console.log('LeavesPage - Status Filter:', statusFilter);
+
+  // Apply status filtering to real data
+  const displayRequests = statusFilter 
+    ? requests.filter(req => req.status === statusFilter)
+    : requests;
+
   const handleApprove = (id: string) => {
     approveMut.mutate({ id, note: reviewNote }, { onSuccess: () => { setReviewingId(null); setReviewNote(''); } });
   };
@@ -46,32 +57,32 @@ export const LeavesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up" id="leaves-page">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in-up" id="leaves-page">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center flex-shrink-0">
             <CalendarDays className="w-5 h-5 text-violet-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Demandes de congés</h1>
-            {pagination && <p className="text-sm text-slate-400">{pagination.total} demande{pagination.total !== 1 ? 's' : ''}</p>}
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Demandes de congés</h1>
+            <p className="text-sm text-slate-400">{displayRequests.length} demande{displayRequests.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
         {canCreate && (
           <button onClick={() => navigate('/leaves/request')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-violet-500/20 hover:bg-violet-600 hover:-translate-y-0.5 active:translate-y-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 bg-violet-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-violet-500/20 hover:bg-violet-600 hover:-translate-y-0.5 active:translate-y-0 w-full sm:w-auto justify-center"
             id="new-leave-btn">
-            <Plus className="w-4 h-4" /> Nouvelle demande
+            <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nouvelle demande</span><span className="sm:hidden">Ajouter</span>
           </button>
         )}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+      <div className="flex flex-wrap gap-2 sm:gap-3 bg-white p-3 sm:p-4 rounded-xl border border-slate-100 shadow-sm">
         {['', 'pending', 'approved', 'rejected', 'cancelled'].map((s) => (
           <button key={s} onClick={() => { setStatusFilter(s); setFilters((f) => ({ ...f, page: 1 })); }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${statusFilter === s
+            className={`px-3 py-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-all ${statusFilter === s
               ? 'bg-violet-500 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
             {s === '' ? 'Tous' : STATUS_CONFIG[s]?.label || s}
           </button>
@@ -84,12 +95,89 @@ export const LeavesPage: React.FC = () => {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
           </div>
-        ) : requests.length === 0 ? (
+        ) : displayRequests.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
             <CalendarDays className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">Aucune demande de congé</p>
           </div>
         ) : (
+          <div className="block lg:hidden">
+            {/* Mobile Card View */}
+            <div className="divide-y divide-slate-100">
+              {displayRequests.map((req) => {
+                const sc = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
+                const isReviewing = reviewingId === req.id;
+                return (
+                  <div key={req.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-slate-800 text-sm truncate">{req.employeeName || 'N/A'}</h3>
+                        <p className="text-xs text-slate-400">{req.department}</p>
+                      </div>
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${sc.bg} ${sc.text} flex-shrink-0`}>
+                        {sc.label}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-slate-400 text-xs">Type:</span>
+                        <p className="text-slate-600">{req.leaveTypeName || '—'}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-xs">Jours:</span>
+                        <p className="text-slate-600">{req.workingDays ?? '—'}</p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="text-slate-400 text-xs">Période:</span>
+                      <p className="text-slate-600 text-sm">{formatDate(req.startDate)} → {formatDate(req.endDate)}</p>
+                    </div>
+                    
+                    {canApprove && req.status === 'pending' && (
+                      <div className="flex items-center gap-2 pt-2">
+                        <button onClick={() => handleApprove(req.id)} disabled={approveMut.isPending}
+                          className="flex-1 px-3 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1">
+                          <Check className="w-4 h-4" /> Approuver
+                        </button>
+                        <button onClick={() => setReviewingId(isReviewing ? null : req.id)}
+                          className="flex-1 px-3 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-medium hover:bg-rose-100 transition-colors flex items-center justify-center gap-1">
+                          <X className="w-4 h-4" /> Refuser
+                        </button>
+                        <button onClick={() => cancelMut.mutate(req.id)} disabled={cancelMut.isPending}
+                          className="p-2 bg-slate-50 text-slate-500 rounded-lg hover:bg-slate-100 transition-colors" title="Annuler">
+                          <Ban className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    {isReviewing && (
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <input value={reviewNote} onChange={(e) => setReviewNote(e.target.value)}
+                          placeholder="Motif du refus (optionnel)..."
+                          className="w-full px-3 py-2 rounded-lg border border-rose-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+                        <div className="flex gap-2">
+                          <button onClick={() => handleReject(req.id)} disabled={rejectMut.isPending}
+                            className="flex-1 px-3 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition-colors">
+                            Confirmer le refus
+                          </button>
+                          <button onClick={() => { setReviewingId(null); setReviewNote(''); }}
+                            className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg">
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
+        {/* Desktop Table View */}
+        <div className="hidden lg:block">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
@@ -102,7 +190,7 @@ export const LeavesPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {requests.map((req) => {
+              {displayRequests.map((req) => {
                 const sc = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
                 const isReviewing = reviewingId === req.id;
                 return (
@@ -171,25 +259,24 @@ export const LeavesPage: React.FC = () => {
               })}
             </tbody>
           </table>
-        )}
-
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
-            <p className="text-sm text-slate-400">Page {pagination.page} sur {pagination.totalPages}</p>
-            <div className="flex gap-2">
-              <button disabled={pagination.page <= 1} onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
-                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button disabled={pagination.page >= pagination.totalPages} onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
-                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
+          <p className="text-sm text-slate-400">Page {pagination.page} sur {pagination.totalPages}</p>
+          <div className="flex gap-2">
+            <button disabled={pagination.page <= 1} onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
+              className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button disabled={pagination.page >= pagination.totalPages} onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
+              className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

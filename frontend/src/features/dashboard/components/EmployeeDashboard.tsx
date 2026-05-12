@@ -4,7 +4,7 @@ import { fr } from 'date-fns/locale';
 import { Clock, CheckSquare, Calendar, Wallet } from 'lucide-react';
 
 export function EmployeeDashboard() {
-  const { data, isLoading } = useDashboardData();
+  const { data, isLoading, error } = useDashboardData();
 
   if (isLoading) {
     return (
@@ -14,10 +14,26 @@ export function EmployeeDashboard() {
     );
   }
 
-  const { stats, nextHoliday } = data || { 
-    stats: { pendingLeaves: 0, pendingTasks: 0, availableBalance: 0 },
-    nextHoliday: null
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">Erreur de chargement du tableau de bord</div>
+      </div>
+    );
+  }
+
+  console.log('Employee Dashboard Data:', data);
+
+  const defaultStats = { 
+    pendingLeaves: 0, 
+    pendingTasks: 0, 
+    availableBalance: 0 
   };
+
+  const stats = data?.stats || defaultStats;
+  const nextHoliday = data?.nextHoliday || null;
+
+  console.log('Employee Stats:', stats);
 
   const statCards = [
     { title: 'Solde congés', value: `${stats.availableBalance || 0}j`, icon: Wallet, color: 'text-emerald-500 bg-emerald-50' },

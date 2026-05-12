@@ -29,7 +29,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
 
   if (isInitializing) {
     return (
-      <div className="fixed inset-0 bg-gray-50 flex flex-col items-center justify-center z-[9999]">
+      <div className="fixed inset-0 bg-gray-50 flex flex-col items-center justify-center z-50">
         <div className="flex flex-col items-center gap-6 mb-8">
           <img 
             src="/assets/images/mayagroup-logo.png" 

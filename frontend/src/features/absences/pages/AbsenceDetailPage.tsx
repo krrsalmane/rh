@@ -122,7 +122,7 @@ export const AbsenceDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {abs.attachments.length > 0 && (
+          {abs.attachments && Array.isArray(abs.attachments) && abs.attachments.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
               <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Justificatifs</h3>
               <div className="space-y-2">

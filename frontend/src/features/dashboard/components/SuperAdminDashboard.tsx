@@ -10,7 +10,7 @@ import {
 const COLORS = ['#0ea5e9', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#ec4899'];
 
 export function SuperAdminDashboard() {
-  const { data, isLoading } = useDashboardData();
+  const { data, isLoading, error } = useDashboardData();
 
   if (isLoading) {
     return (
@@ -20,13 +20,26 @@ export function SuperAdminDashboard() {
     );
   }
 
-  const { stats, distribution, trends, alerts, recentActivity } = data || { 
-    stats: { totalEmployees: 0, totalUsers: 0, pendingLeaves: 0, pendingAbsences: 0 }, 
-    distribution: [], 
-    trends: [], 
-    alerts: [],
-    recentActivity: [] 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">Erreur de chargement du tableau de bord</div>
+      </div>
+    );
+  }
+
+  const defaultStats = { 
+    totalEmployees: 0, 
+    totalUsers: 0, 
+    pendingLeaves: 0, 
+    pendingAbsences: 0 
   };
+
+  const stats = data?.stats || defaultStats;
+  const distribution = data?.distribution || [];
+  const trends = data?.trends || [];
+  const alerts = data?.alerts || [];
+  const recentActivity = data?.recentActivity || [];
 
   const statCards = [
     { title: 'Total employés', value: stats.totalEmployees, icon: Users, color: 'text-sky-500 bg-sky-50' },

@@ -36,7 +36,7 @@ export const DocumentsPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in-up" id="documents-page">
       {/* Secondary Header / Actions */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div>
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Historique des documents</h2>
           {data?.pagination && (
@@ -47,10 +47,10 @@ export const DocumentsPage: React.FC = () => {
         </div>
         <button
           onClick={() => navigate('/documents/generate')}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-xl font-bold text-xs transition-all shadow-lg shadow-sky-500/20 hover:bg-sky-600 hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-4 sm:py-2 bg-sky-500 text-white rounded-xl font-bold text-xs transition-all shadow-lg shadow-sky-500/20 hover:bg-sky-600 hover:-translate-y-0.5 w-full sm:w-auto justify-center"
           id="generate-doc-btn"
         >
-          <Zap className="w-3.5 h-3.5" /> Générer un document
+          <Zap className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Générer un document</span><span className="sm:hidden">Générer</span>
         </button>
       </div>
 

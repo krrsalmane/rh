@@ -25,4 +25,5 @@ export const ROUTES = {
   LEAVE_REQUEST: '/leaves/request',
   LEAVE_TYPES: '/leave-types',
   DOCUMENT_VIEW: '/documents/:id/view',
+  EMPLOYEE_PORTAL: '/employee-portal',
 };

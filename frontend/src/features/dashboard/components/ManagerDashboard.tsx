@@ -4,7 +4,7 @@ import { fr } from 'date-fns/locale';
 import { Users, Clock, Activity, CheckSquare } from 'lucide-react';
 
 export function ManagerDashboard() {
-  const { data, isLoading } = useDashboardData();
+  const { data, isLoading, error } = useDashboardData();
 
   if (isLoading) {
     return (
@@ -14,10 +14,21 @@ export function ManagerDashboard() {
     );
   }
 
-  const { stats, recentActivity } = data || { 
-    stats: { teamSize: 0, pendingLeaves: 0 }, 
-    recentActivity: [] 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">Erreur de chargement du tableau de bord</div>
+      </div>
+    );
+  }
+
+  const defaultStats = { 
+    teamSize: 0, 
+    pendingLeaves: 0 
   };
+
+  const stats = data?.stats || defaultStats;
+  const recentActivity = data?.recentActivity || [];
 
   const statCards = [
     { title: 'Taille de l\'équipe', value: stats.teamSize || 0, icon: Users, color: 'text-sky-500 bg-sky-50' },

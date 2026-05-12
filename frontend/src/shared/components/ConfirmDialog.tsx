@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { AlertTriangle, Info, CheckCircle, AlertCircle } from 'lucide-react';
+import { Z_INDEX_CLASSES, MODAL_BACKDROP_CLASSES } from '@/shared/constants/z-index';
 
 interface Props {
   isOpen: boolean;
@@ -66,9 +67,9 @@ export const ConfirmDialog: React.FC<Props> = ({
   const Icon = style.icon;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+    <div className={`fixed inset-0 ${Z_INDEX_CLASSES.MODAL} flex items-center justify-center px-4`}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+      <div className={`absolute inset-0 ${MODAL_BACKDROP_CLASSES.base} ${MODAL_BACKDROP_CLASSES.blur} animate-fade-in`} onClick={onClose} />
 
       {/* Dialog */}
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 animate-fade-in-up">

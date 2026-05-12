@@ -2,11 +2,13 @@ import axiosInstance from '@/shared/api/axiosInstance';
 import { useQuery } from '@tanstack/react-query';
 
 export interface DashboardStats {
-  totalEmployees: number;
-  totalUsers: number;
+  totalEmployees?: number;
+  totalUsers?: number;
   pendingLeaves: number;
-  pendingAbsences: number;
+  pendingAbsences?: number;
   teamSize?: number;
+  pendingTasks?: number;
+  availableBalance?: number;
 }
 
 export interface DepartmentStat {
@@ -30,7 +32,7 @@ export interface DashboardData {
 
 export async function getDashboardData(): Promise<DashboardData> {
   const { data } = await axiosInstance.get('/dashboard');
-  return data.data;
+  return data;
 }
 
 export function useDashboardData() {

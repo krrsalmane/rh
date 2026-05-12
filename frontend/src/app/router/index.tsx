@@ -28,6 +28,7 @@ import { SettingsPage } from '@/features/settings/pages/SettingsPage';
 import { UsersPage } from '@/features/users/pages/UsersPage';
 import { PublicHolidaysPage } from '@/features/holidays/pages/PublicHolidaysPage';
 import { AuditLogsPage } from '@/features/audit/pages/AuditLogsPage';
+import { EmployeePortalPage } from '@/features/employee-portal/pages/EmployeePortalPage';
 import { TasksPage } from '@/features/tasks/pages/TasksPage';
 
 export const router = createBrowserRouter([
@@ -67,6 +68,8 @@ export const router = createBrowserRouter([
           { path: ROUTES.LEAVES, element: <LeavesPage /> },
           { path: ROUTES.LEAVE_REQUEST, element: <LeaveRequestPage /> },
           { path: ROUTES.LEAVE_TYPES, element: <RoleGuard roles={['super_admin', 'hr_agent']}><LeaveTypesPage /></RoleGuard> },
+          // employee self-service portal
+          { path: ROUTES.EMPLOYEE_PORTAL, element: <EmployeePortalPage /> },
           // super_admin only
           { path: ROUTES.SETTINGS, element: <RoleGuard roles={['super_admin']}><SettingsPage /></RoleGuard> },
           { path: ROUTES.USERS, element: <RoleGuard roles={['super_admin']}><UsersPage /></RoleGuard> },

@@ -47,13 +47,13 @@ export function Notifications() {
           />
           
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+          <div className="absolute right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-60">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">Notifications</h3>
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -69,16 +69,16 @@ export function Notifications() {
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${
+                    className={`p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                       !notification.read ? 'bg-blue-50' : ''
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 text-sm truncate">
                           {notification.title}
                         </h4>
-                        <p className="text-gray-600 text-sm mt-1">
+                        <p className="text-gray-600 text-sm mt-1 line-clamp-2">
                           {notification.message}
                         </p>
                         <p className="text-gray-400 text-xs mt-2">
@@ -88,7 +88,7 @@ export function Notifications() {
                       {!notification.read && (
                         <button
                           onClick={() => handleMarkAsRead(notification.id)}
-                          className="ml-2 text-blue-600 hover:text-blue-800"
+                          className="ml-2 text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors flex-shrink-0"
                           title="Mark as read"
                         >
                           <Check className="w-4 h-4" />
