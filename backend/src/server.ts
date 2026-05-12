@@ -5,7 +5,7 @@ import { getClient } from './config/database';
 import { createServer } from 'http';
 import { initializeNotifications } from './modules/notifications/notifications.service';
 
-const PORT = env.PORT;
+const DEFAULT_PORT = env.PORT || 3000;
 
 initializeStorage();
 
@@ -18,10 +18,37 @@ async function startServer() {
     const server = createServer(app);
     initializeNotifications(server);
 
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📦 Environment: ${env.NODE_ENV}`);
-    });
+    // Try to start on default port, if busy try alternatives
+    function tryStart(port: number) {
+      server.listen(port, () => {
+        console.log(`🚀 Server running on port ${port}`);
+        console.log(`📦 Environment: ${env.NODE_ENV}`);
+      });
+
+      server.on('error', (error: any) => {
+        if (error.code === 'EADDRINUSE') {
+          if (port === DEFAULT_PORT) {
+            console.log(`⚠️ Port ${port} is busy, trying alternative ports...`);
+            tryStart(port + 1);
+          } else if (port < DEFAULT_PORT + 5) {
+            console.log(`⚠️ Port ${port} is busy, trying port ${port + 1}...`);
+            tryStart(port + 1);
+          } else {
+            console.error(`❌ Ports ${DEFAULT_PORT}-${DEFAULT_PORT + 4} are all in use`);
+            console.log('💡 Try killing the process using this port:');
+            console.log(`   netstat -ano | findstr :${DEFAULT_PORT}`);
+            console.log(`   taskkill /F /PID <PID_FROM_NETSTAT>`);
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Server error:', error);
+          process.exit(1);
+        }
+      });
+    }
+
+    tryStart(DEFAULT_PORT);
+
   } catch (error) {
     console.error('❌ Failed to connect to database:', error);
     process.exit(1);

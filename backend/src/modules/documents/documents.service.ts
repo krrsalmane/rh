@@ -10,6 +10,7 @@ import { AppError } from '../../shared/utils/AppError';
 import { auditLog } from '../../shared/utils/auditLogger';
 import { GenerateDocumentInput, DocumentFiltersInput } from './documents.schema';
 import { query } from '../../config/database';
+import { getDefaultLanguage, isValidLanguage, SupportedLanguage } from './translationService';
 
 async function getCompany(companyId: string) {
   const result = await query<{ id: string; name: string; address: string | null; logo_url: string | null }>(
@@ -30,31 +31,38 @@ export async function getDocumentById(id: string, companyId: string) {
 }
 
 export async function generateDocument(input: GenerateDocumentInput, companyId: string, userId: string) {
-  // 1. Fetch template — must be active
+  // 1. Validate and normalize language
+  const language: SupportedLanguage = input.language && isValidLanguage(input.language) 
+    ? input.language 
+    : getDefaultLanguage();
+
+  // 2. Fetch template — must be active
   const template = await templatesRepository.findById(input.templateId, companyId);
   if (!template) throw new AppError('Template not found', 404);
   if (template.status !== 'active') throw new AppError('Le modèle doit être actif pour générer un document', 400);
 
-  // 2. Fetch employee
+  // 3. Fetch employee
   const employee = await employeesRepository.findById(input.employeeId, companyId);
   if (!employee) throw new AppError('Employee not found', 404);
 
-  // 3. Fetch company
+  // 4. Fetch company
   const company = await getCompany(companyId);
   if (!company) throw new AppError('Company not found', 404);
 
-  // 4. Build template data
-  const data = buildTemplateData(employee, company, input.formData);
+  // 5. Build template data with language support
+  const data = buildTemplateData(employee, company, input.formData, language);
+  console.log(`🌍 Generating document with language: ${language}`);
 
-  // 5. Compile HTML
-  const { html, header, footer } = compileTemplate(template.body, data);
+  // 6. Compile HTML with translation
+  const { html, header, footer } = compileTemplate(template.body, data, language);
+  console.log(`📄 Template compiled. Sample: ${html.substring(0, 200)}...`);
 
-  // 6. Generate filename (sanitize employee name)
+  // 7. Generate filename (sanitize employee name)
   const safeName = `${employee.last_name}_${employee.first_name}`.replace(/[^a-zA-Z0-9_-]/g, '_');
   const safeTplName = template.name.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const filename = `${safeName}_${safeTplName}_${Date.now()}.pdf`;
+  const filename = `${safeName}_${safeTplName}_${language}_${Date.now()}.pdf`;
 
-  // 7. Output path (per company, prevent traversal)
+  // 8. Output path (per company, prevent traversal)
   const documentsDir = getStoragePath('documents', companyId);
   ensureDirectoryExists(documentsDir);
   const outputPath = path.join(documentsDir, filename);
@@ -66,11 +74,11 @@ export async function generateDocument(input: GenerateDocumentInput, companyId: 
     throw new AppError('Invalid file path', 400);
   }
 
-  // 8. Generate PDF
+  // 9. Generate PDF
   const pdfBuffer = await renderPDF(html, header, footer);
   fs.writeFileSync(outputPath, pdfBuffer);
 
-  // 9. Save record
+  // 10. Save record with language info
   const document = await documentsRepository.create(
     companyId, input.templateId, input.employeeId,
     template.version, data, outputPath, userId

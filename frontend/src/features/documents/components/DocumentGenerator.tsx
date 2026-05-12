@@ -6,6 +6,7 @@ import { useActiveTemplates } from '../hooks/useTemplates';
 import { useGenerateDocument } from '../hooks/useDocuments';
 import { useEmployees, useEmployee } from '@/features/employees/hooks/useEmployees';
 import { DynamicDocumentForm } from './DynamicDocumentForm';
+import { LanguageSelector, type SupportedLanguage } from './LanguageSelector';
 import type { Template, GenerateDocumentDto } from '../types';
 import type { Employee } from '@/features/employees/types';
 import axios from '@/shared/api/axiosInstance';
@@ -51,6 +52,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [generatedDocId, setGeneratedDocId] = useState<string | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('fr');
   const { data: templates = [], isLoading: loadingTemplates } = useActiveTemplates();
   
   const effectiveSchema = useMemo(() => {
@@ -97,6 +99,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
       templateId: selectedTemplate.id,
       employeeId: selectedEmployeeId,
       formData,
+      language: selectedLanguage,
     };
     generateMutation.mutate(dto, {
       onSuccess: (doc) => {
@@ -155,7 +158,14 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
         {/* STEP 0: Choose template */}
         {step === 0 && (
           <div>
-            <h2 className="text-lg font-bold text-slate-800 mb-4">Choisir un modèle</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-800">Choisir un modèle</h2>
+              <LanguageSelector
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={setSelectedLanguage}
+                className="w-48"
+              />
+            </div>
             {loadingTemplates ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-sky-500 animate-spin" /></div>
             ) : (
@@ -266,7 +276,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
         {step === 2 && selectedTemplate && selectedEmployee && (
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4">Aperçu et confirmation</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <p className="text-xs font-medium text-slate-400 mb-1">Modèle</p>
                 <p className="text-sm font-bold text-slate-800">{selectedTemplate.name}</p>
@@ -276,6 +286,24 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
                 <p className="text-xs font-medium text-slate-400 mb-1">Employé</p>
                 <p className="text-sm font-bold text-slate-800">{selectedEmployee.firstName} {selectedEmployee.lastName}</p>
                 <p className="text-xs text-slate-500">{selectedEmployee.function}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <p className="text-xs font-medium text-slate-400 mb-1">Langue</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-lg">
+                    {selectedLanguage === 'fr' && '🇫🇷'}
+                    {selectedLanguage === 'ar' && '🇸🇦'}
+                    {selectedLanguage === 'en' && '🇬🇧'}
+                    {selectedLanguage === 'de' && '🇩🇪'}
+                  </span>
+                  <span className="text-sm font-bold text-slate-800">
+                    {selectedLanguage === 'fr' && 'Français'}
+                    {selectedLanguage === 'ar' && 'العربية'}
+                    {selectedLanguage === 'en' && 'English'}
+                    {selectedLanguage === 'de' && 'Deutsch'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Document sera généré dans cette langue</p>
               </div>
             </div>
             {Object.keys(formData).length > 0 && (

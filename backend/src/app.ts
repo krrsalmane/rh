@@ -21,7 +21,6 @@ import auditLogsRoutes from './modules/audit-logs/auditLogs.routes';
 import tasksRoutes from './modules/tasks/tasks.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import notificationsRoutes from './modules/notifications/notifications.routes';
-import testRoutes from './modules/test/test.routes';
 
 export const app = express();
 
@@ -50,6 +49,5 @@ app.use('/api/public-holidays', publicHolidaysRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/test', testRoutes);
 
 app.use(errorHandler);
