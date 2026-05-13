@@ -1,9 +1,25 @@
 <div dir="rtl" style="font-family: Arial, 'Segoe UI', Tahoma, sans-serif; text-align: right;">
+<h1>شهادة عمل</h1>
 <p>أنا الموقع أدناه، {{company.name}}، يقع مقرها الاجتماعي في {{company.address}}،</p>
 <p>أشهد بهذه الشهادة أن:</p>
-<p>{{employee.fullName}}، حامل رقم البطاقة الوطنية {{employee.cin}}، يعمل ضمن شركتنا منذ {{employee.hireDate}}.</p>
-<p>يشغل حالياً منصب {{employee.function}} ضمن قسم {{employee.department}}، بموجب عقد {{employee.contractType}}.</p>
-<p>هذه الشهادة تم إصدارها للشخص المعني لأغراض قانونية.</p>
-<p>توقيع وختم الشركة</p>
-<p>حررت في ____________، في {{meta.generatedAt}}</p>
+<p>السيد(ة) <strong>{{employee.fullName}}</strong>، حامل(ة) لبطاقة التعريف الوطنية رقم <strong>{{employee.cin}}</strong>، يشتغل حاليا بمؤسستنا منذ تاريخ <strong>{{formatDate employee.hireDate}}</strong>.</p>
+<p>يشغل حالياً منصب <strong>{{employee.function}}</strong> ضمن قسم <strong>{{employee.department}}</strong>، بموجب عقد <strong>{{employee.contractType}}</strong>.</p>
+<p>سلمت هذه الشهادة للمعني(ة) بالأمر للإدلاء بها عند الحاجة.</p>
+
+<table class="sig-table">
+  <tr>
+    <td>
+      <div class="sig-box">
+        <span class="sig-label">حررت في الدار البيضاء، بتاريخ {{meta.generatedAt}}</span>
+      </div>
+    </td>
+    <td class="sig-spacer"></td>
+    <td>
+      <div class="sig-box">
+        <span class="sig-label">توقيع وختم الشركة</span>
+        <span class="sig-sublabel">الممثل القانوني</span>
+      </div>
+    </td>
+  </tr>
+</table>
 </div>

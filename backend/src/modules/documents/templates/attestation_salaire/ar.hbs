@@ -1,0 +1,14 @@
+<div dir="rtl" style="font-family: Arial, 'Segoe UI', Tahoma, sans-serif; text-align: right;">
+<h1>شهادة الأجر</h1>
+<p>أنا الموقع أدناه، {{company.name}}، يقع مقرها الاجتماعي في {{company.address}}،</p>
+<p>أشهد بهذه الشهادة أن:</p>
+<p>{{employee.fullName}}، حامل رقم البطاقة الوطنية {{employee.cin}}، يعمل ضمن شركتنا منذ {{formatDate employee.hireDate}}.</p>
+<p>يشغل حالياً منصب {{employee.function}} ضمن قسم {{employee.department}}، بموجب عقد {{employee.contractType}}.</p>
+<p>وبهذه الصفة، يتقاضى راتباً شهرياً إجمالياً قدره <strong>{{formatCurrency employee.salary}}</strong>.</p>
+<p>هذه الشهادة تم إصدارها للشخص المعني لأغراض قانونية.</p>
+
+<div class="signature-section" style="margin-top: 80px;">
+  <div class="signature-box">حررت في ____________، في {{meta.generatedAt}}</div>
+  <div class="signature-box">توقيع وختم الشركة</div>
+</div>
+</div>

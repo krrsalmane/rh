@@ -118,7 +118,7 @@ export async function deleteTemplate(id: string, force = false) {
 export async function fetchDocuments(filters: DocumentFilters = {}) {
   const params = new URLSearchParams();
   if (filters.employeeId) params.set('employeeId', filters.employeeId);
-  if (filters.templateId) params.set('templateId', filters.templateId);
+  if (filters.documentType) params.set('documentType', filters.documentType);
   if (filters.status) params.set('status', filters.status);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
@@ -138,6 +138,11 @@ export async function fetchDocument(id: string) {
 export async function generateDocument(data: GenerateDocumentDto) {
   const res = await axios.post<ApiResponse<Record<string, unknown>>>('/documents/generate', data);
   return mapDocument(res.data.data);
+}
+
+export async function fetchAvailableTemplates() {
+  const res = await axios.get<ApiResponse<Record<string, string[]>>>('/documents/available-templates');
+  return res.data.data;
 }
 
 export function getDocumentPdfUrl(id: string): string {
@@ -161,6 +166,7 @@ export async function deleteDocument(id: string) {
 export const templatesApi = {
   getAll: (filters?: TemplateFilters) => fetchTemplates(filters),
   getById: (id: string) => fetchTemplate(id),
+  getAvailable: () => fetchAvailableTemplates(),
   create: (data: CreateTemplateDto) => createTemplate(data),
   update: (id: string, data: Partial<CreateTemplateDto>) => updateTemplate(id, data),
   updateStatus: (id: string, status: 'draft' | 'active' | 'archived') => patchTemplateStatus(id, status),

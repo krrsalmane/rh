@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const GenerateDocumentSchema = z.object({
-  templateId: z.string().uuid(),
+  documentType: z.string().min(1),
   employeeId: z.string().uuid(),
   formData: z.record(z.string(), z.unknown()).default({}),
   language: z.enum(['fr', 'ar', 'en', 'de']).optional(),

@@ -1,0 +1,19 @@
+<h1>BEFRISTETER ARBEITSVERTRAG</h1>
+<p><strong>ZWISCHEN DEN UNTERZEICHNENDEN:</strong></p>
+<p>Das Unternehmen <strong>{{company.name}}</strong>, mit Sitz in <strong>{{company.address}}</strong>, im Folgenden "Der Arbeitgeber" genannt.</p>
+<p><strong>UND:</strong></p>
+<p>Herr/Frau <strong>{{employee.fullName}}</strong>, Inhaber/in des Personalausweises Nr. <strong>{{employee.cin}}</strong>, wohnhaft in <strong>{{employee.address}}</strong>, im Folgenden "Der Arbeitnehmer" genannt.</p>
+
+<h2>ARTIKEL 1: DAUER DES VERTRAGS</h2>
+<p>Dieser Vertrag wird für eine bestimmte Dauer abgeschlossen. Er tritt am <strong>{{formatDate employee.hireDate}}</strong> in Kraft und endet am <strong>{{form.endDate}}</strong>.</p>
+
+<h2>ARTIKEL 2: AUFGABEN UND QUALIFIKATION</h2>
+<p>Der Arbeitnehmer wird die Aufgaben eines <strong>{{employee.function}}</strong> in der Abteilung <strong>{{employee.department}}</strong> wahrnehmen.</p>
+
+<h2>ARTIKEL 3: VERGÜTUNG</h2>
+<p>Als Gegenleistung für seine Dienste erhält der Arbeitnehmer ein monatliches Bruttogehalt von <strong>{{formatCurrency employee.salary}}</strong>.</p>
+
+<div class="signature-section" style="margin-top: 100px;">
+  <div class="signature-box">Unterschrift des Arbeitgebers<br>(mit dem Zusatz "Gelesen und genehmigt")</div>
+  <div class="signature-box">Unterschrift des Arbeitnehmers<br>(mit dem Zusatz "Gelesen und genehmigt")</div>
+</div>

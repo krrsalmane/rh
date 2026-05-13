@@ -1,9 +1,10 @@
-<h1>WORK CERTIFICATE</h1>
+<h1>SALARY CERTIFICATE</h1>
 <p>I, the undersigned, {{company.name}}, whose head office is located at {{company.address}},</p>
 <p>hereby certify that:</p>
 <p><strong>{{employee.fullName}}</strong>, holder of national ID <strong>{{employee.cin}}</strong>, is employed within our company since <strong>{{formatDate employee.hireDate}}</strong>.</p>
-<p>They currently occupy the position of <strong>{{employee.function}}</strong> within the <strong>{{employee.department}} department</strong>, under <strong>{{employee.contractType}} contract</strong>.</p>
-<p>This certificate is issued to the interested party for all legal purposes.</p>
+<p>They currently occupy the position of <strong>{{employee.function}}</strong> within the <strong>{{employee.department}}</strong> department, under <strong>{{employee.contractType}}</strong> contract.</p>
+<p>In this capacity, they receive a monthly gross salary of <strong>{{formatCurrency employee.salary}}</strong>.</p>
+<p>This certificate is issued to the interested party for legal purposes.</p>
 
 <table class="sig-table">
   <tr>

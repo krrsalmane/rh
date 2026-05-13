@@ -1,0 +1,32 @@
+<h1>FIXED-TERM EMPLOYMENT CONTRACT</h1>
+<p><strong>BETWEEN THE UNDERSIGNED:</strong></p>
+<p>The company <strong>{{company.name}}</strong>, whose head office is located at <strong>{{company.address}}</strong>, hereinafter referred to as "The Employer".</p>
+<p><strong>AND:</strong></p>
+<p>Mr./Ms. <strong>{{employee.fullName}}</strong>, holder of national ID <strong>{{employee.cin}}</strong>, residing at <strong>{{employee.address}}</strong>, hereinafter referred to as "The Employee".</p>
+
+<h2>ARTICLE 1: DURATION OF CONTRACT</h2>
+<p>This contract is concluded for a fixed term. It takes effect on <strong>{{formatDate employee.hireDate}}</strong> and will terminate on <strong>{{form.endDate}}</strong>.</p>
+
+<h2>ARTICLE 2: DUTIES AND QUALIFICATION</h2>
+<p>The Employee will perform the duties of <strong>{{employee.function}}</strong> within the <strong>{{employee.department}}</strong> department.</p>
+
+<h2>ARTICLE 3: REMUNERATION</h2>
+<p>In exchange for their services, the Employee will receive a monthly gross salary of <strong>{{formatCurrency employee.salary}}</strong>.</p>
+
+<table class="sig-table">
+  <tr>
+    <td>
+      <div class="sig-box">
+        <span class="sig-label">Employer's Signature</span>
+        <span class="sig-sublabel">(preceded by "Read and approved")</span>
+      </div>
+    </td>
+    <td class="sig-spacer"></td>
+    <td>
+      <div class="sig-box">
+        <span class="sig-label">Employee's Signature</span>
+        <span class="sig-sublabel">(preceded by "Read and approved")</span>
+      </div>
+    </td>
+  </tr>
+</table>

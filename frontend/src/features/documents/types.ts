@@ -59,7 +59,7 @@ export interface GeneratedDocument {
 }
 
 export interface GenerateDocumentDto {
-  templateId: string;
+  documentType: string;
   employeeId: string;
   formData: Record<string, unknown>;
   language?: 'fr' | 'ar' | 'en' | 'de';
@@ -67,7 +67,7 @@ export interface GenerateDocumentDto {
 
 export interface DocumentFilters {
   employeeId?: string;
-  templateId?: string;
+  documentType?: string;
   status?: string;
   page?: number;
   limit?: number;

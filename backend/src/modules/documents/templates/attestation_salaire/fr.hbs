@@ -1,0 +1,12 @@
+<h1>ATTESTATION DE SALAIRE</h1>
+<p>Je soussigné(e), {{company.name}}, dont le siège social est situé au {{company.address}},</p>
+<p>atteste par la présente que :</p>
+<p>{{employee.fullName}}, titulaire de la CIN n° {{employee.cin}}, est employé(e) au sein de notre entreprise depuis le {{formatDate employee.hireDate}}.</p>
+<p>Il/Elle occupe actuellement le poste de {{employee.function}} au sein du département {{employee.department}}, sous contrat {{employee.contractType}}.</p>
+<p>À ce titre, il/elle perçoit un salaire mensuel brut de <strong>{{formatCurrency employee.salary}}</strong>.</p>
+<p>La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.</p>
+
+<div class="signature-section">
+  <div class="signature-box">Fait à ____________, le {{meta.generatedAt}}</div>
+  <div class="signature-box">Signature et cachet</div>
+</div>

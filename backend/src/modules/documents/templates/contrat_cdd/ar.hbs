@@ -1,0 +1,21 @@
+<div dir="rtl" style="font-family: Arial, 'Segoe UI', Tahoma, sans-serif; text-align: right;">
+<h1>عقد عمل محدد المدة</h1>
+<p><strong>بين الموقعين أسفله:</strong></p>
+<p>شركة <strong>{{company.name}}</strong>، الكائن مقرها الاجتماعي بـ <strong>{{company.address}}</strong>، والمشار إليها فيما بعد بـ "المشغل".</p>
+<p><strong>و :</strong></p>
+<p>السيد(ة) <strong>{{employee.fullName}}</strong>، حامل(ة) لبطاقة التعريف الوطنية رقم <strong>{{employee.cin}}</strong>، والقاطن بـ <strong>{{employee.address}}</strong>، والمشار إليه(ا) فيما بعد بـ "الأجير".</p>
+
+<h2>البند 1: مدة العقد</h2>
+<p>أبرم هذا العقد لمدة محددة. يدخل حيز التنفيذ في تاريخ <strong>{{formatDate employee.hireDate}}</strong> وينتهي في <strong>{{form.endDate}}</strong>.</p>
+
+<h2>البند 2: المهام والصفة</h2>
+<p>سيشغل الأجير منصب <strong>{{employee.function}}</strong> ضمن قسم <strong>{{employee.department}}</strong>.</p>
+
+<h2>البند 3: الأجر</h2>
+<p>مقابل خدماته، يتقاضى الأجير راتباً شهرياً إجمالياً قدره <strong>{{formatCurrency employee.salary}}</strong>.</p>
+
+<div class="signature-section" style="margin-top: 100px;">
+  <div class="signature-box">توقيع المشغل<br>(مسبوق بعبارة "قرئ وصودق عليه")</div>
+  <div class="signature-box">توقيع الأجير<br>(مسبوق بعبارة "قرئ وصودق عليه")</div>
+</div>
+</div>

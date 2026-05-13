@@ -2,12 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/utils/cn';
 import { CheckCircle2, ChevronRight, FileText, User, ClipboardCheck, Download, Loader2, ArrowLeft, Zap } from 'lucide-react';
-import { useActiveTemplates } from '../hooks/useTemplates';
+import { useAvailableTemplates } from '../hooks/useTemplates';
 import { useGenerateDocument } from '../hooks/useDocuments';
 import { useEmployees, useEmployee } from '@/features/employees/hooks/useEmployees';
 import { DynamicDocumentForm } from './DynamicDocumentForm';
 import { LanguageSelector, type SupportedLanguage } from './LanguageSelector';
-import type { Template, GenerateDocumentDto } from '../types';
+import type { GenerateDocumentDto } from '../types';
 import type { Employee } from '@/features/employees/types';
 import axios from '@/shared/api/axiosInstance';
 
@@ -18,55 +18,64 @@ const STEPS = [
   { key: 'done', label: 'Terminé', icon: CheckCircle2 },
 ];
 
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  'attestation_travail': 'Attestation de travail',
+  'attestation_salaire': 'Attestation de salaire',
+  'attestation_simple': 'Attestation simple',
+  'contrat_cdd': 'Contrat CDD',
+  'contrat_cdi': 'Contrat de travail CDI',
+};
+
+const getVariableSchema = (docType: string): VariableSchema[] => {
+  const baseSchema: VariableSchema[] = [
+    { name: 'employee.fullName', label: 'Nom complet', type: 'text', autoFill: true },
+    { name: 'employee.cin', label: 'CIN', type: 'text', autoFill: true },
+    { name: 'employee.hireDate', label: 'Date d\'embauche', type: 'date', autoFill: true },
+    { name: 'employee.function', label: 'Fonction', type: 'text', autoFill: true },
+    { name: 'employee.department', label: 'Département', type: 'text', autoFill: true },
+  ];
+
+  if (docType === 'attestation_salaire' || docType === 'contrat_cdi' || docType === 'contrat_cdd') {
+    baseSchema.push({ name: 'employee.salary', label: 'Salaire brut mensuel', type: 'currency', autoFill: true });
+  }
+
+  if (docType === 'contrat_cdd') {
+    baseSchema.push({ name: 'form.endDate', label: 'Date de fin de contrat', type: 'date', autoFill: false, required: true });
+  }
+
+  return baseSchema;
+};
+
 interface Props {
   preselectedEmployeeId?: string;
-  preselectedTemplateId?: string;
+  preselectedDocumentType?: string;
   onClose?: () => void;
 }
 
-const getEffectiveSchema = (template: Template) => {
-  if (template.variableSchema && template.variableSchema.length > 0) {
-    return template.variableSchema;
-  }
-  
-  // Fallback: extract from body
-  const matches = template.body?.match(/\{\{([^}]+)\}\}/g) || [];
-  const uniqueVars = matches
-    .map(m => m.replace(/\{\{|\}\}/g, '').trim())
-    .filter((v, i, arr) => arr.indexOf(v) === i);
-  
-  return uniqueVars.map(name => ({
-    name,
-    label: name.replace('employee.', '').replace('form.', '').replace('company.', '').replace('meta.', ''),
-    type: 'text' as const,
-    required: !name.startsWith('employee.') && !name.startsWith('company.') && !name.startsWith('meta.'),
-    autoFill: name.startsWith('employee.') || name.startsWith('company.') || name.startsWith('meta.'),
-  }));
-};
-
-export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, preselectedTemplateId, onClose }) => {
+export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, preselectedDocumentType, onClose }) => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(preselectedTemplateId ? 1 : 0);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [step, setStep] = useState(preselectedDocumentType ? 1 : 0);
+  const [selectedDocType, setSelectedDocType] = useState<string>(preselectedDocumentType || '');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(preselectedEmployeeId || '');
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [generatedDocId, setGeneratedDocId] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('fr');
-  const { data: templates = [], isLoading: loadingTemplates } = useActiveTemplates();
   
-  const effectiveSchema = useMemo(() => {
-    if (!selectedTemplate) return [];
-    return getEffectiveSchema(selectedTemplate);
-  }, [selectedTemplate]);
+  const { data: availableTemplates = {}, isLoading: loadingTemplates } = useAvailableTemplates();
+  const availableTypes = Object.keys(availableTemplates);
 
-  // Pre-select template if provided via URL
+  const currentSchema = selectedDocType ? getVariableSchema(selectedDocType) : [];
+
+  // Pre-select document type if provided via URL
   React.useEffect(() => {
-    if (preselectedTemplateId && templates.length > 0 && !selectedTemplate) {
-      const found = templates.find((t) => t.id === preselectedTemplateId);
-      if (found) setSelectedTemplate(found);
+    if (preselectedDocumentType && availableTypes.length > 0 && !selectedDocType) {
+      if (availableTypes.includes(preselectedDocumentType)) {
+        setSelectedDocType(preselectedDocumentType);
+      }
     }
-  }, [preselectedTemplateId, templates, selectedTemplate]);
+  }, [preselectedDocumentType, availableTypes, selectedDocType]);
+
   const { data: employeesData } = useEmployees({ search: employeeSearch, page: 1, limit: 50 });
   const { data: employeeDetails } = useEmployee(selectedEmployeeId || undefined);
   const generateMutation = useGenerateDocument();
@@ -94,9 +103,9 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
   }, [selectedEmployee]);
 
   const handleGenerate = () => {
-    if (!selectedTemplate || !selectedEmployeeId) return;
+    if (!selectedDocType || !selectedEmployeeId) return;
     const dto: GenerateDocumentDto = {
-      templateId: selectedTemplate.id,
+      documentType: selectedDocType,
       employeeId: selectedEmployeeId,
       formData,
       language: selectedLanguage,
@@ -125,8 +134,15 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
   };
 
   const canGoNext = () => {
-    if (step === 0) return !!selectedTemplate;
-    if (step === 1) return !!selectedEmployeeId;
+    if (step === 0) return !!selectedDocType;
+    if (step === 1) {
+      if (!selectedEmployeeId) return false;
+      const manualFields = currentSchema.filter(v => !v.autoFill && v.required);
+      return manualFields.every(v => {
+        const fieldName = v.name.replace(/^form\./, '');
+        return !!formData[fieldName];
+      });
+    }
     return true;
   };
 
@@ -155,11 +171,11 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
 
       {/* Step Content */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 min-h-[400px]">
-        {/* STEP 0: Choose template */}
+        {/* STEP 0: Choose document type */}
         {step === 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-800">Choisir un modèle</h2>
+              <h2 className="text-lg font-bold text-slate-800">Choisir un type de document</h2>
               <LanguageSelector
                 selectedLanguage={selectedLanguage}
                 onLanguageChange={setSelectedLanguage}
@@ -170,44 +186,43 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-sky-500 animate-spin" /></div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {templates.map((tpl) => {
-                  const schema = getEffectiveSchema(tpl);
-                  const autoFillCount = schema.filter(v => v.autoFill).length;
-                  const manualCount = schema.length - autoFillCount;
+                {availableTypes.map((type) => {
+                  const label = DOCUMENT_TYPE_LABELS[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const supportedLangs = availableTemplates[type] || [];
+                  const isLangSupported = supportedLangs.includes(selectedLanguage);
 
                   return (
                     <button
-                      key={tpl.id}
-                      onClick={() => setSelectedTemplate(tpl)}
+                      key={type}
+                      disabled={!isLangSupported}
+                      onClick={() => setSelectedDocType(type)}
                       className={cn(
                         "text-left p-4 rounded-xl border-2 transition-all group",
-                        selectedTemplate?.id === tpl.id
+                        selectedDocType === type
                           ? 'border-slate-900 bg-slate-50/50 shadow-sm'
-                          : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                          : isLangSupported 
+                            ? 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                            : 'border-slate-50 bg-slate-50/30 opacity-50 cursor-not-allowed'
                       )}
-                      id={`gen-tpl-${tpl.id}`}
+                      id={`gen-type-${type}`}
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <FileText className="w-4 h-4 text-sky-500" />
-                        <span className="text-sm font-semibold text-slate-800">{tpl.name}</span>
+                        <FileText className={cn("w-4 h-4", isLangSupported ? "text-sky-500" : "text-slate-300")} />
+                        <span className="text-sm font-semibold text-slate-800">{label}</span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {autoFillCount > 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-600 font-medium">
-                            {autoFillCount} auto-remplis
+                      <div className="flex flex-wrap gap-1">
+                        {supportedLangs.map(lang => (
+                          <span key={lang} className={cn(
+                            "text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase",
+                            lang === selectedLanguage ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-400"
+                          )}>
+                            {lang}
                           </span>
-                        )}
-                        {manualCount > 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-medium">
-                            {manualCount} à remplir
-                          </span>
-                        )}
-                        {schema.length === 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-400 font-medium">
-                            Variables auto-détectées
-                          </span>
-                        )}
+                        ))}
                       </div>
+                      {!isLangSupported && (
+                        <p className="text-[10px] text-rose-500 mt-2 font-medium">Non disponible en cette langue</p>
+                      )}
                     </button>
                   );
                 })}
@@ -217,7 +232,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
         )}
 
         {/* STEP 1: Employee + Form */}
-        {step === 1 && selectedTemplate && (
+        {step === 1 && selectedDocType && (
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4">Informations du document</h2>
 
@@ -260,27 +275,28 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
               )}
             </div>
 
-            {/* Dynamic form */}
             {selectedEmployeeId && (
-              <DynamicDocumentForm
-                variableSchema={effectiveSchema}
-                employeeData={employeeDataForForm}
-                formData={formData}
-                onFormDataChange={setFormData}
-              />
+              <div className="mt-8 border-t border-slate-100 pt-6">
+                <DynamicDocumentForm
+                  variableSchema={currentSchema}
+                  employeeData={employeeDataForForm}
+                  formData={formData}
+                  onFormDataChange={setFormData}
+                />
+              </div>
             )}
           </div>
         )}
 
         {/* STEP 2: Review */}
-        {step === 2 && selectedTemplate && selectedEmployee && (
+        {step === 2 && selectedDocType && selectedEmployee && (
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4">Aperçu et confirmation</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                <p className="text-xs font-medium text-slate-400 mb-1">Modèle</p>
-                <p className="text-sm font-bold text-slate-800">{selectedTemplate.name}</p>
-                <p className="text-xs text-slate-500">v{selectedTemplate.version}</p>
+                <p className="text-xs font-medium text-slate-400 mb-1">Type de Document</p>
+                <p className="text-sm font-bold text-slate-800">{DOCUMENT_TYPE_LABELS[selectedDocType] || selectedDocType}</p>
+                <p className="text-xs text-slate-500 uppercase">Static Template</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <p className="text-xs font-medium text-slate-400 mb-1">Employé</p>
@@ -306,19 +322,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
                 <p className="text-xs text-slate-500 mt-1">Document sera généré dans cette langue</p>
               </div>
             </div>
-            {Object.keys(formData).length > 0 && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                <p className="text-xs font-medium text-slate-400 mb-2">Données du formulaire</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(formData).map(([key, val]) => (
-                    <div key={key}>
-                      <span className="text-xs text-slate-400">{key}: </span>
-                      <span className="text-xs font-medium text-slate-700">{String(val)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            
             <button
               onClick={handleGenerate}
               disabled={generateMutation.isPending}
@@ -351,7 +355,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
                 <Download className="w-4 h-4" /> Télécharger le document
               </button>
               <button
-                onClick={() => { setStep(0); setSelectedTemplate(null); setSelectedEmployeeId(''); setEmployeeSearch(''); setFormData({}); setGeneratedDocId(null); }}
+                onClick={() => { setStep(0); setSelectedDocType(''); setSelectedEmployeeId(''); setEmployeeSearch(''); setFormData({}); setGeneratedDocId(null); }}
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-slate-600 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl transition-all"
               >
                 <Zap className="w-4 h-4" /> Générer un autre

@@ -48,3 +48,9 @@ export const deleteDocument = asyncHandler(async (req: Request, res: Response): 
   await documentsService.deleteDocument(req.params.id, req.user!.companyId, req.user!.id);
   res.json({ status: 'success', message: 'Document deleted successfully' });
 });
+
+export const listAvailableTemplates = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
+  const { listAvailableTemplates } = require('./templateLoader');
+  const templates = listAvailableTemplates();
+  res.json({ status: 'success', data: templates });
+});

@@ -17,6 +17,13 @@ export function useActiveTemplates() {
   });
 }
 
+export function useAvailableTemplates() {
+  return useQuery({
+    queryKey: ['templates', 'available'],
+    queryFn: () => api.fetchAvailableTemplates(),
+  });
+}
+
 export function useTemplate(id: string | undefined) {
   return useQuery({
     queryKey: ['templates', id],

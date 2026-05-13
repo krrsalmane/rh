@@ -1,16 +1,12 @@
-import { formatDate, formatCurrency, formatNumber, getLanguageFont, getTextDirection, getLanguageClasses, getDefaultLanguage, translateTemplate, SupportedLanguage } from './translationService';
+import { formatDate, formatCurrency, formatNumber, getLanguageFont, getTextDirection, getLanguageClasses, getDefaultLanguage, SupportedLanguage } from './translationService';
 import { loadTemplate } from './templateLoader';
 import Handlebars from 'handlebars';
 import { AppError } from '../../shared/utils/AppError';
-
-// Register helpers
-// ... (rest of imports/helpers)
 
 // Register helpers with language support
 Handlebars.registerHelper('formatDate', (dateStr: string, options?: any) => {
   if (!dateStr) return '—';
   try {
-    // Get language from options.hash.language or from data context
     const language = (options?.hash?.language || options?.data?.root?.language || 'fr') as SupportedLanguage;
     return formatDate(dateStr, language);
   } catch {
@@ -22,9 +18,7 @@ Handlebars.registerHelper('formatDateLong', (dateStr: string, options?: any) => 
   if (!dateStr) return '—';
   try {
     const language = (options?.hash?.language || options?.data?.root?.language || 'fr') as SupportedLanguage;
-    const dateObj = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
-    const config = language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'ar' ? 'ar-MA' : 'fr-FR';
-    return dateObj.toLocaleDateString(config, { day: '2-digit', month: 'long', year: 'numeric' });
+    return formatDate(dateStr, language);
   } catch {
     return dateStr;
   }
@@ -122,16 +116,25 @@ export function buildTemplateData(
     },
     company: {
       name: company.name,
-      address: company.address || '',
+      address: (() => {
+        const addr = company.address || '';
+        if (lang === 'ar') {
+          return addr
+            .replace(/Casablanca/i, 'الدار البيضاء')
+            .replace(/Morocco/i, 'المغرب')
+            .split(',')
+            .map(s => s.trim())
+            .join('، ');
+        }
+        if (lang === 'de') return addr.replace(/Morocco/i, 'Marokko');
+        return addr;
+      })(),
       logoUrl: company.logo_url || '',
     },
     form: { ...formData },
     meta: {
       generatedAt: formatDate(now, lang),
-      generatedAtLong: (() => {
-        const locale = lang === 'en' ? 'en-US' : lang === 'de' ? 'de-DE' : lang === 'ar' ? 'ar-MA' : 'fr-FR';
-        return now.toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' });
-      })(),
+      generatedAtLong: formatDate(now, lang),
       generatedYear: now.getFullYear(),
     },
     language: lang,
@@ -140,20 +143,14 @@ export function buildTemplateData(
 }
 
 function sanitizeTemplate(html: string): string {
-  // Remove HTML tags inside {{ }} placeholders
-  // Pattern: {{ anything with HTML tags }}
   return html
-    // Remove HTML tags inside handlebars {{ }}
     .replace(/\{\{([^}]*?)<[^>]*>([^}]*?)\}\}/g, '{{$1$2}}')
     .replace(/\{\{([^}]*?)<\/[^>]*>([^}]*?)\}\}/g, '{{$1$2}}')
-    // Clean any remaining HTML inside {{ }}
     .replace(/\{\{[^}]*\}\}/g, (match) => {
       return match.replace(/<[^>]*>/g, '');
     })
-    // Fix any double spaces in variable names
     .replace(/\{\{\s+/g, '{{')
     .replace(/\s+\}\}/g, '}}')
-    // Trim variable names
     .replace(/\{\{(\s*)(.*?)(\s*)\}\}/g, '{{$2}}');
 }
 
@@ -179,7 +176,6 @@ function parseTemplateZones(fullBody: string) {
 }
 
 function wrapInHtml(zones: { header: string; body: string; footer: string }, data: any, language: SupportedLanguage = 'fr'): string {
-  // Check for hidden flags (injected by TemplateBuilder)
   const showHeader = !zones.body.includes('<!-- HEADER_HIDDEN -->') && zones.header.length > 0;
   const showFooter = !zones.body.includes('<!-- FOOTER_HIDDEN -->') && zones.footer.length > 0;
   
@@ -195,90 +191,187 @@ function wrapInHtml(zones: { header: string; body: string; footer: string }, dat
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
-      font-family: ${fontFamily}; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
       font-size: 11pt; 
       color: #334155; 
-      line-height: 1.6;
+      line-height: 1.5;
       direction: ${direction};
       text-align: ${direction === 'rtl' ? 'right' : 'left'};
+      background: white;
     }
     
-    /* Layout Zones */
-    .document-header { border-bottom: 2px solid #f1f5f9; padding: 40px 60px 20px; margin-bottom: 30px; }
-    .document-body { padding: 0 60px; min-height: 500px; }
-    .document-footer { margin-top: 40px; border-top: 1px solid #f1f5f9; padding: 20px 60px 40px; font-size: 9pt; color: #94a3b8; }
+    .document-page {
+      position: relative;
+      padding: 0;
+    }
 
-    /* Content Styling */
-    .document-body p { margin-bottom: 12px; }
-    .document-body h1 { font-size: 18pt; text-align: center; margin: 30px 0 20px; color: #0f172a; }
-    .document-body h2 { font-size: 15pt; margin: 25px 0 12px; color: #1e293b; }
-    .document-body h3 { font-size: 13pt; margin: 20px 0 10px; color: #334155; }
-    
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    td, th { border: 1px solid #e2e8f0; padding: 10px 12px; font-size: 10.5pt; }
-    th { background: #f8fafc; font-weight: 600; text-align: ${direction === 'rtl' ? 'right' : 'left'}; }
-    
-    img { max-width: 100%; height: auto; display: block; }
-    .logo { margin-bottom: 15px; }
-    
-    /* RTL specific styles */
-    .lang-ar .document-body h1,
-    .lang-ar .document-body h2,
-    .lang-ar .document-body h3 {
-      font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
+    .accent-bar {
+      height: 6px;
+      background: #2563eb;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .document-header { 
+      padding: 40px 60px 20px; 
+      margin-bottom: 10px;
     }
     
-    @media print { 
-      body { padding: 0; }
-      .document-header, .document-body, .document-footer { padding-left: 0; padding-right: 0; }
+    .header-table {
+      width: 100%;
+      border: none;
+      margin: 0;
+    }
+    
+    .header-table td {
+      border: none;
+      padding: 0;
+      vertical-align: top;
+    }
+
+    .company-name {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1e293b;
+      line-height: 1.2;
+    }
+
+    .company-details {
+      font-size: 8pt;
+      color: #64748b;
+      margin-top: 3px;
+    }
+
+    .document-body { 
+      padding: 0 60px; 
+      min-height: auto; 
+    }
+    
+    .document-body p { 
+      margin-bottom: 14px; 
+      text-align: justify; 
+    }
+    
+    .document-body h1 { 
+      font-size: 20pt; 
+      font-weight: 800;
+      text-align: center; 
+      margin: 25px 0 35px; 
+      color: #0f172a; 
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+      width: 100%;
+    }
+    
+    .document-body h2 { 
+      font-size: 14pt; 
+      font-weight: 700;
+      margin: 30px 0 12px; 
+      color: #1e293b; 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Signature Table - More reliable than Flex */
+    .sig-table {
+      width: 100%;
+      border: none;
+      margin-top: 80px;
+      page-break-inside: avoid;
+    }
+
+    .sig-table td {
+      border: none;
+      padding: 0;
+      width: 45%;
+      vertical-align: top;
+    }
+
+    .sig-spacer {
+      width: 10% !important;
+    }
+
+    .sig-box {
+      border-top: 1px solid #cbd5e1;
+      padding-top: 15px;
+      text-align: center;
+    }
+
+    .sig-label {
+      font-size: 9pt;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 60px; /* Space for physical signature */
+      display: block;
+    }
+
+    .sig-sublabel {
+      font-size: 8pt;
+      color: #94a3b8;
+      font-style: italic;
+    }
+
+    .document-footer { 
+      margin-top: 80px; 
+      border-top: 1px solid #f1f5f9; 
+      padding: 40px 70px; 
+      font-size: 9pt; 
+      color: #94a3b8; 
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  ${showHeader ? `<div class="document-header">${zones.header}</div>` : ''}
-  
-  <div class="document-body">
-    ${zones.body}
+  <div class="document-page">
+    <div class="accent-bar"></div>
+    
+    <div class="document-header">
+      <table class="header-table">
+        <tr>
+          <td>
+            <div class="company-name">${data.company.name}</div>
+            <div class="company-details">${data.company.address}</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="document-body">
+      ${zones.body}
+    </div>
+
+    <div class="document-footer">
+      ${data.company.name} - ${data.company.address}
+    </div>
   </div>
-  
-  ${showFooter ? `<div class="document-footer">${zones.footer}</div>` : ''}
 </body>
 </html>`;
 }
 
 export function compileTemplate(
-  typeOrContent: string,
+  documentType: string,
   data: Record<string, unknown>,
   language: SupportedLanguage = 'fr'
 ): { html: string; header: string; footer: string } {
   try {
     const lang = language || getDefaultLanguage();
     
-    // Step 1: Load or use the provided template content
-    let templateContent: string;
+    // Step 1: Load template from disk based on type and language
+    const templateContent = loadTemplate(documentType, lang);
     
-    // If it looks like a template (contains HTML tags or Handlebars placeholders), use it directly
-    if (typeOrContent.includes('<') || typeOrContent.includes('{{') || typeOrContent.includes('<!--')) {
-      templateContent = typeOrContent;
-    } else {
-      // Otherwise, load it from disk (fallback for system templates)
-      templateContent = loadTemplate(typeOrContent, lang);
-    }
-
-    // Step 2: Apply multi-language translation (Zone-aware)
-    // This translates static French phrases into the target language (AR, EN, DE)
-    // while protecting variable placeholders.
-    templateContent = translateTemplate(templateContent, lang);
-    
-    // Step 3: Extract zones (Header, Body, Footer)
+    // Step 2: Extract zones
     const zones = parseTemplateZones(templateContent);
 
-    // Step 3: Sanitize each zone — especially for body which comes from TipTap/Editor
+    // Step 3: Sanitize
     zones.header = sanitizeTemplate(zones.header);
     zones.body = sanitizeTemplate(zones.body);
     zones.footer = sanitizeTemplate(zones.footer);
 
-    // Step 4: Compile each zone with Handlebars (pass language in data context)
+    // Step 4: Compile
     const templateData = { ...data, language: lang, direction: getTextDirection(lang) };
     const compiledZones = {
       header: Handlebars.compile(zones.header)(templateData),
@@ -286,7 +379,7 @@ export function compileTemplate(
       footer: Handlebars.compile(zones.footer)(templateData),
     };
 
-    // Step 5: Wrap the main body in full HTML shell (CSS, etc.)
+    // Step 5: Wrap in HTML
     const html = wrapInHtml(compiledZones, data, lang);
 
     return {
@@ -298,10 +391,11 @@ export function compileTemplate(
     throw new AppError(`Erreur lors de la compilation du modèle: ${error.message}`, 500);
   }
 }
+
 export function extractVariablesFromBody(body: string): string[] {
   const matches = body.match(/\{\{([^}]+)\}\}/g) || [];
   return matches
     .map((m) => m.replace(/\{\{|\}\}/g, '').trim())
-    .filter((v, i, arr) => arr.indexOf(v) === i) // unique
+    .filter((v, i, arr) => arr.indexOf(v) === i)
     .filter((v) => !v.startsWith('company.') && !v.startsWith('meta.'));
 }

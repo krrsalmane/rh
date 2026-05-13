@@ -73,7 +73,7 @@ export async function findById(id: string, companyId: string): Promise<DocumentR
 }
 
 export async function create(
-  companyId: string, templateId: string, employeeId: string,
+  companyId: string, templateId: string | null, employeeId: string,
   templateVersion: number, formData: Record<string, unknown>,
   pdfPath: string, generatedBy: string
 ): Promise<DocumentRow> {
