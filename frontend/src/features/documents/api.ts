@@ -145,6 +145,11 @@ export async function fetchAvailableTemplates() {
   return res.data.data;
 }
 
+export async function fetchTemplateContent(type: string, lang: string) {
+  const res = await axios.get<ApiResponse<string>>(`/documents/template-content/${type}/${lang}`);
+  return res.data.data;
+}
+
 export function getDocumentPdfUrl(id: string): string {
   return `/documents/${id}/pdf`;
 }

@@ -1,10 +1,14 @@
 import { z } from 'zod';
 
 export const GenerateDocumentSchema = z.object({
-  documentType: z.string().min(1),
+  documentType: z.string().optional(),
+  templateId: z.string().uuid().optional(),
   employeeId: z.string().uuid(),
   formData: z.record(z.string(), z.unknown()).default({}),
   language: z.enum(['fr', 'ar', 'en', 'de']).optional(),
+}).refine(data => data.documentType || data.templateId, {
+  message: "Either documentType or templateId must be provided",
+  path: ["documentType"],
 });
 
 export const DocumentFiltersSchema = z.object({

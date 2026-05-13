@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import * as documentsRepository from './documents.repository';
 import * as employeesRepository from '../employees/employees.repository';
-import { buildTemplateData, compileTemplate } from './templateEngine';
+import { buildTemplateData, compileTemplate, compileRawTemplate } from './templateEngine';
 import { renderPDF } from './pdfRenderer';
 import { getStoragePath, ensureDirectoryExists } from '../../config/storage';
 import { AppError } from '../../shared/utils/AppError';
@@ -45,15 +45,35 @@ export async function generateDocument(input: GenerateDocumentInput, companyId: 
 
   // 4. Build template data with language support
   const data = buildTemplateData(employee, company, input.formData, language);
-  console.log(`🌍 Generating document "${input.documentType}" with language: ${language}`);
+  
+  let compiled: { html: string; header: string; footer: string };
+  let docTypeName = input.documentType || 'custom_document';
 
-  // 5. Compile HTML using static template from disk
-  const { html, header, footer } = compileTemplate(input.documentType, data, language);
+  // 5. Compile HTML
+  if (input.templateId) {
+    // Fetch custom template from DB
+    const tplResult = await query<{ name: string; body: string }>(
+      'SELECT name, body FROM templates WHERE id = $1 AND company_id = $2',
+      [input.templateId, companyId]
+    );
+    const tpl = tplResult.rows[0];
+    if (!tpl) throw new AppError('Template not found', 404);
+    
+    docTypeName = tpl.name;
+    compiled = compileRawTemplate(tpl.body, data, language);
+  } else if (input.documentType) {
+    console.log(`🌍 Generating document "${input.documentType}" with language: ${language}`);
+    compiled = compileTemplate(input.documentType, data, language);
+  } else {
+    throw new AppError('documentType or templateId is required', 400);
+  }
+
+  const { html, header, footer } = compiled;
   console.log(`📄 Template compiled. Sample: ${html.substring(0, 200)}...`);
 
   // 6. Generate filename (sanitize names)
   const safeName = `${employee.last_name}_${employee.first_name}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const safeDocType = input.documentType.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const safeDocType = docTypeName.replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = `${safeName}_${safeDocType}_${language}_${Date.now()}.pdf`;
 
   // 7. Output path
@@ -72,16 +92,16 @@ export async function generateDocument(input: GenerateDocumentInput, companyId: 
   const pdfBuffer = await renderPDF(html, header, footer);
   fs.writeFileSync(outputPath, pdfBuffer);
 
-  // 9. Save record (linking to template is now optional or uses null)
+  // 9. Save record
   const document = await documentsRepository.create(
-    companyId, null, input.employeeId,
+    companyId, input.templateId || null, input.employeeId,
     1, data, outputPath, userId
   );
 
   // 10. Audit log
   await auditLog({
     userId, companyId, action: 'GENERATE', entity: 'document', entityId: document.id,
-    newValue: { documentType: input.documentType, employeeId: input.employeeId, filename },
+    newValue: { documentType: docTypeName, employeeId: input.employeeId, filename, templateId: input.templateId },
   });
 
   return document;

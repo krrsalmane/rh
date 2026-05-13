@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/utils/cn';
 import { CheckCircle2, ChevronRight, FileText, User, ClipboardCheck, Download, Loader2, ArrowLeft, Zap } from 'lucide-react';
-import { useAvailableTemplates } from '../hooks/useTemplates';
+import { useAvailableTemplates, useTemplate } from '../hooks/useTemplates';
 import { useGenerateDocument } from '../hooks/useDocuments';
 import { useEmployees, useEmployee } from '@/features/employees/hooks/useEmployees';
 import { DynamicDocumentForm } from './DynamicDocumentForm';
@@ -49,13 +49,20 @@ const getVariableSchema = (docType: string): VariableSchema[] => {
 interface Props {
   preselectedEmployeeId?: string;
   preselectedDocumentType?: string;
+  preselectedTemplateId?: string;
   onClose?: () => void;
 }
 
-export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, preselectedDocumentType, onClose }) => {
+export const DocumentGenerator: React.FC<Props> = ({ 
+  preselectedEmployeeId, 
+  preselectedDocumentType, 
+  preselectedTemplateId,
+  onClose 
+}) => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(preselectedDocumentType ? 1 : 0);
+  const [step, setStep] = useState(preselectedDocumentType || preselectedTemplateId ? 1 : 0);
   const [selectedDocType, setSelectedDocType] = useState<string>(preselectedDocumentType || '');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(preselectedTemplateId || '');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(preselectedEmployeeId || '');
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [formData, setFormData] = useState<Record<string, unknown>>({});
@@ -63,9 +70,15 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('fr');
   
   const { data: availableTemplates = {}, isLoading: loadingTemplates } = useAvailableTemplates();
+  const { data: templateDetails } = useTemplate(selectedTemplateId || undefined);
   const availableTypes = Object.keys(availableTemplates);
 
-  const currentSchema = selectedDocType ? getVariableSchema(selectedDocType) : [];
+  const currentSchema = useMemo(() => {
+    if (selectedTemplateId && templateDetails?.data) {
+      return templateDetails.data.variableSchema || [];
+    }
+    return selectedDocType ? getVariableSchema(selectedDocType) : [];
+  }, [selectedTemplateId, templateDetails, selectedDocType]);
 
   // Pre-select document type if provided via URL
   React.useEffect(() => {
@@ -75,6 +88,13 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
       }
     }
   }, [preselectedDocumentType, availableTypes, selectedDocType]);
+
+  // Sync language with template if available
+  React.useEffect(() => {
+    if (templateDetails?.data?.language) {
+      setSelectedLanguage(templateDetails.data.language as SupportedLanguage);
+    }
+  }, [templateDetails]);
 
   const { data: employeesData } = useEmployees({ search: employeeSearch, page: 1, limit: 50 });
   const { data: employeeDetails } = useEmployee(selectedEmployeeId || undefined);
@@ -103,9 +123,10 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
   }, [selectedEmployee]);
 
   const handleGenerate = () => {
-    if (!selectedDocType || !selectedEmployeeId) return;
+    if ((!selectedDocType && !selectedTemplateId) || !selectedEmployeeId) return;
     const dto: GenerateDocumentDto = {
-      documentType: selectedDocType,
+      documentType: selectedDocType || undefined,
+      templateId: selectedTemplateId || undefined,
       employeeId: selectedEmployeeId,
       formData,
       language: selectedLanguage,
@@ -134,7 +155,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
   };
 
   const canGoNext = () => {
-    if (step === 0) return !!selectedDocType;
+    if (step === 0) return !!selectedDocType || !!selectedTemplateId;
     if (step === 1) {
       if (!selectedEmployeeId) return false;
       const manualFields = currentSchema.filter(v => !v.autoFill && v.required);
@@ -232,7 +253,7 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
         )}
 
         {/* STEP 1: Employee + Form */}
-        {step === 1 && selectedDocType && (
+        {step === 1 && (selectedDocType || selectedTemplateId) && (
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4">Informations du document</h2>
 
@@ -289,14 +310,21 @@ export const DocumentGenerator: React.FC<Props> = ({ preselectedEmployeeId, pres
         )}
 
         {/* STEP 2: Review */}
-        {step === 2 && selectedDocType && selectedEmployee && (
+        {step === 2 && (selectedDocType || selectedTemplateId) && selectedEmployee && (
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4">Aperçu et confirmation</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <p className="text-xs font-medium text-slate-400 mb-1">Type de Document</p>
-                <p className="text-sm font-bold text-slate-800">{DOCUMENT_TYPE_LABELS[selectedDocType] || selectedDocType}</p>
-                <p className="text-xs text-slate-500 uppercase">Static Template</p>
+                <p className="text-sm font-bold text-slate-800">
+                  {selectedTemplateId && templateDetails?.data?.name 
+                    ? templateDetails.data.name 
+                    : (DOCUMENT_TYPE_LABELS[selectedDocType] || selectedDocType || 'Document personnalisé')
+                  }
+                </p>
+                <p className="text-xs text-slate-500 uppercase">
+                  {selectedTemplateId ? 'Modèle personnalisé' : 'Modèle statique'}
+                </p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <p className="text-xs font-medium text-slate-400 mb-1">Employé</p>

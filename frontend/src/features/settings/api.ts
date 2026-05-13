@@ -26,3 +26,16 @@ export const usersApi = {
   delete: (id: string) =>
     api.delete(`/users/${id}`).then((r) => r.data),
 };
+
+export const companyApi = {
+  get: () => api.get('/settings').then((r) => r.data.data),
+  update: (data: { name?: string; address?: string; logoUrl?: string }) =>
+    api.put('/settings', data).then((r) => r.data.data),
+};
+
+export const holidaysApi = {
+  getAll: () => api.get('/public-holidays').then((r) => r.data.data),
+  create: (data: { name: string; date: string; isRecurring?: boolean }) =>
+    api.post('/public-holidays', data).then((r) => r.data.data),
+  delete: (id: string) => api.delete(`/public-holidays/${id}`).then((r) => r.data),
+};

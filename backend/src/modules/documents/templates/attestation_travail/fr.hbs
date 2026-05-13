@@ -1,23 +1,6 @@
 <h1>ATTESTATION DE TRAVAIL</h1>
-<p>Je soussigné, {{company.name}}, dont le siège social est situé au {{company.address}},</p>
+<p>Je soussigné, <strong>{{company.name}}</strong>, dont le siège social est situé au <strong>{{company.address}}</strong>,</p>
 <p>certifie par la présente que :</p>
 <p><strong>M./Mme {{employee.fullName}}</strong>, titulaire de la CIN n° <strong>{{employee.cin}}</strong>, est employé(e) au sein de notre société depuis le <strong>{{formatDate employee.hireDate}}</strong>.</p>
 <p>Il/Elle occupe actuellement le poste de <strong>{{employee.function}}</strong> au sein du département <strong>{{employee.department}}</strong>, sous contrat <strong>{{employee.contractType}}</strong>.</p>
 <p>Cette attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.</p>
-
-<table class="sig-table">
-  <tr>
-    <td>
-      <div class="sig-box">
-        <span class="sig-label">Fait à Casablanca, le {{meta.generatedAt}}</span>
-      </div>
-    </td>
-    <td class="sig-spacer"></td>
-    <td>
-      <div class="sig-box">
-        <span class="sig-label">Signature et cachet</span>
-        <span class="sig-sublabel">La Direction</span>
-      </div>
-    </td>
-  </tr>
-</table>

@@ -54,3 +54,14 @@ export const listAvailableTemplates = asyncHandler(async (_req: Request, res: Re
   const templates = listAvailableTemplates();
   res.json({ status: 'success', data: templates });
 });
+
+export const getRawTemplateContent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const { type, lang } = req.params;
+  const { loadTemplate } = require('./templateLoader');
+  try {
+    const content = loadTemplate(type, lang);
+    res.json({ status: 'success', data: content });
+  } catch (error: any) {
+    res.status(404).json({ status: 'error', message: error.message });
+  }
+});

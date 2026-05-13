@@ -16,7 +16,7 @@ import {
   AlignCenter, Undo2,
   Heading2, Plus, Trash2, GripVertical, Save, Send, Eye, EyeOff, Zap,
   Upload, Code, Pencil, Settings, X, Image as ImageIcon,
-  Type, Layers, Layout, RotateCcw, MousePointer2
+  Type, Layers, Layout, RotateCcw, MousePointer2, Database
 } from 'lucide-react';
 
 interface HeaderConfig {
@@ -133,16 +133,22 @@ interface Props {
 }
 
 const QUICK_VARS = [
-  { label: 'Nom complet', value: '{{employee.fullName}}' },
-  { label: 'Prénom', value: '{{employee.firstName}}' },
-  { label: 'Nom', value: '{{employee.lastName}}' },
-  { label: 'Fonction', value: '{{employee.function}}' },
-  { label: 'Département', value: '{{employee.department}}' },
-  { label: 'Date embauche', value: '{{employee.hireDate}}' },
-  { label: 'Salaire', value: '{{employee.salary}}' },
-  { label: 'CIN', value: '{{employee.cin}}' },
-  { label: 'Entreprise', value: '{{company.name}}' },
-  { label: 'Date du jour', value: '{{meta.generatedAt}}' },
+  { group: 'Collaborateur', vars: [
+    { label: 'Nom Complet', value: '{{employee.fullName}}', tag: '{{employee.fullName}}' },
+    { label: 'CIN', value: '{{employee.cin}}', tag: '{{employee.cin}}' },
+    { label: 'Poste', value: '{{employee.function}}', tag: '{{employee.function}}' },
+    { label: 'Département', value: '{{employee.department}}', tag: '{{employee.department}}' },
+    { label: 'Date Embauche', value: '{{formatDate employee.hireDate}}', tag: '{{formatDate employee.hireDate}}' },
+    { label: 'Salaire', value: '{{formatCurrency employee.salary}}', tag: '{{formatCurrency employee.salary}}' },
+  ]},
+  { group: 'Entreprise', vars: [
+    { label: 'Nom Société', value: '{{company.name}}', tag: '{{company.name}}' },
+    { label: 'Adresse', value: '{{company.address}}', tag: '{{company.address}}' },
+  ]},
+  { group: 'Document', vars: [
+    { label: 'Date du jour', value: '{{meta.generatedAt}}', tag: '{{meta.generatedAt}}' },
+    { label: 'Année', value: '{{meta.generatedYear}}', tag: '{{meta.generatedYear}}' },
+  ]}
 ];
 
 export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
@@ -180,22 +186,36 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
   // Helpers for Zone Management
   const parseTemplateParts = (fullBody: string) => {
-    const headerMatch = fullBody.match(/<!-- HEADER -->\n([\s\S]*?)(?=<!-- BODY -->)/)?.[1];
-    const bodyMatch = fullBody.match(/<!-- BODY -->\n([\s\S]*?)(?=<!-- FOOTER -->|$)/)?.[1];
-    const footerMatch = fullBody.match(/<!-- FOOTER -->\n([\s\S]*?)$/)?.[1];
+    // Standardized zone tags
+    const headerMatch = fullBody.match(/<!-- HEADER_START -->\n([\s\S]*?)\n<!-- HEADER_END -->/)?.[1];
+    const bodyMatch = fullBody.match(/<!-- BODY_START -->\n([\s\S]*?)\n<!-- BODY_END -->/)?.[1];
+    const footerMatch = fullBody.match(/<!-- FOOTER_START -->\n([\s\S]*?)\n<!-- FOOTER_END -->/)?.[1];
+
+    if (headerMatch || bodyMatch || footerMatch) {
+      return {
+        header: headerMatch?.trim() || '',
+        body: bodyMatch?.trim() || '',
+        footer: footerMatch?.trim() || '',
+      };
+    }
+
+    // Fallback for older format
+    const oldHeader = fullBody.match(/<!-- HEADER -->\n([\s\S]*?)(?=<!-- BODY -->)/)?.[1];
+    const oldBody = fullBody.match(/<!-- BODY -->\n([\s\S]*?)(?=<!-- FOOTER -->|$)/)?.[1];
+    const oldFooter = fullBody.match(/<!-- FOOTER -->\n([\s\S]*?)$/)?.[1];
 
     return {
-      header: headerMatch?.trim() || '',
-      body: bodyMatch?.trim() || (fullBody.includes('<!-- HEADER -->') ? '' : fullBody),
-      footer: footerMatch?.trim() || '',
+      header: oldHeader?.trim() || '',
+      body: oldBody?.trim() || (fullBody.includes('<!-- HEADER -->') ? '' : fullBody),
+      footer: oldFooter?.trim() || '',
     };
   };
 
   const buildFullTemplate = (bodyContent: string) => {
     const parts = [];
-    if (showHeader && headerHtml) parts.push(`<!-- HEADER -->\n${headerHtml.trim()}`);
-    parts.push(`<!-- BODY -->\n${bodyContent.trim()}`);
-    if (showFooter && footerHtml) parts.push(`<!-- FOOTER -->\n${footerHtml.trim()}`);
+    if (showHeader && headerHtml) parts.push(`<!-- HEADER_START -->\n${headerHtml.trim()}\n<!-- HEADER_END -->`);
+    parts.push(`<!-- BODY_START -->\n${bodyContent.trim()}\n<!-- BODY_END -->`);
+    if (showFooter && footerHtml) parts.push(`<!-- FOOTER_START -->\n${footerHtml.trim()}\n<!-- FOOTER_END -->`);
     return parts.join('\n\n');
   };
 
@@ -474,7 +494,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {QUICK_VARS.map((v) => (
+              {QUICK_VARS.flatMap(g => g.vars).map((v) => (
                 <button
                   key={v.value}
                   onClick={() => insertVariable(v.value)}
@@ -660,6 +680,43 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
           />
         ) : (
           <>
+            {/* Variable Library */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-sm animate-fade-in">
+              <div className="flex items-center gap-2 mb-1">
+                <Database className="w-4 h-4 text-sky-500" />
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bibliothèque de Variables</p>
+              </div>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                {QUICK_VARS.map((group) => (
+                  <div key={group.group} className="space-y-1.5">
+                    <p className="text-[9px] font-black text-slate-300 uppercase px-1">{group.group}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.vars.map((v) => (
+                        <button
+                          key={v.name}
+                          onClick={() => {
+                            if (editor) {
+                              editor.chain().focus().insertContent(v.tag).run();
+                              toast.success(`Variable "${v.label}" insérée`);
+                            }
+                          }}
+                          className="px-2 py-1 text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-100 rounded-lg hover:bg-sky-100 transition-all flex items-center gap-1"
+                          title={v.tag}
+                        >
+                          <Plus className="w-2.5 h-2.5" />
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-amber-50 rounded-2xl p-3 border border-amber-100 text-[9px] text-amber-700 leading-relaxed font-medium">
+                <span className="font-black uppercase block mb-1">💡 Astuce RH</span>
+                Cliquez sur une variable pour l'insérer à l'endroit de votre curseur.
+              </div>
+            </div>
+
             {/* General Info */}
             <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-sm animate-fade-in">
               <div className="flex items-center gap-2 mb-1">
@@ -777,6 +834,27 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
           usageCount: 0, createdAt: new Date().toISOString()
         } as Template}
       />
+      {/* Custom styles for the editor to make variables more "obvious" */}
+      <style>{`
+        .ProseMirror {
+          min-height: 800px;
+          padding: 60px 80px !important;
+          font-family: 'Inter', sans-serif;
+          font-size: 11pt;
+          line-height: 1.6;
+          color: #000;
+          background: white;
+          box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+          margin: 20px auto;
+          max-width: 800px;
+          outline: none !important;
+        }
+        /* Make {{variables}} stand out like chips */
+        .ProseMirror p {
+          margin-bottom: 1em;
+        }
+        /* We can't easily target text nodes in CSS, but we can style the whole editor to feel like a document */
+      `}</style>
     </div>
   );
 };

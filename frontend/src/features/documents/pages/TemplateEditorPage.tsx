@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
-import { templatesApi } from '../api';
+import { templatesApi, fetchTemplateContent } from '../api';
 import { TemplateBuilder } from '../components/TemplateBuilder';
 import type { Template } from '../types';
 
@@ -25,16 +25,47 @@ export function TemplateEditorPage() {
   useEffect(() => {
     if (!isNew && id) {
       console.log('TemplateEditorPage — Loading template:', id);
-      templatesApi.getById(id)
-        .then((data) => {
-          console.log('TemplateEditorPage — Template loaded:', data.name);
-          setTemplate(data);
-        })
-        .catch((err) => {
-          console.error('TemplateEditorPage — Error loading template:', err);
-          setError('Impossible de charger le modèle. Il a peut-être été supprimé.');
-        })
-        .finally(() => setLoading(false));
+      
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+      if (isUuid) {
+        // Normal database template
+        templatesApi.getById(id)
+          .then((data) => {
+            console.log('TemplateEditorPage — Template loaded:', data.name);
+            setTemplate(data);
+          })
+          .catch((err) => {
+            console.error('TemplateEditorPage — Error loading template:', err);
+            setError('Impossible de charger le modèle. Il a peut-être été supprimé.');
+          })
+          .finally(() => setLoading(false));
+      } else {
+        // Try to load as a standard template slug
+        // We'll treat this as a "NEW" template pre-populated with standard content
+        const lang = 'fr'; // Default to FR for import
+        fetchTemplateContent(id, lang)
+          .then((content) => {
+            console.log('TemplateEditorPage — Standard template imported:', id);
+            setTemplate({
+              id: 'new',
+              name: id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              category: id.includes('contrat') ? 'contract' : 'attestation',
+              language: lang,
+              body: content,
+              variableSchema: [],
+              status: 'draft',
+              version: 1,
+              usageCount: 0,
+              createdAt: new Date().toISOString()
+            });
+          })
+          .catch((err) => {
+            console.error('TemplateEditorPage — Error loading standard template:', err);
+            setError('Modèle introuvable. Vérifiez l\'identifiant ou créez-en un nouveau.');
+          })
+          .finally(() => setLoading(false));
+      }
     }
   }, [id, isNew]);
 

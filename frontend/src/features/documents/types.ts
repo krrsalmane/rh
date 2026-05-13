@@ -59,7 +59,8 @@ export interface GeneratedDocument {
 }
 
 export interface GenerateDocumentDto {
-  documentType: string;
+  documentType?: string;
+  templateId?: string;
   employeeId: string;
   formData: Record<string, unknown>;
   language?: 'fr' | 'ar' | 'en' | 'de';

@@ -89,58 +89,129 @@ export function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Absence Trends */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-sky-500" />
-            Tendances des absences (6 mois)
-          </h3>
-          <div className="h-64 w-full">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
+              <TrendingUp className="w-5 h-5 text-sky-500" />
+              Tendances des absences
+            </h3>
+            <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-3 py-1 rounded-full uppercase tracking-wider">
+              6 derniers mois
+            </span>
+          </div>
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trends}>
+              <BarChart data={trends} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0ea5e9" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  cursor={{ fill: '#f8fafc' }}
+                <XAxis 
+                  dataKey="month" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 500 }} 
+                  dy={10}
                 />
-                <Bar dataKey="count" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={30} />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 500 }} 
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f8fafc', radius: 8 }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white/20 ring-1 ring-black/5">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{payload[0].payload.month}</p>
+                          <p className="text-2xl font-black text-sky-600 leading-none">
+                            {payload[0].value} <span className="text-xs font-medium text-slate-400">absences</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar 
+                  dataKey="count" 
+                  fill="url(#barGradient)" 
+                  radius={[10, 10, 0, 0]} 
+                  barSize={32}
+                  animationDuration={1500}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Department Distribution */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <PieChartIcon className="w-4 h-4 text-fuchsia-500" />
-            Répartition par département
-          </h3>
-          <div className="h-64 w-full">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
+              <PieChartIcon className="w-5 h-5 text-fuchsia-500" />
+              Répartition par département
+            </h3>
+            <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-3 py-1 rounded-full uppercase tracking-wider">
+              Effectif global
+            </span>
+          </div>
+          <div className="h-72 w-full flex items-center justify-center relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={distribution}
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  innerRadius={75}
+                  outerRadius={100}
+                  paddingAngle={8}
                   dataKey="value"
+                  stroke="none"
+                  animationBegin={200}
+                  animationDuration={1800}
                 >
                   {distribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={COLORS[index % COLORS.length]} 
+                      className="hover:opacity-80 transition-opacity cursor-pointer outline-none"
+                    />
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white/20 ring-1 ring-black/5">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{payload[0].name}</p>
+                          <p className="text-2xl font-black leading-none" style={{ color: payload[0].payload.fill || payload[0].color }}>
+                            {payload[0].value} <span className="text-xs font-medium text-slate-400">employés</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
+            {/* Center Text for Donut */}
+            <div className="absolute flex flex-col items-center justify-center">
+              <span className="text-3xl font-black text-slate-800 leading-none">{stats.totalEmployees}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">Total</span>
+            </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-4 justify-center">
+          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 justify-center">
             {distribution.map((d, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                <span className="text-xs text-gray-600 font-medium">{d.name}</span>
+              <div key={i} className="flex items-center gap-2 group cursor-default">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full ring-2 ring-white shadow-sm" 
+                  style={{ backgroundColor: COLORS[i % COLORS.length] }} 
+                />
+                <span className="text-xs text-slate-600 font-bold group-hover:text-slate-900 transition-colors">{d.name}</span>
               </div>
             ))}
           </div>

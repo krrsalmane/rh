@@ -20,7 +20,7 @@ export async function getDepartmentDistribution(companyId: string) {
   const result = await query<{ department: string, count: string }>(
     `SELECT department, COUNT(*) as count 
      FROM employees 
-     WHERE company_id = $1 AND department IS NOT NULL AND status = "active"
+     WHERE company_id = $1 AND department IS NOT NULL AND status = 'active'
      GROUP BY department`,
     [companyId]
   );
@@ -51,7 +51,7 @@ export async function getManagerStats(managerId: string, companyId: string) {
     query<{ count: string }>(
       `SELECT COUNT(*) as count FROM leave_requests lr
        JOIN employees e ON lr.employee_id = e.id
-       WHERE e.manager_id = $1 AND lr.company_id = $2 AND lr.status = \'pending\'`,
+       WHERE e.manager_id = $1 AND lr.company_id = $2 AND lr.status = 'pending'`,
       [managerId, companyId]
     ),
   ]);
@@ -67,7 +67,11 @@ export async function getEmployeeStats(employeeId: string, companyId: string) {
     query<{ count: string }>('SELECT COUNT(*) as count FROM leave_requests WHERE employee_id = $1 AND company_id = $2 AND status = \'pending\'', [employeeId, companyId]),
     query<{ count: string }>('SELECT COUNT(*) as count FROM tasks WHERE assigned_to = $1 AND company_id = $2 AND status != \'completed\'', [employeeId, companyId]),
     query<{ sum: string }>(
-      'SELECT SUM(lb.remaining) as sum FROM leave_balances lb JOIN employees e ON lb.employee_id = e.id WHERE lb.employee_id = $1 AND e.company_id = $2 AND lb.year = YEAR(CURRENT_DATE())',
+      `SELECT SUM(lb.remaining) as sum 
+       FROM leave_balances lb 
+       JOIN employees e ON lb.employee_id = e.id 
+       WHERE lb.employee_id = $1 AND e.company_id = $2 
+       AND lb.year = YEAR(CURRENT_DATE())`,
       [employeeId, companyId]
     ),
   ]);
