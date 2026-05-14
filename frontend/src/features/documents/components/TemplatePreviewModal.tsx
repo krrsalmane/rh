@@ -232,7 +232,7 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
                 {/* 1. Dynamic Header */}
                 {showHeader && (
                    <div 
-                    className="p-10 border-b-2 border-slate-100" 
+                    className="p-10" 
                     dangerouslySetInnerHTML={{ __html: buildPreviewHtml(header) }} 
                   />
                 )}
@@ -258,7 +258,7 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
                 {/* 3. Dynamic Footer */}
                 {showFooter && (
                   <div 
-                    className="p-8 bg-slate-50 border-t border-slate-200"
+                    className="p-8 bg-slate-50"
                     dangerouslySetInnerHTML={{ __html: buildPreviewHtml(footer) }}
                   />
                 )}

@@ -25,13 +25,6 @@ SELECT @company_id,
 
 <p>La présente attestation est délivrée à l''intéressé(e) pour servir et valoir ce que de droit{{#if form.purpose}}, notamment pour <strong>{{form.purpose}}</strong>{{/if}}.</p>
 
-<div class="signature-zone">
-  <div class="signature-block">
-    <div class="signature-line">Signature et cachet de l''entreprise</div>
-  </div>
-  <div class="signature-block">
-    <div class="signature-line">Fait à ____________, le {{meta.generatedAtLong}}</div>
-  </div>
 </div>',
   '[
     {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
@@ -70,13 +63,6 @@ SELECT @company_id,
 
 <p>Fait pour servir et valoir ce que de droit.</p>
 
-<div class="signature-zone">
-  <div class="signature-block">
-    <div class="signature-line">Signature et cachet de l''entreprise</div>
-  </div>
-  <div class="signature-block">
-    <div class="signature-line">Fait le {{meta.generatedAtLong}}</div>
-  </div>
 </div>',
   '[
     {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},
@@ -139,13 +125,6 @@ SELECT @company_id,
 
 <p>Fait en deux exemplaires originaux, un pour chaque partie.</p>
 
-<div class="signature-zone">
-  <div class="signature-block">
-    <div class="signature-line">L''Employeur</div>
-  </div>
-  <div class="signature-block">
-    <div class="signature-line">Le Salarié</div>
-  </div>
 </div>',
   '[
     {"name": "employee.fullName", "label": "Nom complet", "type": "text", "required": true, "autoFill": true},

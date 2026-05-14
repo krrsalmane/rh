@@ -332,22 +332,13 @@ export const DocumentGenerator: React.FC<Props> = ({
                 <p className="text-xs text-slate-500">{selectedEmployee.function}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                <p className="text-xs font-medium text-slate-400 mb-1">Langue</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-lg">
-                    {selectedLanguage === 'fr' && '🇫🇷'}
-                    {selectedLanguage === 'ar' && '🇸🇦'}
-                    {selectedLanguage === 'en' && '🇬🇧'}
-                    {selectedLanguage === 'de' && '🇩🇪'}
-                  </span>
-                  <span className="text-sm font-bold text-slate-800">
-                    {selectedLanguage === 'fr' && 'Français'}
-                    {selectedLanguage === 'ar' && 'العربية'}
-                    {selectedLanguage === 'en' && 'English'}
-                    {selectedLanguage === 'de' && 'Deutsch'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Document sera généré dans cette langue</p>
+                <p className="text-xs font-medium text-slate-400 mb-2">Langue</p>
+                <LanguageSelector
+                  selectedLanguage={selectedLanguage}
+                  onLanguageChange={setSelectedLanguage}
+                  className="w-full"
+                />
+                <p className="text-xs text-slate-500 mt-3">Document sera généré dans cette langue</p>
               </div>
             </div>
             

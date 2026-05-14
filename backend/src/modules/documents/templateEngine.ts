@@ -158,16 +158,19 @@ function parseTemplateZones(fullBody: string) {
   const zones = {
     header: '',
     body: fullBody,
+    signature: '',
     footer: ''
   };
 
   // Improved regex to handle both tagged and untagged templates
   const headerMatch = fullBody.match(/<!-- HEADER_START -->([\s\S]*?)<!-- HEADER_END -->/);
   const bodyMatch = fullBody.match(/<!-- BODY_START -->([\s\S]*?)<!-- BODY_END -->/);
+  const signatureMatch = fullBody.match(/<!-- SIGNATURE_START -->([\s\S]*?)<!-- SIGNATURE_END -->/);
   const footerMatch = fullBody.match(/<!-- FOOTER_START -->([\s\S]*?)<!-- FOOTER_END -->/);
 
   if (headerMatch) zones.header = headerMatch[1].trim();
   if (bodyMatch) zones.body = bodyMatch[1].trim();
+  if (signatureMatch) zones.signature = signatureMatch[1].trim();
   if (footerMatch) zones.footer = footerMatch[1].trim();
 
   // Fallback for older format
@@ -183,7 +186,7 @@ function parseTemplateZones(fullBody: string) {
   return zones;
 }
 
-function wrapInHtml(zones: { header: string; body: string; footer: string }, data: any, language: SupportedLanguage = 'fr'): string {
+function wrapInHtml(zones: { header: string; body: string; signature: string; footer: string }, data: any, language: SupportedLanguage = 'fr'): string {
   const lang = language || getDefaultLanguage();
   const direction = getTextDirection(lang);
   const langClass = getLanguageClasses(lang);
@@ -197,15 +200,15 @@ function wrapInHtml(zones: { header: string; body: string; footer: string }, dat
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap');
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body { 
       font-family: 'Inter', sans-serif; 
       font-size: 11pt; 
-      color: #1f2937; 
-      line-height: 1.5;
+      color: #334155; 
+      line-height: 1.6;
       background: #f8fafc;
       -webkit-print-color-adjust: exact;
     }
@@ -220,69 +223,73 @@ function wrapInHtml(zones: { header: string; body: string; footer: string }, dat
       position: relative;
       background: white;
       width: 210mm;
-      height: 297mm;
+      min-height: 297mm;
       margin: 20px auto;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
       overflow: hidden;
     }
 
     .document-header { 
-      padding: 50px 70px 15px; 
+      padding: 60px 80px 20px; 
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
     
     .company-info { flex: 1; }
-    .company-name { font-size: 15pt; font-weight: 800; color: #000; text-transform: uppercase; margin-bottom: 2px; letter-spacing: -0.01em; }
-    .company-details { font-size: 8.5pt; color: #6b7280; line-height: 1.3; max-width: 400px; }
-    .doc-date { font-size: 10pt; color: #374151; font-weight: 600; text-align: right; }
+    .company-name { font-size: 16pt; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.02em; }
+    .company-details { font-size: 9pt; color: #64748b; line-height: 1.4; max-width: 400px; }
+    .doc-date { font-size: 10.5pt; color: #475569; font-weight: 600; text-align: right; margin-top: 4px; }
 
     .document-body { 
-      padding: 15px 70px; 
-      flex: 1;
+      padding: 20px 80px; 
       overflow: hidden;
     }
     
     .document-body h1 { 
-      font-size: 18pt; 
+      font-size: 20pt; 
       font-weight: 800;
       text-align: center; 
-      margin: 30px 0 35px; 
-      color: #000; 
+      margin: 40px 0 45px; 
+      color: #0f172a; 
       text-transform: uppercase;
-      text-decoration: underline;
-      text-underline-offset: 8px;
-      text-decoration-thickness: 2px;
+      letter-spacing: 0.03em;
+      position: relative;
+    }
+
+    .document-body h1::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background-color: #0f172a;
     }
 
     .document-body p { 
-      margin-bottom: 16px; 
+      margin-bottom: 18px; 
       text-align: justify;
-      font-size: 10.5pt;
-      line-height: 1.6;
+      font-size: 11pt;
+      line-height: 1.7;
     }
 
-    .document-body strong { font-weight: 700; color: #000; }
-
-    .signature-section {
-      margin-top: 20px;
-      padding: 0 70px 50px;
-    }
-
-    .sig-table { width: 100%; border-collapse: collapse; }
-    .sig-box { width: 50%; vertical-align: top; }
-    .sig-label { font-size: 9.5pt; font-weight: 700; color: #000; margin-bottom: 60px; display: block; }
+    .document-body strong { font-weight: 700; color: #0f172a; }
 
     .document-footer { 
-      border-top: 1px solid #f1f5f9; 
-      padding: 20px 70px; 
-      font-size: 8pt; 
+      padding: 25px 80px; 
+      font-size: 8.5pt; 
       color: #94a3b8; 
       text-align: center;
       background: white;
+      margin-top: auto;
+    }
+
+    .document-signature {
+      padding: 0 80px 40px;
     }
 
     /* Support for Custom Template Styles */
@@ -292,10 +299,9 @@ function wrapInHtml(zones: { header: string; body: string; footer: string }, dat
     [dir="rtl"] { font-family: 'Cairo', sans-serif; }
     [dir="rtl"] .doc-date { text-align: left; }
     [dir="rtl"] .company-info { text-align: right; }
-    [dir="rtl"] .company-name { font-size: 17pt; }
-    [dir="rtl"] .document-body h1 { font-size: 20pt; margin: 25px 0 30px; }
-    [dir="rtl"] .document-body p { line-height: 1.5; margin-bottom: 12px; font-size: 11pt; }
-    [dir="rtl"] .sig-label { font-size: 11pt; }
+    [dir="rtl"] .company-name { font-size: 18pt; letter-spacing: 0; }
+    [dir="rtl"] .document-body h1 { font-size: 22pt; margin: 35px 0 40px; letter-spacing: 0; }
+    [dir="rtl"] .document-body p { line-height: 1.8; margin-bottom: 16px; font-size: 11.5pt; }
   </style>
 </head>
 <body>
@@ -314,20 +320,11 @@ function wrapInHtml(zones: { header: string; body: string; footer: string }, dat
       ${bodyWithoutStyle}
     </div>
 
-    ${zones.body.includes('sig-table') ? '' : `
-      <div class="signature-section">
-        <table class="sig-table">
-          <tr>
-            <td class="sig-box">
-              <span class="sig-label">Signature de l'employeur</span>
-            </td>
-            <td class="sig-box" style="text-align: right;">
-              <span class="sig-label">Signature du salarié</span>
-            </td>
-          </tr>
-        </table>
-      </div>
-    `}
+    ${zones.signature ? `
+    <div class="document-signature">
+      ${zones.signature}
+    </div>
+    ` : ''}
 
     <div class="document-footer">
       ${zones.footer || `${data.company.name} — ${data.company.address}`}
@@ -355,6 +352,7 @@ export function compileTemplate(
     // Step 3: Sanitize
     zones.header = sanitizeTemplate(zones.header);
     zones.body = sanitizeTemplate(zones.body);
+    zones.signature = sanitizeTemplate(zones.signature);
     zones.footer = sanitizeTemplate(zones.footer);
 
     // Step 4: Compile
@@ -362,6 +360,7 @@ export function compileTemplate(
     const compiledZones = {
       header: Handlebars.compile(zones.header)(templateData),
       body: Handlebars.compile(zones.body)(templateData),
+      signature: Handlebars.compile(zones.signature)(templateData),
       footer: Handlebars.compile(zones.footer)(templateData),
     };
 
@@ -395,6 +394,7 @@ export function compileRawTemplate(
     // Step 2: Sanitize
     zones.header = sanitizeTemplate(zones.header);
     zones.body = sanitizeTemplate(zones.body);
+    zones.signature = sanitizeTemplate(zones.signature);
     zones.footer = sanitizeTemplate(zones.footer);
 
     // Step 3: Compile
@@ -402,6 +402,7 @@ export function compileRawTemplate(
     const compiledZones = {
       header: Handlebars.compile(zones.header)(templateData),
       body: Handlebars.compile(zones.body)(templateData),
+      signature: Handlebars.compile(zones.signature)(templateData),
       footer: Handlebars.compile(zones.footer)(templateData),
     };
 

@@ -39,21 +39,21 @@ interface FooterConfig {
 }
 
 const DEFAULT_HEADER_CONFIG: HeaderConfig = {
-  title: 'DOCUMENT OFFICIEL',
-  subtitle: '{{company.name}}',
-  infoLine: 'Casablanca, le {{meta.generatedAt}}',
+  title: '{{company.name}}',
+  subtitle: '{{company.address}}',
+  infoLine: '{{meta.generatedAt}}',
   logoUrl: null,
   logoSize: 60,
-  showDivider: true,
+  showDivider: false,
   textAlign: 'between',
   layout: 'standard',
 };
 
 const DEFAULT_FOOTER_CONFIG: FooterConfig = {
-  leftText: '{{company.name}}',
-  centerText: 'Maya HR Platform · {{meta.generatedYear}}',
-  rightText: "Document confidentiel destiné à l'usage interne uniquement.",
-  showDivider: true,
+  leftText: '',
+  centerText: '{{company.name}} — {{company.address}}',
+  rightText: '',
+  showDivider: false,
   showPageNumber: true,
 };
 
@@ -63,19 +63,19 @@ const generateHeaderHtml = (config: HeaderConfig) => {
       config.textAlign === 'right' ? 'flex-end' : 'flex-start';
 
   return `
-<div style="display:flex;justify-content:${align};align-items:center;padding-bottom:16px;${config.showDivider ? 'border-bottom:2px solid #0ea5e9;' : ''}margin-bottom:24px;font-family:sans-serif;">
-  <div style="display:flex;${config.textAlign === 'right' ? 'flex-direction:row-reverse;' : 'flex-direction:row;'}align-items:center;gap:12px;">
+<div style="width:100%;display:flex;justify-content:${align};align-items:flex-start;padding-bottom:16px;${config.showDivider ? 'border-bottom:2px solid #e2e8f0;' : ''}margin-bottom:24px;font-family:sans-serif;">
+  <div style="display:flex;${config.textAlign === 'right' ? 'flex-direction:row-reverse;' : 'flex-direction:row;'}align-items:center;gap:16px;">
     <div id="logo-container" data-field="logo">
       {{#if logoUrl}}<img src="{{logoUrl}}" style="height:{{logoSize}}px;width:auto;" />{{/if}}
     </div>
     <div style="text-align:${config.textAlign === 'center' ? 'center' : 'left'};">
-      <div data-field="title" style="font-size:15pt;font-weight:bold;color:#0f172a;">${config.title}</div>
-      <div data-field="subtitle" style="font-size:9pt;color:#64748b;">${config.subtitle}</div>
+      <div data-field="title" style="font-size:16pt;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.02em;">${config.title}</div>
+      <div data-field="subtitle" style="font-size:9.5pt;color:#64748b;margin-top:2px;">${config.subtitle}</div>
     </div>
   </div>
   ${config.textAlign === 'between' ? `
-  <div data-field="infoLine" style="text-align:right;font-size:10pt;color:#64748b;">
-    <div style="font-weight:bold;color:#0ea5e9;margin-bottom:4px;">${config.infoLine}</div>
+  <div data-field="infoLine" style="text-align:right;font-size:10.5pt;color:#475569;font-weight:600;margin-top:2px;">
+    ${config.infoLine}
   </div>` : ''}
 </div>
 `.trim();
@@ -83,14 +83,12 @@ const generateHeaderHtml = (config: HeaderConfig) => {
 
 const generateFooterHtml = (config: FooterConfig) => {
   return `
-<div style="margin-top:40px;padding-top:12px;${config.showDivider ? 'border-top:1px solid #e2e8f0;' : ''}display:flex;justify-content:space-between;font-size:8pt;color:#94a3b8;font-family:sans-serif;">
-  <div style="display:flex;flex-direction:column;gap:2px;">
-    <span data-field="leftText" style="font-weight:bold;color:#475569;">${config.leftText}</span>
-    <span data-field="centerText">Maya HR Platform · {{meta.generatedYear}}</span>
-  </div>
-  <div data-field="rightText" style="text-align:right;">
+<div style="width:100%;margin-top:40px;padding-top:20px;${config.showDivider ? 'border-top:1px solid #f1f5f9;' : ''}display:flex;justify-content:space-between;align-items:flex-end;font-size:8.5pt;color:#94a3b8;font-family:sans-serif;">
+  <div data-field="leftText" style="flex:1;text-align:left;font-weight:600;color:#64748b;">${config.leftText}</div>
+  <div data-field="centerText" style="flex:2;text-align:center;">${config.centerText}</div>
+  <div data-field="rightText" style="flex:1;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
     <span>${config.rightText}</span>
-    ${config.showPageNumber ? '<div style="margin-top:4px;font-weight:bold;color:#0ea5e9;">Page 1/1</div>' : ''}
+    ${config.showPageNumber ? '<span style="font-weight:600;color:#64748b;">Page 1/1</span>' : ''}
   </div>
 </div>
 `.trim();
@@ -148,7 +146,11 @@ const QUICK_VARS = [
   { group: 'Document', vars: [
     { label: 'Date du jour', value: '{{meta.generatedAt}}', tag: '{{meta.generatedAt}}' },
     { label: 'Année', value: '{{meta.generatedYear}}', tag: '{{meta.generatedYear}}' },
-  ]}
+  ]},
+  { group: 'Signatures', vars: [
+    { label: 'Signature du salarié', value: '<p><strong>Signature du salarié :</strong></p><p>_________________________</p>', tag: '<p><strong>Signature du salarié :</strong></p><p>_________________________</p>' },
+    { label: 'Signature de l\'employeur', value: '<p><strong>Signature de l\'employeur :</strong></p><p>_________________________</p>', tag: '<p><strong>Signature de l\'employeur :</strong></p><p>_________________________</p>' },
+  ]},
 ];
 
 export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
@@ -270,7 +272,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
         emptyNodeClass: 'is-empty',
       }),
     ],
-    content: template?.body || '',
+    content: template?.body || '<h1 style="text-align: center">TITRE DU DOCUMENT</h1><p></p>',
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[500px] p-0 bg-white',
@@ -336,7 +338,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
       if (titleMatch) config.title = titleMatch[1];
       if (subtitleMatch) config.subtitle = subtitleMatch[1];
-      if (infoLineMatch) config.infoLine = infoLineMatch[1].replace(/<[^>]*>/g, '').replace('Casablanca, le ', '');
+      if (infoLineMatch) config.infoLine = infoLineMatch[1].replace(/<[^>]*>/g, '').replace(/^Casablanca, le |^Le /i, '');
       if (logoMatch && !logoMatch[1].includes('{{logoUrl}}')) config.logoUrl = logoMatch[1];
       if (sizeMatch) config.logoSize = parseInt(sizeMatch[1]);
       if (alignMatch) {
@@ -349,11 +351,14 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       return config;
     } else {
       const config = { ...DEFAULT_FOOTER_CONFIG };
-      const leftMatch = html.match(/data-field="leftText"[^>]*>([\s\S]*?)<\/span>/);
+      const leftMatch = html.match(/data-field="leftText"[^>]*>([\s\S]*?)<\/div>/);
+      const centerMatch = html.match(/data-field="centerText"[^>]*>([\s\S]*?)<\/div>/);
       const rightMatch = html.match(/data-field="rightText"[^>]*>[\s\S]*?<span>([\s\S]*?)<\/span>/);
       if (leftMatch) config.leftText = leftMatch[1];
+      if (centerMatch) config.centerText = centerMatch[1];
       if (rightMatch) config.rightText = rightMatch[1];
       config.showPageNumber = html.includes('Page 1/1');
+      config.showDivider = html.includes('border-top');
       return config;
     }
   };
@@ -509,7 +514,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
           </div>
 
           {/* THE DOCUMENT CONTAINER */}
-          <div className="bg-white shadow-2xl rounded-sm border border-slate-200 min-h-[1123px] flex flex-col transition-all duration-300 overflow-hidden">
+          <div className="bg-white shadow-2xl rounded-sm border border-slate-200 min-h-[700px] flex flex-col transition-all duration-300 overflow-hidden">
 
             {/* 1. HEADER ZONE */}
             <div className={clsx(
@@ -555,7 +560,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
             {/* 2. BODY ZONE */}
             <div className={clsx(
-              "flex-1 relative transition-all duration-300",
+              "relative transition-all duration-300",
               editingZone === 'body' ? "bg-white ring-2 ring-inset ring-emerald-200" : "bg-slate-50/10"
             )}>
               <ZoneBar
@@ -581,7 +586,14 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                   />
                 </div>
               ) : (
-                <div className={clsx("p-10 min-h-[600px]", editingZone !== 'body' && "opacity-60 pointer-events-none")}>
+                <div 
+                  className={clsx(
+                    "p-10 min-h-[600px]", 
+                    editingZone !== 'body' && "opacity-60 pointer-events-none",
+                    language === 'ar' && "text-right"
+                  )}
+                  dir={language === 'ar' ? 'rtl' : 'ltr'}
+                >
                   {editingZone === 'body' && (
                     <div className="flex flex-wrap items-center gap-0.5 p-1.5 bg-slate-50 border border-slate-100 rounded-xl mb-6 sticky top-4 z-20 shadow-sm animate-fade-in">
                       <ToolbarBtn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} icon={Bold} title="Gras" />
@@ -608,7 +620,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
             {/* 3. FOOTER ZONE */}
             <div className={clsx(
-              "relative mt-auto transition-all duration-300 border-t border-dashed",
+              "relative mt-8 transition-all duration-300 border-t border-dashed",
               editingZone === 'footer' ? "bg-slate-50/50 border-slate-300 ring-2 ring-inset ring-slate-300" : "border-transparent",
               !showFooter && "opacity-40 grayscale"
             )}>
@@ -743,6 +755,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                     <option value="fr">Français</option>
                     <option value="ar">Arabe</option>
                     <option value="en">Anglais</option>
+                    <option value="de">Allemand</option>
                   </select>
                 </div>
               </div>

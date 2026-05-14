@@ -17,15 +17,7 @@ export async function renderPDF(
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      displayHeaderFooter: true,
-      headerTemplate: '<div></div>',
-      footerTemplate: `
-        <style>
-          #footer { padding: 0 !important; margin: 0 !important; width: 100%; }
-          .f-content { font-family: sans-serif; font-size: 8pt; width: 100%; padding: 0 40px; text-align: right; color: #94a3b8; }
-        </style>
-        <div class="f-content">Page <span class="pageNumber"></span> / <span class="totalPages"></span></div>
-      `,
+      displayHeaderFooter: false,
       margin: {
         top: '10mm',
         right: '10mm',

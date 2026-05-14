@@ -35,7 +35,7 @@ export const companyApi = {
 
 export const holidaysApi = {
   getAll: () => api.get('/public-holidays').then((r) => r.data.data),
-  create: (data: { name: string; date: string; isRecurring?: boolean }) =>
+  create: (data: { name: string; date: string; year: number; isRecurring?: boolean }) =>
     api.post('/public-holidays', data).then((r) => r.data.data),
   delete: (id: string) => api.delete(`/public-holidays/${id}`).then((r) => r.data),
 };

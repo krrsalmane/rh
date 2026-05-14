@@ -157,3 +157,4 @@ export const PublicHolidaysSettings: React.FC = () => {
     </div>
   );
 };
+

@@ -11,10 +11,10 @@ const templateCache = new Map<string, string>();
 export function loadTemplate(documentType: string, language: SupportedLanguage): string {
   const cacheKey = `${documentType}/${language}`;
   
-  // Return from cache if available
-  if (templateCache.has(cacheKey)) {
-    return templateCache.get(cacheKey)!;
-  }
+  /* Cache disabled to ensure disk changes reflect immediately */
+  // if (templateCache.has(cacheKey)) {
+  //   return templateCache.get(cacheKey)!;
+  // }
   
   const templatePath = path.join(__dirname, 'templates', documentType, `${language}.hbs`);
   
