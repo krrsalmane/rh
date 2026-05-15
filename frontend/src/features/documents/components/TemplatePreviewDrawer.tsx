@@ -87,6 +87,7 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
   template, isOpen, onClose, onEdit, onGenerate
 }) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'variables' | 'info'>('preview');
+  const isArabic = template?.language === 'ar';
 
   if (!template) return null;
 
@@ -175,13 +176,16 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
                 </div>
                 <iframe
                   srcDoc={`
+                    <html lang="${template.language}" dir="ltr">
+                    <body>
                     <style>
-                      body { font-family: sans-serif; line-height: 1.4; color: #334155; padding: 20px; margin: 0; }
-                      .zone-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
-                      .zone-footer { border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 15px; background: #f8fafc; font-size: 0.8em; }
+                      body { font-family: sans-serif; line-height: 1.4; color: #334155; padding: 20px; margin: 0; direction: ltr; text-align: left; }
+                      .zone-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; direction: ltr; text-align: left; }
+                      .zone-footer { border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 15px; background: #f8fafc; font-size: 0.8em; direction: ltr; text-align: left; }
+                      .zone-body { direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'}; }
                       h1, h2, h3 { color: #0f172a; margin-top: 1em; }
                       table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-                      th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+                      th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: ${isArabic ? 'right' : 'left'}; }
                       th { background: #f8fafc; font-weight: bold; }
                     </style>
                     <div class="content">
@@ -189,6 +193,8 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
                       <div class="zone-body">${body}</div>
                       ${showFooter ? `<div class="zone-footer">${footer}</div>` : ''}
                     </div>
+                    </body>
+                    </html>
                   `}
                   title="Preview"
                   className="w-full h-full border-none bg-white"

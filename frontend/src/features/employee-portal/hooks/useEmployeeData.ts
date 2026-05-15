@@ -44,7 +44,7 @@ export function useEmployeeData() {
     queryKey: ['employee-profile'],
     queryFn: async () => {
       const response = await axiosInstance.get('/employees/profile');
-      return response.data;
+      return response.data.data;
     },
   });
 
@@ -52,7 +52,7 @@ export function useEmployeeData() {
     queryKey: ['employee-leave-balances'],
     queryFn: async () => {
       const response = await axiosInstance.get('/leaves/balances');
-      return response.data;
+      return response.data.data;
     },
   });
 
@@ -60,7 +60,7 @@ export function useEmployeeData() {
     queryKey: ['employee-documents'],
     queryFn: async () => {
       const response = await axiosInstance.get('/documents/employee');
-      return response.data;
+      return response.data.data;
     },
   });
 
@@ -68,7 +68,7 @@ export function useEmployeeData() {
     queryKey: ['employee-time-entries'],
     queryFn: async () => {
       const response = await axiosInstance.get('/time/entries');
-      return response.data;
+      return response.data.data;
     },
   });
 

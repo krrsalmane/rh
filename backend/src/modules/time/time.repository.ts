@@ -102,12 +102,19 @@ export async function remove(id: string, companyId: string): Promise<boolean> {
   return (result.rowCount ?? 0) > 0;
 }
 
-export async function getSummary(employeeId: string, startDate: string, endDate: string, companyId: string) {
+export async function getSummary(employeeId: string | undefined, startDate: string, endDate: string, companyId: string) {
+  const hasEmployeeFilter = !!employeeId;
   const result = await query<{ total_hours: string; total_overtime: string; total_deficit: string; days_worked: string }>(
-    `SELECT COALESCE(SUM(total_hours), 0) as total_hours, COALESCE(SUM(overtime), 0) as total_overtime,
-     COALESCE(SUM(deficit), 0) as total_deficit, COUNT(*) as days_worked
-     FROM time_entries WHERE employee_id = $1 AND company_id = $2 AND date BETWEEN $3 AND $4`,
-    [employeeId, companyId, startDate, endDate]
+    hasEmployeeFilter
+      ? `SELECT COALESCE(SUM(total_hours), 0) as total_hours, COALESCE(SUM(overtime), 0) as total_overtime,
+       COALESCE(SUM(deficit), 0) as total_deficit, COUNT(*) as days_worked
+       FROM time_entries WHERE employee_id = $1 AND company_id = $2 AND date BETWEEN $3 AND $4`
+      : `SELECT COALESCE(SUM(total_hours), 0) as total_hours, COALESCE(SUM(overtime), 0) as total_overtime,
+       COALESCE(SUM(deficit), 0) as total_deficit, COUNT(*) as days_worked
+       FROM time_entries WHERE company_id = $1 AND date BETWEEN $2 AND $3`,
+    hasEmployeeFilter
+      ? [employeeId, companyId, startDate, endDate]
+      : [companyId, startDate, endDate]
   );
   const row = result.rows[0];
   return {

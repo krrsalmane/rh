@@ -1,7 +1,10 @@
 import { formatDate, formatCurrency, formatNumber, getLanguageFont, getTextDirection, getLanguageClasses, getDefaultLanguage, SupportedLanguage } from './translationService';
 import { loadTemplate } from './templateLoader';
+import fs from 'fs';
+import path from 'path';
 import Handlebars from 'handlebars';
 import { AppError } from '../../shared/utils/AppError';
+import { getStoragePath } from '../../config/storage';
 
 // Register helpers with language support
 Handlebars.registerHelper('formatDate', (dateStr: string, options?: any) => {
@@ -75,6 +78,29 @@ interface CompanyData {
   logo_url: string | null;
 }
 
+function resolveLogoUrl(logoUrl: string | null): string {
+  if (!logoUrl) return '';
+  if (logoUrl.startsWith('data:') || /^https?:\/\//i.test(logoUrl)) return logoUrl;
+
+  const normalized = logoUrl.replace(/\\/g, '/');
+  const candidates = [
+    normalized,
+    normalized.replace(/^\/+/, ''),
+    getStoragePath('uploads', path.basename(normalized)),
+  ];
+
+  const filePath = candidates.find((candidate) => fs.existsSync(candidate));
+
+  if (!filePath) return logoUrl;
+
+  const extension = path.extname(filePath).toLowerCase();
+  const mimeType = extension === '.png' ? 'image/png' : extension === '.jpg' || extension === '.jpeg' ? 'image/jpeg' : '';
+  if (!mimeType) return logoUrl;
+
+  const fileBuffer = fs.readFileSync(filePath);
+  return `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+}
+
 // Contract type localization map
 const CONTRACT_TYPE_MAP: Record<string, Partial<Record<SupportedLanguage, string>>> = {
   'CDI':        { en: 'permanent contract',   de: 'unbefristeten Arbeitsvertrag', ar: 'عمل غير محدد المدة' },
@@ -129,7 +155,7 @@ export function buildTemplateData(
         if (lang === 'de') return addr.replace(/Morocco/i, 'Marokko');
         return addr;
       })(),
-      logoUrl: company.logo_url || '',
+      logoUrl: resolveLogoUrl(company.logo_url),
     },
     form: { ...formData },
     meta: {
@@ -215,6 +241,7 @@ function wrapInHtml(zones: { header: string; body: string; signature: string; fo
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=Cairo:wght@400;500;600;700&family=Great+Vibes&family=UnifrakturCook:wght@700&family=Fredoka:wght@400;600&display=swap');
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
     
     body { 
       font-family: 'Inter', sans-serif; 
@@ -235,11 +262,17 @@ function wrapInHtml(zones: { header: string; body: string; signature: string; fo
       position: relative;
       background: white;
       width: 100%;
-      min-height: 100%;
+      min-height: 100vh;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+    }
+
+    @media print {
+      .document-page {
+        min-height: calc(297mm - 34mm);
+      }
     }
 
     .document-header { 
@@ -297,6 +330,7 @@ function wrapInHtml(zones: { header: string; body: string; signature: string; fo
       color: #9ca3af; 
       text-align: center;
       background: white;
+      flex: 0 0 auto;
       margin-top: auto;
     }
 

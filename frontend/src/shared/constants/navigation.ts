@@ -34,7 +34,7 @@ export const NAVIGATION: NavSection[] = [
   {
     section: 'GESTION RH',
     items: [
-      { label: 'Employés', icon: Users, path: '/employees', roles: ['super_admin','hr_agent'] },
+      { label: 'Employés', icon: Users, path: '/employees', roles: ['super_admin','hr_agent','manager'] },
       { label: 'Documents', icon: FileText, path: '/documents', roles: ['super_admin','hr_agent'] },
       { label: 'Modèles', icon: FilePlus, path: '/templates', roles: ['super_admin','hr_agent'] },
     ]
@@ -43,7 +43,7 @@ export const NAVIGATION: NavSection[] = [
     section: 'PRÉSENCE',
     items: [
       { label: 'Temps', icon: Clock, path: '/time', roles: ['super_admin','hr_agent','manager','employee'] },
-      { label: 'Absences', icon: UserX, path: '/absences', roles: ['super_admin','hr_agent','manager','employee'] },
+      { label: 'Absences', icon: UserX, path: '/absences', roles: ['super_admin','hr_agent','employee'] },
       { label: 'Congés', icon: CalendarDays, path: '/leaves', roles: ['super_admin','hr_agent','manager','employee'] },
     ]
   },

@@ -8,7 +8,7 @@ import { CreateWorkScheduleSchema, UpdateWorkScheduleSchema } from './workSchedu
 const router = Router();
 router.use(authenticate);
 
-router.get('/', authorize('super_admin', 'hr_agent', 'manager'), workSchedulesController.getWorkSchedules);
+router.get('/', authorize('super_admin', 'hr_agent'), workSchedulesController.getWorkSchedules);
 router.get('/:id', authorize('super_admin', 'hr_agent'), workSchedulesController.getWorkScheduleById);
 router.post('/', authorize('super_admin', 'hr_agent'), validate(CreateWorkScheduleSchema), workSchedulesController.createWorkSchedule);
 router.put('/:id', authorize('super_admin', 'hr_agent'), validate(UpdateWorkScheduleSchema), workSchedulesController.updateWorkSchedule);

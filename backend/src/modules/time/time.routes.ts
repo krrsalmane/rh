@@ -9,9 +9,9 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', authorize('super_admin', 'hr_agent', 'manager', 'employee'), timeController.getTimeEntries);
-router.get('/summary', authorize('super_admin', 'hr_agent', 'manager'), timeController.getTimeSummary);
-router.get('/:id', authorize('super_admin', 'hr_agent', 'manager'), timeController.getTimeEntryById);
-router.post('/', authorize('super_admin', 'hr_agent', 'manager'), validate(CreateTimeEntrySchema), timeController.createTimeEntry);
+router.get('/summary', authorize('super_admin', 'hr_agent', 'manager', 'employee'), timeController.getTimeSummary);
+router.get('/:id', authorize('super_admin', 'hr_agent', 'manager', 'employee'), timeController.getTimeEntryById);
+router.post('/', authorize('super_admin', 'hr_agent'), validate(CreateTimeEntrySchema), timeController.createTimeEntry);
 router.put('/:id', authorize('super_admin', 'hr_agent'), validate(UpdateTimeEntrySchema), timeController.updateTimeEntry);
 router.delete('/:id', authorize('super_admin'), timeController.deleteTimeEntry);
 

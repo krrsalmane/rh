@@ -9,6 +9,11 @@ export const getEmployees = asyncHandler(async (req: Request, res: Response): Pr
   res.json({ status: 'success', data: result.items, pagination: result.pagination });
 });
 
+export const getProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const profile = await employeesService.getProfile(req.user!);
+  res.json({ status: 'success', data: profile });
+});
+
 export const getEmployeeById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { employee, leaveBalances } = await employeesService.getEmployeeById(req.params.id, req.user!);
   res.json({ status: 'success', data: { ...employee, leaveBalances } });

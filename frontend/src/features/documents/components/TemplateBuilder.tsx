@@ -16,7 +16,7 @@ import {
   Bold, Italic, Underline as UnderlineIcon, List,
   AlignCenter, Undo2,
   Plus, Trash2, GripVertical, Save, Send, Eye, EyeOff, Zap,
-  Upload, Code, Pencil, Settings, X, Image as ImageIcon,
+  Upload, Pencil, Settings, X, Image as ImageIcon,
   Type, Layers, Layout, RotateCcw, MousePointer2, Database
 } from 'lucide-react';
 
@@ -143,29 +143,6 @@ const TextStyleExtras = Extension.create({
   },
 });
 
-const DEFAULT_BODY_BY_LANGUAGE: Record<SupportedLang, string> = {
-  fr: [
-    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">TITRE DU DOCUMENT</p>',
-    '<p style="text-align:center;color:#64748b;margin-top:0;">Sous-titre optionnel</p>',
-    '<p>Commencez ici le contenu principal du document.</p>',
-  ].join(''),
-  en: [
-    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">DOCUMENT TITLE</p>',
-    '<p style="text-align:center;color:#64748b;margin-top:0;">Optional subtitle</p>',
-    '<p>Start the main document content here.</p>',
-  ].join(''),
-  de: [
-    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">DOKUMENTTITEL</p>',
-    '<p style="text-align:center;color:#64748b;margin-top:0;">Optionaler Untertitel</p>',
-    '<p>Beginnen Sie hier mit dem Hauptinhalt des Dokuments.</p>',
-  ].join(''),
-  ar: [
-    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">عنوان الوثيقة</p>',
-    '<p style="text-align:center;color:#64748b;margin-top:0;">عنوان فرعي اختياري</p>',
-    '<p>ابدأ هنا المحتوى الرئيسي للوثيقة.</p>',
-  ].join(''),
-};
-
 const DEFAULT_HEADER_CONFIG: HeaderConfig = {
   title: '{{company.name}}',
   subtitle: '{{company.address}}',
@@ -189,12 +166,13 @@ const generateHeaderHtml = (config: HeaderConfig) => {
   const align = config.textAlign === 'between' ? 'space-between' :
     config.textAlign === 'center' ? 'center' :
       config.textAlign === 'right' ? 'flex-end' : 'flex-start';
+  const logoSrc = config.logoUrl || '';
 
   return `
 <div style="width:100%;display:flex;justify-content:${align};align-items:flex-start;padding-bottom:16px;${config.showDivider ? 'border-bottom:2px solid #e2e8f0;' : ''}margin-bottom:24px;font-family:sans-serif;">
   <div style="display:flex;${config.textAlign === 'right' ? 'flex-direction:row-reverse;' : 'flex-direction:row;'}align-items:center;gap:16px;">
     <div id="logo-container" data-field="logo">
-      {{#if logoUrl}}<img src="{{logoUrl}}" style="height:{{logoSize}}px;width:auto;" />{{/if}}
+      ${config.logoUrl ? `<img src="${logoSrc}" style="height:${config.logoSize}px;width:auto;" />` : ''}
     </div>
     <div style="text-align:${config.textAlign === 'center' ? 'center' : 'left'};">
       <div data-field="title" style="font-size:16pt;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.02em;">${config.title}</div>
@@ -309,12 +287,6 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       return initial;
     }
 
-    if (isNewTemplate) {
-      SUPPORTED_LANGS.forEach((lang) => {
-        initial[lang] = DEFAULT_BODY_BY_LANGUAGE[lang];
-      });
-    }
-
     return initial;
   });
   const [liveHtml, setLiveHtml] = useState(bodyByLanguage[activeLanguage] || '');
@@ -373,12 +345,9 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
     };
   };
 
-  const buildFullTemplate = (bodyContent: string) => {
-    const parts = [];
-    if (showHeader && headerHtml) parts.push(`<!-- HEADER_START -->\n${headerHtml.trim()}\n<!-- HEADER_END -->`);
-    parts.push(`<!-- BODY_START -->\n${bodyContent.trim()}\n<!-- BODY_END -->`);
-    if (showFooter && footerHtml) parts.push(`<!-- FOOTER_START -->\n${footerHtml.trim()}\n<!-- FOOTER_END -->`);
-    return parts.join('\n\n');
+  const extractBodyContent = (content: string) => {
+    const { body } = parseTemplateParts(content || '');
+    return body || content || '';
   };
 
   const previewZone = (html: string) => {
@@ -450,7 +419,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
     if (!editor) return;
     const nextBody = bodyByLanguage[activeLanguage] || '';
     if (editor.getHTML() !== nextBody) {
-      editor.commands.setContent(nextBody || '', false);
+      editor.commands.setContent(nextBody || '', { emitUpdate: false });
     }
     setLiveHtml(nextBody || '');
     if (nextBody.includes('<html')) {
@@ -464,43 +433,31 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
   useEffect(() => {
     if (template && editor) {
+      const templateSource =
+        (template.bodyTranslations && template.bodyTranslations[template.language || 'fr']) ||
+        template.body ||
+        '';
+      const { header, body, footer } = parseTemplateParts(templateSource);
       const nextBodyByLanguage: Record<SupportedLang, string> = {
         fr: '', ar: '', en: '', de: '',
       };
 
       if (template.bodyTranslations) {
         SUPPORTED_LANGS.forEach((lang) => {
-          nextBodyByLanguage[lang] = template.bodyTranslations?.[lang] || '';
+          nextBodyByLanguage[lang] = extractBodyContent(template.bodyTranslations?.[lang] || '');
         });
       }
 
       if (template.body) {
-        nextBodyByLanguage[template.language || 'fr'] = template.body;
-      }
-
-      if (Object.values(nextBodyByLanguage).every((v) => !v)) {
-        SUPPORTED_LANGS.forEach((lang) => {
-          nextBodyByLanguage[lang] = DEFAULT_BODY_BY_LANGUAGE[lang];
-        });
+        nextBodyByLanguage[template.language || 'fr'] = extractBodyContent(template.body);
       }
 
       setBodyByLanguage(nextBodyByLanguage);
       setActiveLanguage(template.language || 'fr');
 
-      const { header, body, footer } = parseTemplateParts(nextBodyByLanguage[template.language || 'fr'] || '');
-
       if (header) {
         setHeaderHtml(header);
         setShowHeader(true);
-        // Extract logo from header if exists
-        const logoMatch = header.match(/src="([^"]+)"/);
-        if (logoMatch && !logoMatch[1].includes('{{logoUrl}}')) {
-          setHeaderConfig(prev => ({ ...prev, logoUrl: logoMatch[1] }));
-        }
-        const sizeMatch = header.match(/height:(\d+)px/);
-        if (sizeMatch) {
-          setHeaderConfig(prev => ({ ...prev, logoSize: parseInt(sizeMatch[1]) }));
-        }
       }
 
       if (footer) {
@@ -647,13 +604,42 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
   const handleSave = (status: 'draft' | 'active') => {
     const currentBodyContent = editorMode === 'html' ? (importedHtml || '') : (bodyByLanguage[activeLanguage] || editor?.getHTML() || '');
-    const fullBodyByLanguage: Record<SupportedLang, string> = {
-      fr: buildFullTemplate(bodyByLanguage.fr || ''),
-      ar: buildFullTemplate(bodyByLanguage.ar || ''),
-      en: buildFullTemplate(bodyByLanguage.en || ''),
-      de: buildFullTemplate(bodyByLanguage.de || ''),
+    const normalizedCurrentBody = extractBodyContent(currentBodyContent);
+    const currentHeaderHtml = showHeader ? generateHeaderHtml(headerConfig) : '';
+    const currentFooterHtml = showFooter ? generateFooterHtml(footerConfig) : '';
+    const normalizedBodiesByLanguage: Record<SupportedLang, string> = {
+      fr: extractBodyContent(bodyByLanguage.fr || ''),
+      ar: extractBodyContent(bodyByLanguage.ar || ''),
+      en: extractBodyContent(bodyByLanguage.en || ''),
+      de: extractBodyContent(bodyByLanguage.de || ''),
     };
-    const fullBody = buildFullTemplate(currentBodyContent);
+    const fullBodyByLanguage: Record<SupportedLang, string> = {
+      fr: [
+        showHeader && currentHeaderHtml ? `<!-- HEADER_START -->\n${currentHeaderHtml.trim()}\n<!-- HEADER_END -->` : '',
+        `<!-- BODY_START -->\n${normalizedBodiesByLanguage.fr.trim()}\n<!-- BODY_END -->`,
+        showFooter && currentFooterHtml ? `<!-- FOOTER_START -->\n${currentFooterHtml.trim()}\n<!-- FOOTER_END -->` : '',
+      ].filter(Boolean).join('\n\n'),
+      ar: [
+        showHeader && currentHeaderHtml ? `<!-- HEADER_START -->\n${currentHeaderHtml.trim()}\n<!-- HEADER_END -->` : '',
+        `<!-- BODY_START -->\n${normalizedBodiesByLanguage.ar.trim()}\n<!-- BODY_END -->`,
+        showFooter && currentFooterHtml ? `<!-- FOOTER_START -->\n${currentFooterHtml.trim()}\n<!-- FOOTER_END -->` : '',
+      ].filter(Boolean).join('\n\n'),
+      en: [
+        showHeader && currentHeaderHtml ? `<!-- HEADER_START -->\n${currentHeaderHtml.trim()}\n<!-- HEADER_END -->` : '',
+        `<!-- BODY_START -->\n${normalizedBodiesByLanguage.en.trim()}\n<!-- BODY_END -->`,
+        showFooter && currentFooterHtml ? `<!-- FOOTER_START -->\n${currentFooterHtml.trim()}\n<!-- FOOTER_END -->` : '',
+      ].filter(Boolean).join('\n\n'),
+      de: [
+        showHeader && currentHeaderHtml ? `<!-- HEADER_START -->\n${currentHeaderHtml.trim()}\n<!-- HEADER_END -->` : '',
+        `<!-- BODY_START -->\n${normalizedBodiesByLanguage.de.trim()}\n<!-- BODY_END -->`,
+        showFooter && currentFooterHtml ? `<!-- FOOTER_START -->\n${currentFooterHtml.trim()}\n<!-- FOOTER_END -->` : '',
+      ].filter(Boolean).join('\n\n'),
+    };
+    const fullBody = [
+      showHeader && currentHeaderHtml ? `<!-- HEADER_START -->\n${currentHeaderHtml.trim()}\n<!-- HEADER_END -->` : '',
+      `<!-- BODY_START -->\n${normalizedCurrentBody.trim()}\n<!-- BODY_END -->`,
+      showFooter && currentFooterHtml ? `<!-- FOOTER_START -->\n${currentFooterHtml.trim()}\n<!-- FOOTER_END -->` : '',
+    ].filter(Boolean).join('\n\n');
 
     // Auto-detect variables if schema is minimal
     let finalSchema = variableSchema;
@@ -678,8 +664,8 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
     const payload: CreateTemplateDto = {
       name,
       category,
-      language,
-      body: fullBodyByLanguage[language] || fullBody,
+      language: activeLanguage,
+      body: fullBodyByLanguage[activeLanguage] || fullBody,
       bodyTranslations,
       variableSchema: finalSchema,
       status,
@@ -736,7 +722,9 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
           </div>
 
           {/* THE DOCUMENT CONTAINER */}
-          <div className="bg-white shadow-2xl rounded-sm border border-slate-200 min-h-[700px] flex flex-col transition-all duration-300 overflow-hidden">
+          <div
+            className="bg-white shadow-2xl rounded-sm border border-slate-200 min-h-[700px] flex flex-col transition-all duration-300 overflow-hidden"
+          >
 
             {/* 1. HEADER ZONE */}
             <div className={clsx(
@@ -815,6 +803,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                     editingZone !== 'body' && "opacity-60 pointer-events-none",
                     activeLanguage === 'ar' && "text-right"
                   )}
+                  lang={activeLanguage}
                   dir={activeLanguage === 'ar' ? 'rtl' : 'ltr'}
                 >
                   {editingZone === 'body' && (
@@ -959,7 +948,10 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                 {SUPPORTED_LANGS.map((lang) => (
                   <button
                     key={lang}
-                    onClick={() => setActiveLanguage(lang)}
+                    onClick={() => {
+                      setActiveLanguage(lang);
+                      setLanguage(lang);
+                    }}
                     className={clsx(
                       "py-2 rounded-xl border text-[10px] font-black uppercase transition-all",
                       activeLanguage === lang
@@ -988,7 +980,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                     <div className="flex flex-wrap gap-1.5">
                       {group.vars.map((v) => (
                         <button
-                          key={v.name}
+                          key={v.value}
                           onClick={() => {
                             if (editor) {
                               editor.chain().focus().insertContent(v.tag).run();
@@ -1324,6 +1316,18 @@ function ZoneBar({ title, active, enabled, onToggle, onEdit, color, icon: Icon, 
   );
 }
 
+function FieldSection({ label, field, focusedField, children }: { label: string; field: string; focusedField: string | null; children: React.ReactNode }) {
+  return (
+    <div className={clsx(
+      "space-y-1.5 p-2 rounded-xl transition-all",
+      focusedField === field ? "bg-sky-50 ring-1 ring-sky-200" : ""
+    )}>
+      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
+      {children}
+    </div>
+  );
+}
+
 function ZoneEditor({
   zone, config, setConfig, html, setHtml, onClose, onLogoUpload, focusedField, onResetHtml
 }: any) {
@@ -1342,17 +1346,6 @@ function ZoneEditor({
   const updateField = (field: string, value: any) => {
     setConfig((prev: any) => ({ ...prev, [field]: value }));
   };
-
-
-  const FieldWrapper = ({ label, field, children }: any) => (
-    <div className={clsx(
-      "space-y-1.5 p-2 rounded-xl transition-all",
-      focusedField === field ? "bg-sky-50 ring-1 ring-sky-200" : ""
-    )}>
-      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
-      {children}
-    </div>
-  );
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-5 shadow-xl animate-scale-in">
@@ -1388,7 +1381,7 @@ function ZoneEditor({
           <div className="space-y-5 animate-fade-in">
             {zone === 'header' ? (
               <>
-                <FieldWrapper label="Identité du Document" field="title">
+                <FieldSection label="Identité du Document" field="title" focusedField={focusedField}>
                   <input
                     value={config.title} onChange={(e) => updateField('title', e.target.value)}
                     className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-sky-100 transition-all"
@@ -1399,9 +1392,9 @@ function ZoneEditor({
                     className="w-full px-3 py-2 text-[10px] bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-sky-100 transition-all mt-1"
                     placeholder="Sous-titre / Entreprise..."
                   />
-                </FieldWrapper>
+                </FieldSection>
 
-                <FieldWrapper label="Branding & Logo" field="logo">
+                <FieldSection label="Branding & Logo" field="logo" focusedField={focusedField}>
                   <div className="flex items-center gap-4 py-1">
                     <div className="w-14 h-14 bg-slate-50 rounded-xl border border-dashed border-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                       {config.logoUrl ? <img src={config.logoUrl} className="max-w-full max-h-full object-contain" /> : <ImageIcon className="w-5 h-5 text-slate-300" />}
@@ -1429,15 +1422,15 @@ function ZoneEditor({
                       />
                     </div>
                   )}
-                </FieldWrapper>
+                </FieldSection>
 
-                <FieldWrapper label="Coordonnées / Info" field="infoLine">
+                <FieldSection label="Coordonnées / Info" field="infoLine" focusedField={focusedField}>
                   <input
                     value={config.infoLine} onChange={(e) => updateField('infoLine', e.target.value)}
                     className="w-full px-3 py-2 text-[10px] font-medium bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-sky-100 transition-all"
                     placeholder="Ville, Date, etc..."
                   />
-                </FieldWrapper>
+                </FieldSection>
 
                 <div className="p-2 space-y-3">
                   <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Mise en page</label>
@@ -1462,7 +1455,7 @@ function ZoneEditor({
               </>
             ) : (
               <>
-                <FieldWrapper label="Texte Gauche" field="leftText">
+                <FieldSection label="Texte Gauche" field="leftText" focusedField={focusedField}>
                   <input
                     value={footerLeft}
                     onChange={(e) => {
@@ -1472,8 +1465,8 @@ function ZoneEditor({
                     onBlur={() => updateField('leftText', footerLeft)}
                     className="w-full px-3 py-2 text-[10px] font-bold bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all"
                   />
-                </FieldWrapper>
-                <FieldWrapper label="Texte Droit" field="rightText">
+                </FieldSection>
+                <FieldSection label="Texte Droit" field="rightText" focusedField={focusedField}>
                   <textarea
                     value={footerRight}
                     onChange={(e) => {
@@ -1483,7 +1476,7 @@ function ZoneEditor({
                     onBlur={() => updateField('rightText', footerRight)}
                     className="w-full px-3 py-2 text-[10px] bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all h-20 resize-none"
                   />
-                </FieldWrapper>
+                </FieldSection>
                 <div className="p-2 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <input type="checkbox" checked={config.showPageNumber} onChange={(e) => updateField('showPageNumber', e.target.checked)} className="rounded border-slate-300 text-slate-600 focus:ring-slate-500 w-3.5 h-3.5" />
@@ -1500,8 +1493,7 @@ function ZoneEditor({
             <div className="pt-2 border-t border-slate-50">
               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Variables Rapides</label>
               <div className="flex flex-wrap gap-1.5">
-                <button onClick={() => updateField(zone === 'header' ? 'title' : 'leftText', config[zone === 'header' ? 'title' : 'leftText'] + ' {{company.name}}')} className="px-2 py-1 text-[9px] bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 font-bold transition-all text-slate-600">Société</button>
-                <button onClick={() => updateField('infoLine', config.infoLine + ' {{meta.generatedAt}}')} className="px-2 py-1 text-[9px] bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 font-bold transition-all text-slate-600">Date</button>
+                <span className="text-[9px] text-slate-400 italic">Ajoutez les variables manuellement dans le texte.</span>
               </div>
             </div>
           </div>

@@ -7,9 +7,31 @@ import { auditLog } from '../../shared/utils/auditLogger';
 
 export async function getEmployees(filters: EmployeeFiltersInput, user: any) {
   const { companyId, role, id } = user;
-  if (role === 'employee') filters.search = id; // Searching by ID as a hack or repo handles it
+  if (role === 'employee') filters.search = id; // Employee can only see self
   else if (role === 'manager') filters.managerId = id;
   return employeesRepository.findAll(filters, companyId);
+}
+
+export async function getProfile(user: any) {
+  const employeeId = user.employeeId || user.id;
+  const employee = await employeesRepository.findById(employeeId, user.companyId);
+  if (!employee) throw new AppError('Employee not found', 404);
+  return {
+    id: employee.id,
+    companyId: employee.company_id,
+    firstName: employee.first_name,
+    lastName: employee.last_name,
+    email: employee.email || '',
+    department: employee.department || '',
+    position: employee.function || '',
+    phone: employee.phone || undefined,
+    address: employee.address || undefined,
+    hireDate: employee.hire_date,
+    workScheduleName: employee.work_schedule_name || undefined,
+    weeklyHours: employee.weekly_hours || undefined,
+    dailyHours: employee.daily_hours || undefined,
+    createdAt: employee.created_at,
+  };
 }
 
 export async function getEmployeeById(id: string, user: any) {
@@ -116,6 +138,7 @@ export async function getDepartments(user: any) {
 export async function getLeaveBalances(employeeId: string, user: any) {
   const { companyId, role, id: userId } = user;
   if (role === 'employee' && employeeId !== userId) throw new AppError('Access denied', 403);
+  if (role === 'manager') throw new AppError('Access denied', 403);
   
   // Verify employee belongs to company first
   const employee = await employeesRepository.findById(employeeId, companyId);

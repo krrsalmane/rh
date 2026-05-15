@@ -36,13 +36,15 @@ export const PublicHolidaysSettings: React.FC = () => {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await holidaysApi.create(newHoliday);
+      const year = new Date(newHoliday.date).getFullYear();
+      await holidaysApi.create({ ...newHoliday, year });
       toast.success('Jour férié ajouté');
       setShowAdd(false);
       setNewHoliday({ name: '', date: '', isRecurring: false });
       fetchHolidays();
     } catch (error) {
-      toast.error('Erreur lors de l\'ajout');
+      const message = (error as any)?.response?.data?.message || 'Erreur lors de l\'ajout';
+      toast.error(message);
     }
   };
 

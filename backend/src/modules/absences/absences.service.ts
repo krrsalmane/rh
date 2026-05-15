@@ -6,7 +6,6 @@ import { auditLog } from '../../shared/utils/auditLogger';
 export async function getAbsences(filters: AbsenceFiltersInput, user: any) {
   const { companyId, role, id } = user;
   if (role === 'employee') filters.employeeId = id;
-  else if (role === 'manager') filters.managerId = id;
   return absencesRepository.findAll(filters, companyId);
 }
 
@@ -21,6 +20,7 @@ export async function getAbsenceById(id: string, user: any) {
 export async function createAbsence(input: CreateAbsenceInput, user: any) {
   const { companyId, role, id: userId } = user;
   if (role === 'employee' && input.employeeId !== userId) throw new AppError('Access denied', 403);
+  if (role !== 'super_admin' && role !== 'hr_agent' && role !== 'employee') throw new AppError('Access denied', 403);
 
   // Check for overlapping absences
   const overlapping = await absencesRepository.findOverlapping(input.employeeId, input.startDate, input.endDate);
@@ -61,6 +61,8 @@ export async function deleteAbsence(id: string, user: any) {
 
 export async function getAnalytics(user: any, startDate: string, endDate: string) {
   const { companyId, role, id: userId } = user;
-  // Note: repository might need adjustment for analytics isolation if needed
+  if (role !== 'super_admin' && role !== 'hr_agent') {
+    throw new AppError('Access denied', 403);
+  }
   return absencesRepository.getAnalytics(companyId, startDate, endDate);
 }

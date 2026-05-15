@@ -23,10 +23,6 @@ const SAMPLE_DATA: Record<string, string> = {
   'employee.phone': '0661234567',
   'employee.address': 'Casablanca, Maroc',
   'employee.contractType': 'CDI',
-  'company.name': 'Maya HR Group',
-  'company.address': 'Casablanca, Maroc',
-  'meta.generatedAt': new Date().toLocaleDateString('fr-FR'),
-  'meta.generatedYear': new Date().getFullYear().toString(),
 };
 
 function parseTemplateParts(fullBody: string) {
@@ -82,6 +78,7 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [zoom, setZoom] = useState(100);
   const [isCopied, setIsCopied] = useState(false);
+  const isArabic = template?.language === 'ar';
 
   console.log('TemplatePreviewModal — template:', template?.name, '| body length:', template?.body?.length ?? 0);
 
@@ -240,14 +237,18 @@ export const TemplatePreviewModal: React.FC<Props> = ({ template, isOpen, onClos
                 {/* 2. Document Body */}
                 <iframe
                   srcDoc={`
+                    <html lang="${template.language}" dir="${isArabic ? 'rtl' : 'ltr'}">
+                    <body>
                     <style>
-                      body { font-family: sans-serif; line-height: 1.6; color: #334155; padding: 40px 64px; }
+                      body { font-family: sans-serif; line-height: 1.6; color: #334155; padding: 40px 64px; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'}; }
                       h1, h2, h3 { color: #0f172a; margin-top: 1.5em; }
                       table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                      th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; }
+                      th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: ${isArabic ? 'right' : 'left'}; }
                       th { background: #f8fafc; font-weight: bold; }
                     </style>
                     ${buildPreviewHtml(body)}
+                    </body>
+                    </html>
                   `}
                   className="flex-1 w-full border-none"
                   style={{ background: 'white' }}

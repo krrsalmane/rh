@@ -53,6 +53,7 @@ export const EmployeeTable: React.FC<Props> = ({
   const navigate = useNavigate();
   const userRole = useAppSelector((s) => s.auth.role);
   const isSuperAdmin = userRole === 'super_admin';
+  const canEdit = userRole === 'super_admin' || userRole === 'hr_agent';
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -152,7 +153,7 @@ export const EmployeeTable: React.FC<Props> = ({
                   Salaire <SortIcon col="salary" />
                 </th>
               )}
-              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -209,14 +210,16 @@ export const EmployeeTable: React.FC<Props> = ({
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onEdit(emp)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                      title="Modifier"
-                      id={`employee-edit-${emp.id}`}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
+                    {canEdit && (
+                      <button
+                        onClick={() => onEdit(emp)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                        title="Modifier"
+                        id={`employee-edit-${emp.id}`}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
                     {isSuperAdmin && (
                       <button
                         onClick={() => onDelete(emp)}

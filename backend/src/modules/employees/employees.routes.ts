@@ -22,11 +22,12 @@ router.use(authenticate);
 router.use(employeesLimiter);
 
 // Static routes MUST come before parameterized routes
-router.get('/departments', authorize('super_admin', 'hr_agent'), employeesController.getDepartments);
+router.get('/profile', authorize('super_admin', 'hr_agent', 'manager', 'employee'), employeesController.getProfile);
+router.get('/departments', authorize('super_admin', 'hr_agent', 'manager'), employeesController.getDepartments);
 
-router.get('/', authorize('super_admin', 'hr_agent'), employeesController.getEmployees);
-router.get('/:id', authorize('super_admin', 'hr_agent'), employeesController.getEmployeeById);
-router.get('/:id/leave-balances', authorize('super_admin', 'hr_agent'), employeesController.getLeaveBalances);
+router.get('/', authorize('super_admin', 'hr_agent', 'manager'), employeesController.getEmployees);
+router.get('/:id', authorize('super_admin', 'hr_agent', 'manager', 'employee'), employeesController.getEmployeeById);
+router.get('/:id/leave-balances', authorize('super_admin', 'hr_agent', 'employee'), employeesController.getLeaveBalances);
 
 router.post('/', authorize('super_admin', 'hr_agent'), validate(CreateEmployeeSchema), employeesController.createEmployee);
 router.put('/:id', authorize('super_admin', 'hr_agent'), validate(UpdateEmployeeSchema), employeesController.updateEmployee);

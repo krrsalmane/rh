@@ -16,12 +16,16 @@ export async function getTimeEntryById(id: string, user: any) {
   const entry = await timeRepository.findById(id, companyId);
   if (!entry) throw new AppError('Time entry not found', 404);
   if (role === 'employee' && entry.employee_id !== userId) throw new AppError('Access denied', 403);
+  if (role === 'manager') {
+    const employee = await employeesRepository.findById(entry.employee_id, companyId);
+    if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
+  }
   return entry;
 }
 
 export async function createTimeEntry(input: CreateTimeEntryInput, user: any) {
   const { companyId, role, id: userId } = user;
-  if (role === 'employee' && input.employeeId !== userId) throw new AppError('Access denied', 403);
+  if (role !== 'super_admin' && role !== 'hr_agent') throw new AppError('Access denied', 403);
 
   // Auto-calculate expected hours from schedule
   if (!input.expectedHours) {
@@ -56,6 +60,10 @@ export async function deleteTimeEntry(id: string, user: any) {
 export async function getTimeSummary(employeeId: string, startDate: string, endDate: string, user: any) {
   const { companyId, role, id: userId } = user;
   if (role === 'employee' && employeeId && employeeId !== userId) throw new AppError('Access denied', 403);
+  if (role === 'manager' && employeeId) {
+    const employee = await employeesRepository.findById(employeeId, companyId);
+    if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
+  }
   const targetId = role === 'employee' ? userId : employeeId;
   return timeRepository.getSummary(targetId, startDate, endDate, companyId);
 }

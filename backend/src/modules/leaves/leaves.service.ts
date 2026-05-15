@@ -4,6 +4,7 @@ import { AppError } from '../../shared/utils/AppError';
 import { auditLog } from '../../shared/utils/auditLogger';
 import { calculateWorkingDays } from '../../shared/utils/dateUtils';
 import { getNotificationService } from '../notifications/notifications.service';
+import * as employeesRepository from '../employees/employees.repository';
 
 export async function getLeaveRequests(filters: LeaveFiltersInput, user: any) {
   const { companyId, role, id } = user;
@@ -11,9 +12,7 @@ export async function getLeaveRequests(filters: LeaveFiltersInput, user: any) {
   if (role === 'employee') {
     filters.employeeId = id;
   } else if (role === 'manager') {
-    // Manager sees all leave requests except their own
-    // Exclude current user's own leave requests from the list
-    filters.excludeEmployeeId = id;
+    filters.managerId = id;
   }
   // Super admin and HR agent see all requests
   
@@ -27,6 +26,10 @@ export async function getLeaveRequestById(id: string, user: any) {
   
   if (role === 'employee' && request.employee_id !== userId) {
     throw new AppError('Access denied', 403);
+  }
+  if (role === 'manager') {
+    const employee = await employeesRepository.findById(request.employee_id, companyId);
+    if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
   }
   
   return request;
@@ -45,9 +48,11 @@ export async function createLeaveRequest(input: CreateLeaveRequestInput, user: a
     throw new AppError('You can only create leave requests for yourself', 403);
   }
 
-  // Manager cannot create leave requests for themselves
-  if (role === 'manager' && input.employeeId === userId) {
-    throw new AppError('Managers cannot create leave requests for themselves', 403);
+  if (role === 'manager') {
+    const employee = await employeesRepository.findById(effectiveEmployeeId, companyId);
+    if (!employee || employee.manager_id !== userId) {
+      throw new AppError('Access denied', 403);
+    }
   }
 
   // 1. Check for overlapping requests
@@ -128,6 +133,10 @@ export async function approveLeaveRequest(id: string, input: ReviewLeaveInput, u
   const request = await leavesRepository.findById(id, companyId);
   if (!request) throw new AppError('Leave request not found', 404);
   if (request.status !== 'pending') throw new AppError('Leave request is not pending', 400);
+  if (user.role === 'manager') {
+    const employee = await employeesRepository.findById(request.employee_id, companyId);
+    if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
+  }
 
   const updated = await leavesRepository.updateStatus(id, 'approved', userId, input.approvalNote || null, companyId);
   if (request.working_days) {
@@ -163,6 +172,10 @@ export async function rejectLeaveRequest(id: string, input: ReviewLeaveInput, us
   const request = await leavesRepository.findById(id, companyId);
   if (!request) throw new AppError('Leave request not found', 404);
   if (request.status !== 'pending') throw new AppError('Leave request is not pending', 400);
+  if (user.role === 'manager') {
+    const employee = await employeesRepository.findById(request.employee_id, companyId);
+    if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
+  }
 
   const updated = await leavesRepository.updateStatus(id, 'rejected', userId, input.approvalNote || null, companyId);
   await auditLog({ userId, companyId, action: 'REJECT', entity: 'leave_request', entityId: id, newValue: { status: 'rejected' } });
@@ -198,6 +211,9 @@ export async function cancelLeaveRequest(id: string, user: any) {
   if (role === 'employee' && request.employee_id !== userId) {
     throw new AppError('Access denied', 403);
   }
+  if (role === 'manager') {
+    throw new AppError('Access denied', 403);
+  }
   
   if (request.status === 'cancelled') throw new AppError('Already cancelled', 400);
 
@@ -214,6 +230,10 @@ export async function getBalances(employeeId: string, year: number, user: any) {
   const effectiveEmployeeId = role === 'employee' ? user.employeeId : employeeId;
   if (role === 'employee' && employeeId !== user.employeeId) {
     throw new AppError('Access denied', 403);
+  }
+  if (role === 'manager' && employeeId) {
+    const employee = await employeesRepository.findById(employeeId, user.companyId);
+    if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
   }
   
   // Get existing balances
