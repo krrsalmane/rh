@@ -16,6 +16,7 @@ export interface Template {
   category: 'contract' | 'attestation' | 'letter' | 'custom';
   language: 'fr' | 'ar' | 'en' | 'de';
   body: string;
+  bodyTranslations?: Partial<Record<'fr' | 'ar' | 'en' | 'de', string>>;
   variableSchema: VariableSchema[];
   version: number;
   status: 'draft' | 'active' | 'archived';
@@ -29,6 +30,7 @@ export interface CreateTemplateDto {
   category: 'contract' | 'attestation' | 'letter' | 'custom';
   language?: 'fr' | 'ar' | 'en' | 'de';
   body: string;
+  bodyTranslations?: Partial<Record<'fr' | 'ar' | 'en' | 'de', string>>;
   variableSchema: VariableSchema[];
   status?: 'draft' | 'active' | 'archived';
 }

@@ -9,6 +9,7 @@ export interface TemplateRow {
   category: string;
   language: string;
   body: string;
+  body_translations: unknown;
   variable_schema: unknown;
   version: number;
   status: string;
@@ -39,7 +40,7 @@ export async function findAll(companyId: string, filters: TemplateFiltersInput):
   const offset = (filters.page - 1) * filters.limit;
 
   const result = await query<TemplateRow>(
-    `SELECT t.id, t.name, t.category, t.language, t.status, t.version, t.variable_schema, t.created_by, t.created_at,
+    `SELECT t.id, t.name, t.category, t.language, t.body_translations, t.status, t.version, t.variable_schema, t.created_by, t.created_at,
        (SELECT COUNT(*) FROM generated_documents WHERE template_id = t.id) as usage_count
      FROM templates t
      WHERE ${whereClause}
@@ -81,9 +82,10 @@ export async function findByName(name: string, companyId: string, excludeId?: st
 export async function create(input: CreateTemplateInput, companyId: string, userId: string): Promise<TemplateRow> {
   const id = uuidv4();
   await query(
-    `INSERT INTO templates (id, company_id, name, category, language, body, variable_schema, status, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    `INSERT INTO templates (id, company_id, name, category, language, body, body_translations, variable_schema, status, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
     [id, companyId, input.name, input.category, input.language, input.body,
+      input.bodyTranslations ? JSON.stringify(input.bodyTranslations) : null,
       JSON.stringify(input.variableSchema || []), input.status || 'draft', userId]
   );
   return (await findById(id, companyId))!;
@@ -98,6 +100,7 @@ export async function update(id: string, input: Partial<CreateTemplateInput>, co
   if (input.category !== undefined) { fields.push(`category = $${idx}`); values.push(input.category); idx++; }
   if (input.language !== undefined) { fields.push(`language = $${idx}`); values.push(input.language); idx++; }
   if (input.body !== undefined) { fields.push(`body = $${idx}`); values.push(input.body); idx++; }
+  if (input.bodyTranslations !== undefined) { fields.push(`body_translations = $${idx}`); values.push(JSON.stringify(input.bodyTranslations)); idx++; }
   if (input.variableSchema !== undefined) { fields.push(`variable_schema = $${idx}`); values.push(JSON.stringify(input.variableSchema)); idx++; }
   if (input.status !== undefined) { fields.push(`status = $${idx}`); values.push(input.status); idx++; }
 

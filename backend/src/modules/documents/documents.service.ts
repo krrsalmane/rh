@@ -30,6 +30,12 @@ export async function getDocumentById(id: string, companyId: string) {
 }
 
 export async function generateDocument(input: GenerateDocumentInput, companyId: string, userId: string) {
+  console.log('📄 generateDocument input:', {
+    documentType: input.documentType,
+    templateId: input.templateId,
+    employeeId: input.employeeId,
+    language: input.language,
+  });
   // 1. Validate and normalize language
   const language: SupportedLanguage = input.language && isValidLanguage(input.language) 
     ? input.language 
@@ -51,17 +57,30 @@ export async function generateDocument(input: GenerateDocumentInput, companyId: 
 
   // 5. Compile HTML
   if (input.templateId) {
+    console.log('📄 Using DB templateId:', input.templateId);
     // Fetch custom template from DB
-    const tplResult = await query<{ name: string; body: string }>(
-      'SELECT name, body FROM templates WHERE id = $1 AND company_id = $2',
+    const tplResult = await query<{ name: string; body: string; body_translations: unknown }>(
+      'SELECT name, body, body_translations FROM templates WHERE id = $1 AND company_id = $2',
       [input.templateId, companyId]
     );
     const tpl = tplResult.rows[0];
     if (!tpl) throw new AppError('Template not found', 404);
     
     docTypeName = tpl.name;
-    compiled = compileRawTemplate(tpl.body, data, language);
+    let translations: Record<string, string> | null = null;
+    if (typeof tpl.body_translations === 'string') {
+      try {
+        translations = JSON.parse(tpl.body_translations) as Record<string, string>;
+      } catch {
+        translations = null;
+      }
+    } else if (tpl.body_translations && typeof tpl.body_translations === 'object') {
+      translations = tpl.body_translations as Record<string, string>;
+    }
+    const translatedBody = translations?.[language];
+    compiled = compileRawTemplate(translatedBody || tpl.body, data, language);
   } else if (input.documentType) {
+    console.log('📄 Using static documentType:', input.documentType);
     console.log(`🌍 Generating document "${input.documentType}" with language: ${language}`);
     compiled = compileTemplate(input.documentType, data, language);
   } else {

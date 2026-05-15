@@ -15,17 +15,12 @@ async function startServer() {
     console.log('✅ Database connected');
     client.release();
 
-    const server = createServer(app);
-    initializeNotifications(server);
-
     // Try to start on default port, if busy try alternatives
     function tryStart(port: number) {
-      server.listen(port, () => {
-        console.log(`🚀 Server running on port ${port}`);
-        console.log(`📦 Environment: ${env.NODE_ENV}`);
-      });
+      const server = createServer(app);
+      initializeNotifications(server);
 
-      server.on('error', (error: any) => {
+      server.once('error', (error: any) => {
         if (error.code === 'EADDRINUSE') {
           if (port === DEFAULT_PORT) {
             console.log(`⚠️ Port ${port} is busy, trying alternative ports...`);
@@ -40,10 +35,16 @@ async function startServer() {
             console.log(`   taskkill /F /PID <PID_FROM_NETSTAT>`);
             process.exit(1);
           }
-        } else {
-          console.error('❌ Server error:', error);
-          process.exit(1);
+          return;
         }
+
+        console.error('❌ Server error:', error);
+        process.exit(1);
+      });
+
+      server.listen(port, () => {
+        console.log(`🚀 Server running on port ${port}`);
+        console.log(`📦 Environment: ${env.NODE_ENV}`);
       });
     }
 

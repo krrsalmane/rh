@@ -8,12 +8,16 @@ import type {
 // ============ Helpers: snake_case -> camelCase ============
 
 function mapTemplate(row: Record<string, unknown>): Template {
+  const bodyTranslations = parseBodyTranslations(row.body_translations);
+  const language = (row.language as Template['language']) || 'fr';
+
   return {
     id: row.id as string,
     name: row.name as string,
     category: row.category as Template['category'],
-    language: (row.language as Template['language']) || 'fr',
-    body: (row.body as string) || '',
+    language,
+    body: (bodyTranslations?.[language] as string) || (row.body as string) || '',
+    bodyTranslations,
     variableSchema: parseVariableSchema(row.variable_schema),
     version: (row.version as number) || 1,
     status: row.status as Template['status'],
@@ -47,6 +51,15 @@ function parseVariableSchema(raw: unknown): Template['variableSchema'] {
   }
   if (Array.isArray(raw)) return raw;
   return [];
+}
+
+function parseBodyTranslations(raw: unknown): Template['bodyTranslations'] {
+  if (!raw) return undefined;
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return undefined; }
+  }
+  if (typeof raw === 'object') return raw as Template['bodyTranslations'];
+  return undefined;
 }
 
 // ============ Templates API ============
@@ -84,6 +97,7 @@ export async function createTemplate(data: CreateTemplateDto) {
     category: data.category,
     language: data.language || 'fr',
     body: data.body,
+    bodyTranslations: data.bodyTranslations,
     variableSchema: data.variableSchema,
     status: data.status || 'draft',
   };
@@ -97,6 +111,7 @@ export async function updateTemplate(id: string, data: Partial<CreateTemplateDto
   if (data.category !== undefined) payload.category = data.category;
   if (data.language !== undefined) payload.language = data.language;
   if (data.body !== undefined) payload.body = data.body;
+  if (data.bodyTranslations !== undefined) payload.bodyTranslations = data.bodyTranslations;
   if (data.variableSchema !== undefined) payload.variableSchema = data.variableSchema;
   if (data.status !== undefined) payload.status = data.status;
 

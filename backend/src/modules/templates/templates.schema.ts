@@ -15,6 +15,7 @@ export const CreateTemplateSchema = z.object({
   category: z.enum(['contract', 'attestation', 'letter', 'custom']),
   language: z.enum(['fr', 'ar', 'en', 'de']).default('fr'),
   body: z.string().min(10, 'Le contenu doit contenir au moins 10 caractères'),
+  bodyTranslations: z.record(z.enum(['fr', 'ar', 'en', 'de']), z.string()).optional(),
   variableSchema: z.array(VariableSchemaItem).default([]),
   status: z.enum(['draft', 'active', 'archived']).default('draft'),
 });

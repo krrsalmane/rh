@@ -3,8 +3,13 @@ import axios from 'axios';
 import { store } from '@/store';
 import { clearCredentials, updateAccessToken } from '@/store/authSlice';
 
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+if (import.meta.env.DEV) {
+  console.log(`🌐 API base URL: ${baseURL}`);
+}
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL,
   withCredentials: true, // send refresh-token cookie
 });
 

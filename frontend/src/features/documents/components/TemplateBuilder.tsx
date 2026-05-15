@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -14,7 +15,7 @@ import clsx from 'clsx';
 import {
   Bold, Italic, Underline as UnderlineIcon, List,
   AlignCenter, Undo2,
-  Heading2, Plus, Trash2, GripVertical, Save, Send, Eye, EyeOff, Zap,
+  Plus, Trash2, GripVertical, Save, Send, Eye, EyeOff, Zap,
   Upload, Code, Pencil, Settings, X, Image as ImageIcon,
   Type, Layers, Layout, RotateCcw, MousePointer2, Database
 } from 'lucide-react';
@@ -38,6 +39,133 @@ interface FooterConfig {
   showPageNumber: boolean;
 }
 
+type SupportedLang = 'fr' | 'ar' | 'en' | 'de';
+
+const SUPPORTED_LANGS: SupportedLang[] = ['fr', 'ar', 'en', 'de'];
+
+const FONT_SIZES = ['10pt', '11pt', '12pt', '13pt', '14pt', '16pt', '18pt', '20pt'];
+
+const TEXT_STYLE_PRESETS = [
+  { label: 'Default', value: 'default', attrs: {} },
+  { label: 'Serif (Corporate)', value: 'serif', attrs: { fontFamily: 'Merriweather, serif' } },
+  { label: 'Blackletter', value: 'blackletter', attrs: { fontFamily: 'UnifrakturCook, serif' } },
+  { label: 'Script', value: 'script', attrs: { fontFamily: 'Great Vibes, cursive' } },
+  { label: 'Monospace', value: 'mono', attrs: { fontFamily: 'Courier New, monospace' } },
+  { label: 'Rounded', value: 'rounded', attrs: { fontFamily: 'Fredoka, sans-serif' } },
+  { label: 'Small Caps', value: 'smallcaps', attrs: { fontVariant: 'small-caps', letterSpacing: '0.03em' } },
+  { label: 'Wide', value: 'wide', attrs: { letterSpacing: '0.2em', textTransform: 'uppercase' } },
+];
+
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    fontSize: {
+      setFontSize: (size: string) => ReturnType;
+      unsetFontSize: () => ReturnType;
+    };
+  }
+}
+
+const FontSize = Extension.create({
+  name: 'fontSize',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (element) => element.style.fontSize || null,
+            renderHTML: (attributes) => {
+              if (!attributes.fontSize) return {};
+              return { style: `font-size: ${attributes.fontSize}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+  addCommands() {
+    return {
+      setFontSize:
+        (size: string) =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { fontSize: size }).run(),
+      unsetFontSize:
+        () =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run(),
+    };
+  },
+});
+
+const TextStyleExtras = Extension.create({
+  name: 'textStyleExtras',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          fontFamily: {
+            default: null,
+            parseHTML: (element) => element.style.fontFamily || null,
+            renderHTML: (attributes) => {
+              if (!attributes.fontFamily) return {};
+              return { style: `font-family: ${attributes.fontFamily}` };
+            },
+          },
+          fontVariant: {
+            default: null,
+            parseHTML: (element) => element.style.fontVariant || null,
+            renderHTML: (attributes) => {
+              if (!attributes.fontVariant) return {};
+              return { style: `font-variant: ${attributes.fontVariant}` };
+            },
+          },
+          letterSpacing: {
+            default: null,
+            parseHTML: (element) => element.style.letterSpacing || null,
+            renderHTML: (attributes) => {
+              if (!attributes.letterSpacing) return {};
+              return { style: `letter-spacing: ${attributes.letterSpacing}` };
+            },
+          },
+          textTransform: {
+            default: null,
+            parseHTML: (element) => element.style.textTransform || null,
+            renderHTML: (attributes) => {
+              if (!attributes.textTransform) return {};
+              return { style: `text-transform: ${attributes.textTransform}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+});
+
+const DEFAULT_BODY_BY_LANGUAGE: Record<SupportedLang, string> = {
+  fr: [
+    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">TITRE DU DOCUMENT</p>',
+    '<p style="text-align:center;color:#64748b;margin-top:0;">Sous-titre optionnel</p>',
+    '<p>Commencez ici le contenu principal du document.</p>',
+  ].join(''),
+  en: [
+    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">DOCUMENT TITLE</p>',
+    '<p style="text-align:center;color:#64748b;margin-top:0;">Optional subtitle</p>',
+    '<p>Start the main document content here.</p>',
+  ].join(''),
+  de: [
+    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">DOKUMENTTITEL</p>',
+    '<p style="text-align:center;color:#64748b;margin-top:0;">Optionaler Untertitel</p>',
+    '<p>Beginnen Sie hier mit dem Hauptinhalt des Dokuments.</p>',
+  ].join(''),
+  ar: [
+    '<p style="text-align:center;font-size:18pt;font-weight:700;letter-spacing:0.02em;margin:12mm 0 2mm;">عنوان الوثيقة</p>',
+    '<p style="text-align:center;color:#64748b;margin-top:0;">عنوان فرعي اختياري</p>',
+    '<p>ابدأ هنا المحتوى الرئيسي للوثيقة.</p>',
+  ].join(''),
+};
+
 const DEFAULT_HEADER_CONFIG: HeaderConfig = {
   title: '{{company.name}}',
   subtitle: '{{company.address}}',
@@ -51,10 +179,10 @@ const DEFAULT_HEADER_CONFIG: HeaderConfig = {
 
 const DEFAULT_FOOTER_CONFIG: FooterConfig = {
   leftText: '',
-  centerText: '{{company.name}} — {{company.address}}',
+  centerText: '',
   rightText: '',
   showDivider: false,
-  showPageNumber: true,
+  showPageNumber: false,
 };
 
 const generateHeaderHtml = (config: HeaderConfig) => {
@@ -154,15 +282,45 @@ const QUICK_VARS = [
 ];
 
 export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
+  const isNewTemplate = !template || template.id === 'new';
   const [name, setName] = useState(template?.name || '');
   const [category, setCategory] = useState<CreateTemplateDto['category']>(template?.category || 'attestation');
-  const [language, setLanguage] = useState<'fr' | 'ar' | 'en' | 'de'>(template?.language || 'fr');
+  const [language, setLanguage] = useState<SupportedLang>(template?.language || 'fr');
+  const [activeLanguage, setActiveLanguage] = useState<SupportedLang>(template?.language || 'fr');
   const [variableSchema, setVariableSchema] = useState<VariableSchema[]>(template?.variableSchema || []);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [liveHtml, setLiveHtml] = useState(template?.body || '');
+  const [bodyByLanguage, setBodyByLanguage] = useState<Record<SupportedLang, string>>(() => {
+    const initial: Record<SupportedLang, string> = {
+      fr: '', ar: '', en: '', de: '',
+    };
+
+    if (template?.bodyTranslations) {
+      SUPPORTED_LANGS.forEach((lang) => {
+        initial[lang] = template.bodyTranslations?.[lang] || '';
+      });
+      if (!initial[template.language] && template.body) {
+        initial[template.language] = template.body;
+      }
+      return initial;
+    }
+
+    if (template?.body) {
+      initial[template.language || 'fr'] = template.body;
+      return initial;
+    }
+
+    if (isNewTemplate) {
+      SUPPORTED_LANGS.forEach((lang) => {
+        initial[lang] = DEFAULT_BODY_BY_LANGUAGE[lang];
+      });
+    }
+
+    return initial;
+  });
+  const [liveHtml, setLiveHtml] = useState(bodyByLanguage[activeLanguage] || '');
 
   // Header/Footer Zones
-  const [showHeader, setShowHeader] = useState(false);
+  const [showHeader, setShowHeader] = useState(isNewTemplate ? true : false);
   const [showFooter, setShowFooter] = useState(false);
 
   const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(DEFAULT_HEADER_CONFIG);
@@ -174,12 +332,14 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
   const [editingZone, setEditingZone] = useState<'header' | 'body' | 'footer'>('body');
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const [editorMode, setEditorMode] = useState<'tiptap' | 'html'>(
-    (template?.body && template.body.includes('<html')) ? 'html' : 'tiptap'
-  );
-  const [importedHtml, setImportedHtml] = useState<string | null>(
-    (template?.body && template.body.includes('<html')) ? template.body : null
-  );
+  const [editorMode, setEditorMode] = useState<'tiptap' | 'html'>(() => {
+    const currentBody = bodyByLanguage[activeLanguage] || '';
+    return currentBody.includes('<html') ? 'html' : 'tiptap';
+  });
+  const [importedHtml, setImportedHtml] = useState<string | null>(() => {
+    const currentBody = bodyByLanguage[activeLanguage] || '';
+    return currentBody.includes('<html') ? currentBody : null;
+  });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const createMutation = useCreateTemplate();
@@ -263,7 +423,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
   const editor = useEditor({
     extensions: [
-      StarterKit, Underline, TextStyle, Color,
+      StarterKit.configure({ heading: false }), Underline, TextStyle, FontSize, TextStyleExtras, Color,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Table.configure({ resizable: true }),
       TableRow, TableHeader, TableCell,
@@ -272,7 +432,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
         emptyNodeClass: 'is-empty',
       }),
     ],
-    content: template?.body || '<h1 style="text-align: center">TITRE DU DOCUMENT</h1><p></p>',
+    content: bodyByLanguage[activeLanguage] || '',
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[500px] p-0 bg-white',
@@ -280,13 +440,54 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       },
     },
     onUpdate: ({ editor }) => {
-      setLiveHtml(editor.getHTML());
+      const html = editor.getHTML();
+      setLiveHtml(html);
+      setBodyByLanguage((prev) => ({ ...prev, [activeLanguage]: html }));
     },
   });
 
   useEffect(() => {
+    if (!editor) return;
+    const nextBody = bodyByLanguage[activeLanguage] || '';
+    if (editor.getHTML() !== nextBody) {
+      editor.commands.setContent(nextBody || '', false);
+    }
+    setLiveHtml(nextBody || '');
+    if (nextBody.includes('<html')) {
+      setEditorMode('html');
+      setImportedHtml(nextBody);
+    } else {
+      setEditorMode('tiptap');
+      setImportedHtml(null);
+    }
+  }, [activeLanguage, bodyByLanguage, editor]);
+
+  useEffect(() => {
     if (template && editor) {
-      const { header, body, footer } = parseTemplateParts(template.body || '');
+      const nextBodyByLanguage: Record<SupportedLang, string> = {
+        fr: '', ar: '', en: '', de: '',
+      };
+
+      if (template.bodyTranslations) {
+        SUPPORTED_LANGS.forEach((lang) => {
+          nextBodyByLanguage[lang] = template.bodyTranslations?.[lang] || '';
+        });
+      }
+
+      if (template.body) {
+        nextBodyByLanguage[template.language || 'fr'] = template.body;
+      }
+
+      if (Object.values(nextBodyByLanguage).every((v) => !v)) {
+        SUPPORTED_LANGS.forEach((lang) => {
+          nextBodyByLanguage[lang] = DEFAULT_BODY_BY_LANGUAGE[lang];
+        });
+      }
+
+      setBodyByLanguage(nextBodyByLanguage);
+      setActiveLanguage(template.language || 'fr');
+
+      const { header, body, footer } = parseTemplateParts(nextBodyByLanguage[template.language || 'fr'] || '');
 
       if (header) {
         setHeaderHtml(header);
@@ -321,7 +522,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
 
       setName(template.name || '');
       setCategory(template.category || 'attestation');
-      setLanguage(template.language || 'fr');
+      setLanguage((template.language as SupportedLang) || 'fr');
       setVariableSchema(template.variableSchema || []);
     }
   }, [template, editor]);
@@ -396,6 +597,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       setImportedHtml(html);
       setEditorMode('html');
       setLiveHtml(html);
+      setBodyByLanguage((prev) => ({ ...prev, [activeLanguage]: html }));
 
       // Detect all {{variables}} from the full HTML
       const varMatches = html.match(/\{\{([^}]+)\}\}/g) || [];
@@ -444,8 +646,14 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
   };
 
   const handleSave = (status: 'draft' | 'active') => {
-    const bodyContent = editorMode === 'html' ? (importedHtml || '') : (editor?.getHTML() || '');
-    const fullBody = buildFullTemplate(bodyContent);
+    const currentBodyContent = editorMode === 'html' ? (importedHtml || '') : (bodyByLanguage[activeLanguage] || editor?.getHTML() || '');
+    const fullBodyByLanguage: Record<SupportedLang, string> = {
+      fr: buildFullTemplate(bodyByLanguage.fr || ''),
+      ar: buildFullTemplate(bodyByLanguage.ar || ''),
+      en: buildFullTemplate(bodyByLanguage.en || ''),
+      de: buildFullTemplate(bodyByLanguage.de || ''),
+    };
+    const fullBody = buildFullTemplate(currentBodyContent);
 
     // Auto-detect variables if schema is minimal
     let finalSchema = variableSchema;
@@ -461,7 +669,21 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
       })) as VariableSchema[];
     }
 
-    const payload: CreateTemplateDto = { name, category, language, body: fullBody, variableSchema: finalSchema, status };
+    const bodyTranslations: Partial<Record<SupportedLang, string>> = {};
+    SUPPORTED_LANGS.forEach((lang) => {
+      const content = fullBodyByLanguage[lang];
+      if (content) bodyTranslations[lang] = content;
+    });
+
+    const payload: CreateTemplateDto = {
+      name,
+      category,
+      language,
+      body: fullBodyByLanguage[language] || fullBody,
+      bodyTranslations,
+      variableSchema: finalSchema,
+      status,
+    };
 
     if (template?.id && template.id !== 'new') {
       updateMutation.mutate({ id: template.id, data: payload }, { onSuccess: onSave });
@@ -581,6 +803,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                     onChange={(newHtml: string) => {
                       setImportedHtml(newHtml);
                       setLiveHtml(newHtml);
+                      setBodyByLanguage((prev) => ({ ...prev, [activeLanguage]: newHtml }));
                     }}
                     onExit={() => setEditorMode('tiptap')}
                   />
@@ -590,17 +813,51 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                   className={clsx(
                     "p-10 min-h-[600px]", 
                     editingZone !== 'body' && "opacity-60 pointer-events-none",
-                    language === 'ar' && "text-right"
+                    activeLanguage === 'ar' && "text-right"
                   )}
-                  dir={language === 'ar' ? 'rtl' : 'ltr'}
+                  dir={activeLanguage === 'ar' ? 'rtl' : 'ltr'}
                 >
                   {editingZone === 'body' && (
                     <div className="flex flex-wrap items-center gap-0.5 p-1.5 bg-slate-50 border border-slate-100 rounded-xl mb-6 sticky top-4 z-20 shadow-sm animate-fade-in">
                       <ToolbarBtn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} icon={Bold} title="Gras" />
                       <ToolbarBtn active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} icon={Italic} title="Italique" />
                       <ToolbarBtn active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} icon={UnderlineIcon} title="Souligné" />
+                      <select
+                        defaultValue="default"
+                        onChange={(e) => {
+                          const preset = TEXT_STYLE_PRESETS.find((item) => item.value === e.target.value);
+                          if (!preset || preset.value === 'default') {
+                            editor.chain().focus().setMark('textStyle', { fontFamily: null, fontVariant: null, letterSpacing: null, textTransform: null }).removeEmptyTextStyle().run();
+                            return;
+                          }
+                          editor.chain().focus().setMark('textStyle', preset.attrs).run();
+                        }}
+                        className="ml-2 h-8 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold text-slate-600 px-2"
+                        title="Style du texte"
+                      >
+                        {TEXT_STYLE_PRESETS.map((preset) => (
+                          <option key={preset.value} value={preset.value}>{preset.label}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={editor.getAttributes('textStyle').fontSize || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (!value) {
+                            editor.chain().focus().unsetFontSize().run();
+                          } else {
+                            editor.chain().focus().setFontSize(value).run();
+                          }
+                        }}
+                        className="ml-2 h-8 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold text-slate-600 px-2"
+                        title="Taille du texte"
+                      >
+                        <option value="">Taille</option>
+                        {FONT_SIZES.map((size) => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
                       <span className="w-px h-4 bg-slate-200 mx-1" />
-                      <ToolbarBtn active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} icon={Heading2} title="Titre" />
                       <ToolbarBtn active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} icon={List} title="Liste" />
                       <span className="w-px h-4 bg-slate-200 mx-1" />
                       <ToolbarBtn active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()} icon={AlignCenter} title="Centrer" />
@@ -692,6 +949,32 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
           />
         ) : (
           <>
+            {/* Language Tabs */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-3 shadow-sm animate-fade-in">
+              <div className="flex items-center gap-2 mb-1">
+                <Layers className="w-4 h-4 text-slate-400" />
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langues du modèle</p>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {SUPPORTED_LANGS.map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setActiveLanguage(lang)}
+                    className={clsx(
+                      "py-2 rounded-xl border text-[10px] font-black uppercase transition-all",
+                      activeLanguage === lang
+                        ? "bg-slate-900 border-slate-900 text-white shadow-sm"
+                        : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                    )}
+                    type="button"
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-400">Contenu par langue. Le style (header/footer) reste partagé.</p>
+            </div>
+
             {/* Variable Library */}
             <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-sm animate-fade-in">
               <div className="flex items-center gap-2 mb-1">
@@ -750,7 +1033,7 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Langue</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Langue par défaut</label>
                   <select value={language} onChange={(e) => setLanguage(e.target.value as any)} className="input-field text-sm">
                     <option value="fr">Français</option>
                     <option value="ar">Arabe</option>
@@ -842,7 +1125,8 @@ export const TemplateBuilder: React.FC<Props> = ({ template, onSave }) => {
         template={{
           id: template?.id || 'preview',
           name: name || 'Nouveau modèle',
-          category, language, body: liveHtml,
+          category, language: activeLanguage, body: liveHtml,
+          bodyTranslations: { ...bodyByLanguage },
           variableSchema, status: 'draft', version: template?.version || 1,
           usageCount: 0, createdAt: new Date().toISOString()
         } as Template}
@@ -1045,10 +1329,20 @@ function ZoneEditor({
 }: any) {
   const [tab, setTab] = useState<'visual' | 'code'>('visual');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [footerLeft, setFooterLeft] = useState(config.leftText || '');
+  const [footerRight, setFooterRight] = useState(config.rightText || '');
+
+  useEffect(() => {
+    if (zone === 'footer') {
+      setFooterLeft(config.leftText || '');
+      setFooterRight(config.rightText || '');
+    }
+  }, [zone, config.leftText, config.rightText]);
 
   const updateField = (field: string, value: any) => {
     setConfig((prev: any) => ({ ...prev, [field]: value }));
   };
+
 
   const FieldWrapper = ({ label, field, children }: any) => (
     <div className={clsx(
@@ -1170,13 +1464,23 @@ function ZoneEditor({
               <>
                 <FieldWrapper label="Texte Gauche" field="leftText">
                   <input
-                    value={config.leftText} onChange={(e) => updateField('leftText', e.target.value)}
+                    value={footerLeft}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFooterLeft(value);
+                    }}
+                    onBlur={() => updateField('leftText', footerLeft)}
                     className="w-full px-3 py-2 text-[10px] font-bold bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all"
                   />
                 </FieldWrapper>
                 <FieldWrapper label="Texte Droit" field="rightText">
                   <textarea
-                    value={config.rightText} onChange={(e) => updateField('rightText', e.target.value)}
+                    value={footerRight}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFooterRight(value);
+                    }}
+                    onBlur={() => updateField('rightText', footerRight)}
                     className="w-full px-3 py-2 text-[10px] bg-slate-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all h-20 resize-none"
                   />
                 </FieldWrapper>

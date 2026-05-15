@@ -195,65 +195,77 @@ function wrapInHtml(zones: { header: string; body: string; signature: string; fo
   const customStyleMatch = zones.body.match(/<style>([\s\S]*?)<\/style>/);
   const bodyWithoutStyle = zones.body.replace(/<style>([\s\S]*?)<\/style>/, '');
 
+  const headerHtml = zones.header ? `
+    <div class="document-header">
+      ${zones.header}
+    </div>
+  ` : '';
+
+  const footerHtml = zones.footer ? `
+    <div class="document-footer">
+      ${zones.footer}
+    </div>
+  ` : '';
+
   return `<!DOCTYPE html>
 <html lang="${lang}" dir="${direction}" class="${langClass}">
 <head>
   <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=Cairo:wght@400;500;600;700&family=Great+Vibes&family=UnifrakturCook:wght@700&family=Fredoka:wght@400;600&display=swap');
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body { 
       font-family: 'Inter', sans-serif; 
       font-size: 11pt; 
-      color: #334155; 
-      line-height: 1.6;
-      background: #f8fafc;
+      color: #1f2937; 
+      line-height: 1.65;
+      background: #ffffff;
       -webkit-print-color-adjust: exact;
     }
 
     @media print {
       body { background: white; }
       .document-page { box-shadow: none !important; margin: 0 !important; }
-      @page { size: A4; margin: 0; }
+      @page { size: A4; margin: 14mm 18mm 20mm; }
     }
 
     .document-page {
       position: relative;
       background: white;
-      width: 210mm;
-      min-height: 297mm;
-      margin: 20px auto;
+      width: 100%;
+      min-height: 100%;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
       overflow: hidden;
     }
 
     .document-header { 
-      padding: 60px 80px 20px; 
+      padding: 6mm 0 4mm; 
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
     
     .company-info { flex: 1; }
-    .company-name { font-size: 16pt; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.02em; }
-    .company-details { font-size: 9pt; color: #64748b; line-height: 1.4; max-width: 400px; }
-    .doc-date { font-size: 10.5pt; color: #475569; font-weight: 600; text-align: right; margin-top: 4px; }
+    .company-name { font-size: 14pt; font-weight: 700; color: #111827; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.02em; }
+    .company-details { font-size: 9.5pt; color: #6b7280; line-height: 1.4; max-width: 400px; }
+    .doc-date { font-size: 10pt; color: #374151; font-weight: 600; text-align: right; margin-top: 4px; }
 
     .document-body { 
-      padding: 20px 80px; 
+      padding: 6mm 0 8mm; 
       overflow: hidden;
     }
     
     .document-body h1 { 
-      font-size: 20pt; 
-      font-weight: 800;
+      font-family: 'Merriweather', serif;
+      font-size: 19pt; 
+      font-weight: 700;
       text-align: center; 
-      margin: 40px 0 45px; 
-      color: #0f172a; 
+      margin: 18mm 0 10mm; 
+      color: #111827; 
       text-transform: uppercase;
       letter-spacing: 0.03em;
       position: relative;
@@ -265,32 +277,36 @@ function wrapInHtml(zones: { header: string; body: string; signature: string; fo
       bottom: -10px;
       left: 50%;
       transform: translateX(-50%);
-      width: 60px;
-      height: 3px;
-      background-color: #0f172a;
+      width: 54px;
+      height: 2px;
+      background-color: #111827;
     }
 
     .document-body p { 
-      margin-bottom: 18px; 
+      margin-bottom: 14px; 
       text-align: justify;
       font-size: 11pt;
-      line-height: 1.7;
+      line-height: 1.65;
     }
 
-    .document-body strong { font-weight: 700; color: #0f172a; }
+    .document-body strong { font-weight: 700; color: #111827; }
 
     .document-footer { 
-      padding: 25px 80px; 
+      padding: 12mm 0 4mm; 
       font-size: 8.5pt; 
-      color: #94a3b8; 
+      color: #9ca3af; 
       text-align: center;
       background: white;
       margin-top: auto;
     }
 
     .document-signature {
-      padding: 0 80px 40px;
+      padding: 0 0 10mm;
     }
+
+    .page-break { page-break-before: always; }
+    h1, h2, h3, h4, h5, h6 { page-break-after: avoid; }
+    p, ul, ol, table, blockquote { page-break-inside: avoid; }
 
     /* Support for Custom Template Styles */
     ${customStyleMatch ? customStyleMatch[1] : ''}
@@ -299,22 +315,14 @@ function wrapInHtml(zones: { header: string; body: string; signature: string; fo
     [dir="rtl"] { font-family: 'Cairo', sans-serif; }
     [dir="rtl"] .doc-date { text-align: left; }
     [dir="rtl"] .company-info { text-align: right; }
-    [dir="rtl"] .company-name { font-size: 18pt; letter-spacing: 0; }
-    [dir="rtl"] .document-body h1 { font-size: 22pt; margin: 35px 0 40px; letter-spacing: 0; }
-    [dir="rtl"] .document-body p { line-height: 1.8; margin-bottom: 16px; font-size: 11.5pt; }
+    [dir="rtl"] .company-name { font-size: 16pt; letter-spacing: 0; }
+    [dir="rtl"] .document-body h1 { font-size: 20pt; margin: 14mm 0 10mm; letter-spacing: 0; }
+    [dir="rtl"] .document-body p { line-height: 1.8; margin-bottom: 14px; font-size: 11.5pt; }
   </style>
 </head>
 <body>
   <div class="document-page">
-    <div class="document-header">
-      ${zones.header || `
-        <div class="company-info">
-          <div class="company-name">${data.company.name}</div>
-          <div class="company-details">${data.company.address}</div>
-        </div>
-        <div class="doc-date">${data.meta.generatedAt}</div>
-      `}
-    </div>
+    ${headerHtml}
 
     <div class="document-body">
       ${bodyWithoutStyle}
@@ -326,9 +334,7 @@ function wrapInHtml(zones: { header: string; body: string; signature: string; fo
     </div>
     ` : ''}
 
-    <div class="document-footer">
-      ${zones.footer || `${data.company.name} — ${data.company.address}`}
-    </div>
+    ${footerHtml}
   </div>
 </body>
 </html>`;
