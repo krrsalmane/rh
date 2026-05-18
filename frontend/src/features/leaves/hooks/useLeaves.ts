@@ -20,7 +20,7 @@ export function useLeaveRequests(filters: LeaveFilters) {
 export function useCreateLeaveRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (dto: CreateLeaveRequestDto) => leavesApi.createLeaveRequest(dto),
+    mutationFn: (dto: CreateLeaveRequestDto | FormData) => leavesApi.createLeaveRequest(dto),
     onSuccess: () => {
       toast.success('Demande de congé créée');
       qc.invalidateQueries({ queryKey: [LEAVES_KEY] });
@@ -82,6 +82,14 @@ export function useLeaveTypes() {
   return useQuery({
     queryKey: [LEAVE_TYPES_KEY],
     queryFn: () => leavesApi.getLeaveTypes(),
+  });
+}
+
+export function useLeaveRequestById(id: string | null) {
+  return useQuery({
+    queryKey: [LEAVES_KEY, id],
+    queryFn: () => leavesApi.getLeaveRequestById(id!),
+    enabled: !!id,
   });
 }
 

@@ -26,9 +26,13 @@ class NotificationService {
   private connectedUsers: Map<string, ConnectedUser> = new Map();
 
   constructor(server: any) {
+    const allowedOrigins = process.env.FRONTEND_URL
+      ? [process.env.FRONTEND_URL]
+      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'];
+
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:5175",
+        origin: allowedOrigins,
         methods: ["GET", "POST"]
       }
     });
@@ -41,6 +45,14 @@ class NotificationService {
       await notificationsRepository.markAsRead(notificationId);
     } catch (error) {
       console.error('❌ Error marking notification as read:', error);
+    }
+  }
+
+  async markAllAsRead(userId: string) {
+    try {
+      await notificationsRepository.markAllAsRead(userId);
+    } catch (error) {
+      console.error('❌ Error marking all notifications as read:', error);
     }
   }
 
@@ -157,7 +169,7 @@ class NotificationService {
           type: notification.type,
           title: notification.title,
           message: notification.message,
-          data: notification.data ? JSON.parse(notification.data) : null,
+          data: notification.data ?? null,
           createdAt: new Date().toISOString()
         });
       }
@@ -240,6 +252,9 @@ let notificationService: NotificationService;
 
 export function initializeNotifications(server: any) {
   if (!notificationService) {
+    void notificationsRepository.createTable().catch((error) => {
+      console.error('❌ Failed to initialize notifications table:', error);
+    });
     notificationService = new NotificationService(server);
   }
   return notificationService;

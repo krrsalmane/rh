@@ -5,12 +5,14 @@ import { auditLog } from '../../shared/utils/auditLogger';
 import { calculateWorkingDays } from '../../shared/utils/dateUtils';
 import { getNotificationService } from '../notifications/notifications.service';
 import * as employeesRepository from '../employees/employees.repository';
+import path from 'path';
+import { getStoragePath } from '../../config/storage';
 
 export async function getLeaveRequests(filters: LeaveFiltersInput, user: any) {
-  const { companyId, role, id } = user;
+  const { companyId, role, id, employeeId } = user;
   
   if (role === 'employee') {
-    filters.employeeId = id;
+    filters.employeeId = employeeId || id;
   } else if (role === 'manager') {
     filters.managerId = id;
   }
@@ -35,7 +37,11 @@ export async function getLeaveRequestById(id: string, user: any) {
   return request;
 }
 
-export async function createLeaveRequest(input: CreateLeaveRequestInput, user: any) {
+export async function createLeaveRequest(
+  input: CreateLeaveRequestInput,
+  user: any,
+  document?: { path: string; originalName: string }
+) {
   const { companyId, role, id: userId } = user;
   
   const effectiveEmployeeId = role === 'employee' ? user.employeeId : input.employeeId;
@@ -79,8 +85,29 @@ export async function createLeaveRequest(input: CreateLeaveRequestInput, user: a
     throw new AppError(`Solde de congés insuffisant. Disponible: ${balance.remaining}, Demandé: ${workingDays}`, 400);
   }
   
-  const request = await leavesRepository.create(companyId, effectiveEmployeeId, input.leaveTypeId, input.startDate, input.endDate, workingDays);
-  await auditLog({ userId, companyId, action: 'CREATE', entity: 'leave_request', entityId: request.id, newValue: input as unknown as Record<string, unknown> });
+  const request = await leavesRepository.create(
+    companyId,
+    effectiveEmployeeId,
+    input.leaveTypeId,
+    input.startDate,
+    input.endDate,
+    workingDays,
+    input.reason || null,
+    document?.path || null,
+    document?.originalName || null
+  );
+  await auditLog({
+    userId,
+    companyId,
+    action: 'CREATE',
+    entity: 'leave_request',
+    entityId: request.id,
+    newValue: {
+      ...input,
+      workingDays,
+      supportingDocumentName: document?.originalName || null,
+    } as unknown as Record<string, unknown>
+  });
   
   // Send notifications to HR, managers, and super admins
   try {
@@ -97,7 +124,7 @@ export async function createLeaveRequest(input: CreateLeaveRequestInput, user: a
       type: 'leave_request',
       title: 'Nouvelle demande de congé',
       message: `${employeeName} a demandé un congé - ${input.leaveTypeId}`,
-      data: { employeeName, leaveType: input.leaveTypeId },
+      data: { employeeName, leaveType: input.leaveTypeId, reason: input.reason || '', hasDocument: Boolean(document) },
       companyId
     });
     
@@ -107,7 +134,7 @@ export async function createLeaveRequest(input: CreateLeaveRequestInput, user: a
       type: 'leave_request',
       title: 'Nouvelle demande de congé',
       message: `${employeeName} a demandé un congé - ${input.leaveTypeId}`,
-      data: { employeeName, leaveType: input.leaveTypeId },
+      data: { employeeName, leaveType: input.leaveTypeId, reason: input.reason || '', hasDocument: Boolean(document) },
       companyId
     });
     
@@ -117,7 +144,7 @@ export async function createLeaveRequest(input: CreateLeaveRequestInput, user: a
       type: 'leave_request',
       title: 'Nouvelle demande de congé',
       message: `${employeeName} a demandé un congé - ${input.leaveTypeId}`,
-      data: { employeeName, leaveType: input.leaveTypeId },
+      data: { employeeName, leaveType: input.leaveTypeId, reason: input.reason || '', hasDocument: Boolean(document) },
       companyId
     });
   } catch (error) {
@@ -126,6 +153,24 @@ export async function createLeaveRequest(input: CreateLeaveRequestInput, user: a
   }
   
   return request;
+}
+
+export async function getLeaveRequestDocument(id: string, user: any) {
+  const request = await getLeaveRequestById(id, user);
+  if (!request.supporting_document_path) {
+    throw new AppError('Leave request has no supporting document', 404);
+  }
+
+  const storageRoot = path.resolve(getStoragePath('uploads'));
+  const filePath = path.resolve(request.supporting_document_path);
+  if (!filePath.startsWith(storageRoot)) {
+    throw new AppError('Invalid document path', 400);
+  }
+
+  return {
+    filePath,
+    filename: request.supporting_document_name || path.basename(filePath),
+  };
 }
 
 export async function approveLeaveRequest(id: string, input: ReviewLeaveInput, user: any) {

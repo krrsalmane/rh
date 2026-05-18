@@ -8,6 +8,9 @@ export interface LeaveRequest {
   leaveTypeName: string;
   startDate: string;
   endDate: string;
+  reason: string | null;
+  supportingDocumentPath: string | null;
+  supportingDocumentName: string | null;
   workingDays: number | null;
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   requestedAt: string;
@@ -50,6 +53,7 @@ export interface CreateLeaveRequestDto {
   leaveTypeId: string;
   startDate: string;
   endDate: string;
+  reason?: string | null;
   workingDays?: number | null;
 }
 

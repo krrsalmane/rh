@@ -9,6 +9,9 @@ export interface LeaveRequestRow {
   leave_type_id: string;
   start_date: string;
   end_date: string;
+  reason: string | null;
+  supporting_document_path: string | null;
+  supporting_document_name: string | null;
   working_days: number | null;
   status: string;
   requested_at: string;
@@ -65,11 +68,23 @@ export async function findById(id: string, companyId: string): Promise<LeaveRequ
   return result.rows[0] || null;
 }
 
-export async function create(companyId: string, employeeId: string, leaveTypeId: string, startDate: string, endDate: string, workingDays: number | null): Promise<LeaveRequestRow> {
+export async function create(
+  companyId: string,
+  employeeId: string,
+  leaveTypeId: string,
+  startDate: string,
+  endDate: string,
+  workingDays: number | null,
+  reason: string | null,
+  supportingDocumentPath: string | null,
+  supportingDocumentName: string | null
+): Promise<LeaveRequestRow> {
   const id = uuidv4();
   await query(
-    'INSERT INTO leave_requests (id, company_id, employee_id, leave_type_id, start_date, end_date, working_days) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-    [id, companyId, employeeId, leaveTypeId, startDate, endDate, workingDays]
+    `INSERT INTO leave_requests (
+      id, company_id, employee_id, leave_type_id, start_date, end_date, working_days, reason, supporting_document_path, supporting_document_name
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [id, companyId, employeeId, leaveTypeId, startDate, endDate, workingDays, reason, supportingDocumentPath, supportingDocumentName]
   );
   return (await findById(id, companyId))!;
 }

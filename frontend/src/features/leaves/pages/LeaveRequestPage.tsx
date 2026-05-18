@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, ArrowLeft, Loader2 } from 'lucide-react';
+import { CalendarDays, ArrowLeft, Loader2, Paperclip } from 'lucide-react';
 import { useLeaveTypes, useCreateLeaveRequest } from '../hooks/useLeaves';
 import { getBalances } from '../api';
 import { useAppSelector } from '@/store/hooks';
@@ -23,6 +23,7 @@ export const LeaveRequestPage: React.FC = () => {
   });
 
   const [form, setForm] = useState<Partial<CreateLeaveRequestDto>>({});
+  const [supportingDocument, setSupportingDocument] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const createMut = useCreateLeaveRequest();
 
@@ -58,7 +59,16 @@ export const LeaveRequestPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    createMut.mutate({ ...form, employeeId: selectedEmployeeId } as CreateLeaveRequestDto, {
+    const payload = new FormData();
+    if (selectedEmployeeId) payload.append('employeeId', selectedEmployeeId);
+    payload.append('leaveTypeId', form.leaveTypeId || '');
+    payload.append('startDate', form.startDate || '');
+    payload.append('endDate', form.endDate || '');
+    if (form.reason) payload.append('reason', form.reason);
+    if (typeof form.workingDays === 'number') payload.append('workingDays', String(form.workingDays));
+    if (supportingDocument) payload.append('supportingDocument', supportingDocument);
+
+    createMut.mutate(payload, {
       onSuccess: () => navigate('/leaves'),
     });
   };
@@ -198,6 +208,40 @@ export const LeaveRequestPage: React.FC = () => {
             className={inputCls('workingDays')}
           />
           {errors.workingDays && <p className="text-xs text-rose-500">{errors.workingDays}</p>}
+        </div>
+
+        {/* Reason */}
+        <div className="space-y-1.5">
+          <label className="block text-sm font-semibold text-slate-700">
+            Description / motif <span className="text-slate-400 font-normal">(optionnel)</span>
+          </label>
+          <textarea
+            rows={4}
+            value={form.reason || ''}
+            onChange={(e) => set('reason', e.target.value)}
+            placeholder="Expliquez brièvement le contexte de la demande..."
+            className={`${inputCls('reason')} resize-none`}
+          />
+        </div>
+
+        {/* Supporting document */}
+        <div className="space-y-1.5">
+          <label className="block text-sm font-semibold text-slate-700">
+            Pièce justificative <span className="text-slate-400 font-normal">(optionnel)</span>
+          </label>
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center transition-colors hover:border-violet-300 hover:bg-violet-50/60">
+            <Paperclip className="w-5 h-5 text-violet-500" />
+            <span className="text-sm font-medium text-slate-700">
+              {supportingDocument ? supportingDocument.name : 'Importer un PDF, JPG ou PNG'}
+            </span>
+            <span className="text-xs text-slate-400">Le fichier sert de justificatif pour le service RH</span>
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              onChange={(e) => setSupportingDocument(e.target.files?.[0] || null)}
+              className="hidden"
+            />
+          </label>
         </div>
 
         {/* Actions */}

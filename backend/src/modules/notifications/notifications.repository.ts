@@ -39,6 +39,13 @@ export async function markAsRead(notificationId: string): Promise<void> {
   );
 }
 
+export async function markAllAsRead(userId: string): Promise<void> {
+  await query(
+    'UPDATE notifications SET `read` = 1, read_at = NOW() WHERE user_id = $1 AND `read` = 0',
+    [userId]
+  );
+}
+
 export async function findUnreadCount(userId: string): Promise<number> {
   const result = await query<{ count: string }>(
     'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND `read` = 0',

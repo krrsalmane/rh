@@ -15,6 +15,9 @@ function mapLeaveRequest(raw: Record<string, unknown>): LeaveRequest {
     leaveTypeName: (raw.leave_type_name ?? raw.leaveTypeName ?? '') as string,
     startDate: (raw.start_date ?? raw.startDate) as string,
     endDate: (raw.end_date ?? raw.endDate) as string,
+    reason: (raw.reason ?? null) as string | null,
+    supportingDocumentPath: (raw.supporting_document_path ?? raw.supportingDocumentPath ?? null) as string | null,
+    supportingDocumentName: (raw.supporting_document_name ?? raw.supportingDocumentName ?? null) as string | null,
     workingDays: (raw.working_days ?? raw.workingDays ?? null) as number | null,
     status: (raw.status as LeaveRequest['status']) || 'pending',
     requestedAt: (raw.requested_at ?? raw.requestedAt) as string,
@@ -68,9 +71,25 @@ export async function getLeaveRequestById(id: string) {
   return { ...data, data: mapLeaveRequest(data.data) };
 }
 
-export async function createLeaveRequest(dto: CreateLeaveRequestDto) {
+export async function createLeaveRequest(dto: CreateLeaveRequestDto | FormData) {
   const { data } = await axiosInstance.post('/leaves', dto);
   return { ...data, data: mapLeaveRequest(data.data) };
+}
+
+export async function downloadLeaveRequestDocument(id: string) {
+  const response = await axiosInstance.get(`/leaves/${id}/document`, {
+    responseType: 'blob',
+  });
+  const disposition = response.headers['content-disposition'] as string | undefined;
+  const filenameMatch = disposition?.match(/filename="?([^";]+)"?/i);
+  return {
+    blob: response.data as Blob,
+    filename: filenameMatch?.[1] || 'justificatif',
+  };
+}
+
+export async function markAllNotificationsAsRead() {
+  await axiosInstance.post('/notifications/read-all');
 }
 
 export async function approveLeaveRequest(id: string, approvalNote?: string) {

@@ -5,9 +5,10 @@ export const CreateLeaveRequestSchema = z.object({
   leaveTypeId: z.string(),
   startDate: z.string(),
   endDate: z.string(),
+  reason: z.string().optional(),
   workingDays: z.preprocess(
     (val) => (val === '' ? undefined : val),
-    z.number().int().positive().nullable().optional()
+    z.coerce.number().int().positive().nullable().optional()
   ),
 });
 

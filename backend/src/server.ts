@@ -4,6 +4,7 @@ import { initializeStorage } from './config/storage';
 import { getClient } from './config/database';
 import { createServer } from 'http';
 import { initializeNotifications } from './modules/notifications/notifications.service';
+import { execSync } from 'child_process';
 
 const DEFAULT_PORT = env.PORT || 3000;
 
@@ -11,6 +12,9 @@ initializeStorage();
 
 async function startServer() {
   try {
+    console.log('🔄 Checking database migrations...');
+    execSync('npm run db:migrate -- --no-seed', { stdio: 'inherit' });
+
     const client = await getClient();
     console.log('✅ Database connected');
     client.release();

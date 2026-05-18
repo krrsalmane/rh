@@ -132,7 +132,7 @@ async function freshInstall() {
     console.log(`  • 15 Moroccan public holidays (2026)`);
     console.log(`  • 3 document templates (Attestation travail, salaire, Contrat CDI)`);
     if (withFakeData) {
-      console.log(`  • 7 test employees with users across all roles`);
+      console.log(`  • 10 test employees with users across all roles`);
       console.log(`  • Sample leave requests, absences, time entries, and audit logs`);
     }
     console.log(`\n🚀 Start the server: ${colorize('npm run dev', 'bold')}\n`);

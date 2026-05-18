@@ -18,6 +18,18 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [socket, setSocket] = useState<Socket | null>(null);
   const { accessToken: token } = useAppSelector((state) => state.auth);
+  const userId = useAppSelector((state) => state.auth.user?.id);
+  const role = useAppSelector((state) => state.auth.role);
+
+  const upsertNotification = (notification: Notification) => {
+    setNotifications((prev) => {
+      if (prev.some((item) => item.id === notification.id)) {
+        return prev;
+      }
+      setUnreadCount((count) => count + (notification.read ? 0 : 1));
+      return [notification, ...prev];
+    });
+  };
 
   // Fetch notifications from API
   const fetchNotifications = async () => {
@@ -43,21 +55,40 @@ export function useNotifications() {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      await axiosInstance.post('/notifications/read-all');
+      setNotifications(prev => prev.map((n) => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
+  };
+
   // Initialize WebSocket connection
   useEffect(() => {
-    if (!token) return;
+    if (!token || !userId || !role) return;
 
-    const newSocket = io('http://localhost:3000', {
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_API_URL?.replace(/\/api$/, '') ||
+      'http://localhost:3000';
+
+    const newSocket = io(socketUrl, {
       auth: { token }
     });
 
     newSocket.on('connect', () => {
       console.log('Connected to notification server');
+      newSocket.emit('authenticate', {
+        token,
+        userId,
+        role,
+      });
     });
 
-    newSocket.on('notification', (notification: Notification) => {
-      setNotifications(prev => [notification, ...prev]);
-      setUnreadCount(prev => prev + 1);
+    newSocket.on('new_notification', (notification: Notification) => {
+      upsertNotification(notification);
     });
 
     newSocket.on('disconnect', () => {
@@ -69,7 +100,7 @@ export function useNotifications() {
     return () => {
       newSocket.disconnect();
     };
-  }, [token]);
+  }, [token, userId, role]);
 
   // Initial fetch
   useEffect(() => {
@@ -82,6 +113,7 @@ export function useNotifications() {
     notifications,
     unreadCount,
     markAsRead,
+    markAllAsRead,
     fetchNotifications
   };
 }

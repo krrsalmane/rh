@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
-import { Bell, X, Check } from 'lucide-react';
+import { Bell, X, CheckCheck } from 'lucide-react';
 
 export function Notifications() {
-  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleMarkAsRead = async (notificationId: string) => {
     await markAsRead(notificationId);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
   };
 
   const formatTime = (dateString: string) => {
@@ -51,12 +55,24 @@ export function Notifications() {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h3>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllAsRead}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                    title="Tout marquer comme lu"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    Tout marquer comme lu
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Notifications List */}
@@ -69,9 +85,16 @@ export function Notifications() {
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                    className={`p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
                       !notification.read ? 'bg-blue-50' : ''
                     }`}
+                    onClick={async () => {
+                      if (!notification.read) {
+                        await handleMarkAsRead(notification.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -85,15 +108,6 @@ export function Notifications() {
                           {formatTime(notification.createdAt)}
                         </p>
                       </div>
-                      {!notification.read && (
-                        <button
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          className="ml-2 text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors flex-shrink-0"
-                          title="Mark as read"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))

@@ -99,8 +99,8 @@ export function SuperAdminDashboard() {
               6 derniers mois
             </span>
           </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-72 w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minHeight={260}>
               <BarChart data={trends} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -160,8 +160,8 @@ export function SuperAdminDashboard() {
               Effectif global
             </span>
           </div>
-          <div className="h-72 w-full flex items-center justify-center relative">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-72 w-full flex items-center justify-center relative min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minHeight={260}>
               <PieChart>
                 <Pie
                   data={distribution}

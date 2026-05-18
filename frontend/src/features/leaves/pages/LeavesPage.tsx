@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { CalendarDays, Plus, Check, X, Ban, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { CalendarDays, Plus, Check, X, Ban, ChevronLeft, ChevronRight, Loader2, Info, Download, Paperclip, User, FileText } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { useLeaveRequests, useLeaveTypes, useApproveLeave, useRejectLeave, useCancelLeave } from '../hooks/useLeaves';
+import { useLeaveRequests, useLeaveTypes, useApproveLeave, useRejectLeave, useCancelLeave, useLeaveRequestById } from '../hooks/useLeaves';
 import { useNavigate } from 'react-router-dom';
 import type { LeaveFilters, LeaveRequest } from '../types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { downloadLeaveRequestDocument } from '../api';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   pending:   { label: 'En attente', bg: 'bg-amber-50', text: 'text-amber-700' },
@@ -25,9 +26,12 @@ export const LeavesPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState('');
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
   const { data, isLoading } = useLeaveRequests({ ...filters, status: statusFilter || undefined });
   const { data: leaveTypes } = useLeaveTypes();
+  const { data: selectedRequestData, isLoading: selectedRequestLoading } = useLeaveRequestById(selectedRequestId);
   const approveMut = useApproveLeave();
   const rejectMut = useRejectLeave();
   const cancelMut = useCancelLeave();
@@ -55,6 +59,26 @@ export const LeavesPage: React.FC = () => {
 
   const formatDate = (d: string) => {
     try { return format(new Date(d), 'dd MMM yyyy', { locale: fr }); } catch { return d; }
+  };
+
+  const selectedRequest = selectedRequestData?.data;
+
+  const handleDownloadDocument = async () => {
+    if (!selectedRequestId) return;
+    setDownloadLoading(true);
+    try {
+      const { blob, filename } = await downloadLeaveRequestDocument(selectedRequestId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setDownloadLoading(false);
+    }
   };
 
   return (
@@ -136,6 +160,17 @@ export const LeavesPage: React.FC = () => {
                       <p className="text-slate-600 text-sm">{formatDate(req.startDate)} → {formatDate(req.endDate)}</p>
                     </div>
                     
+                    <div className="flex items-center gap-2 pt-2">
+                      {(role === 'super_admin' || role === 'hr_agent' || role === 'manager') && (
+                        <button
+                          onClick={() => setSelectedRequestId(req.id)}
+                          className="flex-1 px-3 py-2 bg-slate-50 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-100 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Info className="w-4 h-4" /> Détails
+                        </button>
+                      )}
+                    </div>
+
                     {(canApprove || canCancel) && req.status === 'pending' && (
                       <div className="flex items-center gap-2 pt-2">
                         {canApprove && (
@@ -223,28 +258,37 @@ export const LeavesPage: React.FC = () => {
                       </td>
                       {(canApprove || canCancel) && (
                         <td className="px-6 py-4 text-center">
-                          {req.status === 'pending' ? (
-                            <div className="flex items-center justify-center gap-1.5">
-                              {canApprove && (
-                                <>
-                                  <button onClick={() => handleApprove(req.id)} disabled={approveMut.isPending}
-                                    className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors" title="Approuver">
-                                    <Check className="w-4 h-4" />
-                                  </button>
-                                  <button onClick={() => setReviewingId(isReviewing ? null : req.id)}
-                                    className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Refuser">
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </>
-                              )}
-                              {canCancel && <button onClick={() => cancelMut.mutate(req.id)} disabled={cancelMut.isPending}
-                                className="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors" title="Annuler">
-                                <Ban className="w-3.5 h-3.5" />
-                              </button>}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-slate-300">—</span>
-                          )}
+                          <div className="flex items-center justify-center gap-1.5">
+                            {(role === 'super_admin' || role === 'hr_agent' || role === 'manager') && (
+                              <button
+                                onClick={() => setSelectedRequestId(req.id)}
+                                className="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors"
+                                title="Détails"
+                              >
+                                <Info className="w-4 h-4" />
+                              </button>
+                            )}
+                            {req.status === 'pending' ? (
+                              <>
+                                {canApprove && (
+                                  <>
+                                    <button onClick={() => handleApprove(req.id)} disabled={approveMut.isPending}
+                                      className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors" title="Approuver">
+                                      <Check className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => setReviewingId(isReviewing ? null : req.id)}
+                                      className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Refuser">
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
+                                {canCancel && <button onClick={() => cancelMut.mutate(req.id)} disabled={cancelMut.isPending}
+                                  className="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors" title="Annuler">
+                                  <Ban className="w-3.5 h-3.5" />
+                                </button>}
+                              </>
+                            ) : null}
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -272,6 +316,127 @@ export const LeavesPage: React.FC = () => {
           </table>
         </div>
       </div>
+      {selectedRequestId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Détails de la demande</h2>
+                <p className="text-sm text-slate-400">Consultez le motif et le justificatif avant décision</p>
+              </div>
+              <button
+                onClick={() => setSelectedRequestId(null)}
+                className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-5 px-6 py-6">
+              {selectedRequestLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-7 w-7 animate-spin text-violet-500" />
+                </div>
+              ) : selectedRequest ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        <User className="h-4 w-4" /> Demandeur
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800">{selectedRequest.employeeName}</p>
+                      <p className="text-xs text-slate-400">{selectedRequest.department || 'Département non renseigné'}</p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        <CalendarDays className="h-4 w-4" /> Période
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {formatDate(selectedRequest.startDate)} → {formatDate(selectedRequest.endDate)}
+                      </p>
+                      <p className="text-xs text-slate-400">{selectedRequest.workingDays ?? '—'} jours ouvrables</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-100 p-4">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        <FileText className="h-4 w-4" /> Motif
+                      </div>
+                      <p className="text-sm leading-6 text-slate-700">
+                        {selectedRequest.reason || 'Aucun motif renseigné.'}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 p-4">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        <Paperclip className="h-4 w-4" /> Justificatif
+                      </div>
+                      <p className="text-sm text-slate-700">
+                        {selectedRequest.supportingDocumentName || 'Aucun document joint'}
+                      </p>
+                      {selectedRequest.supportingDocumentPath && (
+                        <button
+                          onClick={handleDownloadDocument}
+                          disabled={downloadLoading}
+                          className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                        >
+                          {downloadLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          Télécharger le fichier
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-violet-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-violet-500">Statut</p>
+                      <p className="mt-1 text-sm font-bold text-violet-700">{STATUS_CONFIG[selectedRequest.status]?.label || selectedRequest.status}</p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Type</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-800">{selectedRequest.leaveTypeName}</p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Demandé le</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-800">{formatDate(selectedRequest.requestedAt)}</p>
+                    </div>
+                  </div>
+
+                  {selectedRequest.approvalNote && (
+                    <div className="rounded-2xl border border-slate-100 bg-amber-50/50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Note de traitement</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">{selectedRequest.approvalNote}</p>
+                    </div>
+                  )}
+
+                  {(canApprove || canCancel) && selectedRequest.status === 'pending' && (
+                    <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+                      {canApprove && (
+                        <button
+                          onClick={() => { handleApprove(selectedRequest.id); setSelectedRequestId(null); }}
+                          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
+                        >
+                          <Check className="h-4 w-4" /> Approuver
+                        </button>
+                      )}
+                      {canApprove && (
+                        <button
+                          onClick={() => { setReviewingId(selectedRequest.id); setSelectedRequestId(null); }}
+                          className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600"
+                        >
+                          <X className="h-4 w-4" /> Refuser
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="py-10 text-center text-sm text-slate-400">Impossible de charger les détails.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">

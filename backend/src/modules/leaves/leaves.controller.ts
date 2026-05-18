@@ -16,8 +16,16 @@ export const getLeaveRequestById = asyncHandler(async (req: Request, res: Respon
 
 export const createLeaveRequest = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const input = CreateLeaveRequestSchema.parse(req.body);
-  const request = await leavesService.createLeaveRequest(input, req.user!);
+  const document = req.file
+    ? { path: req.file.path, originalName: req.file.originalname }
+    : undefined;
+  const request = await leavesService.createLeaveRequest(input, req.user!, document);
   res.status(201).json({ status: 'success', data: request });
+});
+
+export const getLeaveRequestDocument = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const { filePath, filename } = await leavesService.getLeaveRequestDocument(req.params.id, req.user!);
+  res.download(filePath, filename);
 });
 
 export const approveLeaveRequest = asyncHandler(async (req: Request, res: Response): Promise<void> => {

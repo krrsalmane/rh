@@ -1,7 +1,7 @@
 import pool, { query } from '../config/database';
 
 const COMPANY_ID = '00000000-0000-0000-0000-000000000001';
-const PASSWORD_HASH = '$2a$10$AV0ZFnr8OVMpG8NurU7xjeZFWORTnupfS/oJCRj0Ti7GV.HUwVzsa'; // Admin@1234
+const PASSWORD_HASH = '$2a$10$CrjaW3dVTfFaESCwqyty6OvOE.gX/ttyYA0L4gV9PIyqOk.gLGU3S'; // Admin@1234
 
 interface IdRow {
   id: string;
@@ -184,6 +184,34 @@ async function run() {
       4000,
       'internship'
     );
+    const employee5Id = await getOrCreateEmployeeId(
+      'Sana',
+      'Quality',
+      'sana.qa@hrms.com',
+      'Quality Assurance',
+      'QA Lead',
+      standardScheduleId,
+      13000
+    );
+    const employee6Id = await getOrCreateEmployeeId(
+      'Hamza',
+      'Sales',
+      'hamza.sales@hrms.com',
+      'Sales',
+      'Sales Representative',
+      standardScheduleId,
+      9800,
+      'CDD'
+    );
+    const employee7Id = await getOrCreateEmployeeId(
+      'Imane',
+      'Operations',
+      'imane.ops@hrms.com',
+      'Operations',
+      'Operations Coordinator',
+      shiftScheduleId,
+      10500
+    );
 
     await upsertUser('superadmin@hrms.com', 'super_admin', superAdminEmpId);
     await upsertUser('hragent@hrms.com', 'hr_agent', hrEmpId);
@@ -192,6 +220,9 @@ async function run() {
     await upsertUser('salma.finance@hrms.com', 'employee', employee2Id);
     await upsertUser('omar.support@hrms.com', 'employee', employee3Id);
     await upsertUser('leila.intern@hrms.com', 'employee', employee4Id);
+    await upsertUser('sana.qa@hrms.com', 'manager', employee5Id);
+    await upsertUser('hamza.sales@hrms.com', 'employee', employee6Id);
+    await upsertUser('imane.ops@hrms.com', 'employee', employee7Id);
 
     await query(
       `INSERT INTO leave_types (company_id, name, annual_days, accrual_rule, carry_over_max, requires_approval, is_active)
@@ -379,6 +410,9 @@ async function run() {
     console.log('   - salma.finance@hrms.com');
     console.log('   - omar.support@hrms.com');
     console.log('   - leila.intern@hrms.com');
+    console.log('   - sana.qa@hrms.com');
+    console.log('   - hamza.sales@hrms.com');
+    console.log('   - imane.ops@hrms.com');
   } catch (error) {
     console.error('❌ Failed to seed fake data:', error);
     throw error;

@@ -68,6 +68,33 @@ export async function markAsRead(req: Request, res: Response) {
   }
 }
 
+export async function markAllAsRead(req: Request, res: Response) {
+  try {
+    const notificationService = getNotificationServiceSafe();
+    if (!notificationService) {
+      return res.status(503).json({
+        success: false,
+        message: 'Notification service not available'
+      });
+    }
+
+    const userId = (req as any).user.id;
+
+    await notificationService.markAllAsRead(userId as string);
+
+    res.json({
+      success: true,
+      message: 'All notifications marked as read'
+    });
+  } catch (error) {
+    console.error('❌ Error marking all notifications as read:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark all notifications as read'
+    });
+  }
+}
+
 export async function getUnreadCount(req: Request, res: Response) {
   try {
     const notificationService = getNotificationServiceSafe();
