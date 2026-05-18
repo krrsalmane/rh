@@ -10,6 +10,14 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(8),
   STORAGE_PATH: z.string().default('./uploads'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  
+  // SMTP Configuration
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional().transform((val) => val ? Number(val) : undefined),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
+  HR_EMAIL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

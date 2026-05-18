@@ -20,9 +20,10 @@ export interface LeaveRequestRow {
 }
 
 export async function getEmployeeInfo(employeeId: string, companyId: string) {
-  const result = await query<{ name: string }>(
-    `SELECT CONCAT(e.first_name, ' ', e.last_name) as name 
+  const result = await query<{ name: string; user_id: string | null; email: string }>(
+    `SELECT CONCAT(e.first_name, ' ', e.last_name) as name, u.id as user_id, e.email
      FROM employees e 
+     LEFT JOIN users u ON e.email = u.email AND e.company_id = u.company_id
      WHERE e.id = $1 AND e.company_id = $2`,
     [employeeId, companyId]
   );
@@ -36,7 +37,7 @@ export async function findAll(filters: LeaveFiltersInput, companyId: string) {
   if (filters.employeeId) { conditions.push(`lr.employee_id = $${idx}`); params.push(filters.employeeId); idx++; }
   if (filters.leaveTypeId) { conditions.push(`lr.leave_type_id = $${idx}`); params.push(filters.leaveTypeId); idx++; }
   if (filters.status) { conditions.push(`lr.status = $${idx}`); params.push(filters.status); idx++; }
-  if (filters.managerId) { conditions.push(`e.manager_id = $${idx}`); params.push(filters.managerId); idx++; }
+  if (filters.department) { conditions.push(`e.department = $${idx}`); params.push(filters.department); idx++; }
   if (filters.excludeEmployeeId) { conditions.push(`lr.employee_id != $${idx}`); params.push(filters.excludeEmployeeId); idx++; }
 
   const whereClause = conditions.join(' AND ');
@@ -154,6 +155,14 @@ export async function getLeaveTypesByCompany(companyId: string) {
     [companyId]
   );
   return result.rows;
+}
+
+export async function getLeaveTypeById(id: string, companyId: string) {
+  const result = await query<{ id: string; name: string }>(
+    'SELECT id, name FROM leave_types WHERE id = $1 AND company_id = $2',
+    [id, companyId]
+  );
+  return result.rows[0] || null;
 }
 
 export async function createBalance(employeeId: string, leaveTypeId: string, year: number, credited: number) {

@@ -13,21 +13,40 @@ interface Notification {
   read: boolean;
 }
 
+// Normalize a raw notification from the backend (snake_case + MySQL booleans)
+// into the frontend Notification shape (camelCase + real booleans).
+function normalizeNotification(raw: any): Notification {
+  return {
+    id: raw.id,
+    type: raw.type,
+    title: raw.title,
+    message: raw.message,
+    data: typeof raw.data === 'string' ? JSON.parse(raw.data) : raw.data,
+    createdAt: raw.createdAt || raw.created_at || '',
+    read: raw.read === 1 || raw.read === true,
+  };
+}
+
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [state, setState] = useState({
+    notifications: [] as Notification[],
+    unreadCount: 0
+  });
   const [socket, setSocket] = useState<Socket | null>(null);
   const { accessToken: token } = useAppSelector((state) => state.auth);
   const userId = useAppSelector((state) => state.auth.user?.id);
   const role = useAppSelector((state) => state.auth.role);
 
-  const upsertNotification = (notification: Notification) => {
-    setNotifications((prev) => {
-      if (prev.some((item) => item.id === notification.id)) {
+  const upsertNotification = (raw: any) => {
+    const notification = normalizeNotification(raw);
+    setState((prev) => {
+      if (prev.notifications.some((item) => item.id === notification.id)) {
         return prev;
       }
-      setUnreadCount((count) => count + (notification.read ? 0 : 1));
-      return [notification, ...prev];
+      return {
+        notifications: [notification, ...prev.notifications],
+        unreadCount: prev.unreadCount + (notification.read ? 0 : 1)
+      };
     });
   };
 
@@ -35,31 +54,41 @@ export function useNotifications() {
   const fetchNotifications = async () => {
     try {
       const response = await axiosInstance.get('/notifications');
-      setNotifications(response.data.data || []);
-      setUnreadCount(response.data.unreadCount || 0);
+      const rawData = response.data.data || [];
+      const normalizedData = rawData.map(normalizeNotification);
+      
+      setState({
+        notifications: normalizedData,
+        unreadCount: response.data.unreadCount || 0
+      });
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }
   };
 
-  // Mark notification as read
+  // Mark single notification as read
   const markAsRead = async (notificationId: string) => {
     try {
       await axiosInstance.post('/notifications/read', { notificationId });
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setState(prev => ({
+        notifications: prev.notifications.map(n =>
+          n.id === notificationId ? { ...n, read: true } : n
+        ),
+        unreadCount: Math.max(0, prev.unreadCount - 1)
+      }));
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
   };
 
+  // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
       await axiosInstance.post('/notifications/read-all');
-      setNotifications(prev => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
+      setState(prev => ({
+        notifications: prev.notifications.map((n) => ({ ...n, read: true })),
+        unreadCount: 0
+      }));
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
@@ -72,7 +101,7 @@ export function useNotifications() {
     const socketUrl =
       import.meta.env.VITE_SOCKET_URL ||
       import.meta.env.VITE_API_URL?.replace(/\/api$/, '') ||
-      'http://localhost:3000';
+      'http://localhost:3002';
 
     const newSocket = io(socketUrl, {
       auth: { token }
@@ -87,7 +116,7 @@ export function useNotifications() {
       });
     });
 
-    newSocket.on('new_notification', (notification: Notification) => {
+    newSocket.on('new_notification', (notification: any) => {
       upsertNotification(notification);
     });
 
@@ -110,8 +139,8 @@ export function useNotifications() {
   }, [token]);
 
   return {
-    notifications,
-    unreadCount,
+    notifications: state.notifications,
+    unreadCount: state.unreadCount,
     markAsRead,
     markAllAsRead,
     fetchNotifications

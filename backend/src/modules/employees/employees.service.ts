@@ -4,11 +4,14 @@ import * as leavesRepository from '../leaves/leaves.repository';
 import { CreateEmployeeInput, UpdateEmployeeInput, EmployeeFiltersInput } from './employees.schema';
 import { AppError } from '../../shared/utils/AppError';
 import { auditLog } from '../../shared/utils/auditLogger';
+import { query } from '../../config/database';
 
 export async function getEmployees(filters: EmployeeFiltersInput, user: any) {
   const { companyId, role, id } = user;
-  if (role === 'employee') filters.search = id; // Employee can only see self
-  else if (role === 'manager') filters.managerId = id;
+  if (role === 'employee') {
+    filters.search = id; // Employee can only see self
+  }
+  // HR and Manager roles see all employees like Admin
   return employeesRepository.findAll(filters, companyId);
 }
 

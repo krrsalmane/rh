@@ -7,6 +7,8 @@ import { getNotificationService } from '../notifications/notifications.service';
 import * as employeesRepository from '../employees/employees.repository';
 import path from 'path';
 import { getStoragePath } from '../../config/storage';
+import { sendLeaveRequestEmail, sendLeaveStatusEmail } from '../../shared/services/email.service';
+import { query } from '../../config/database';
 
 export async function getLeaveRequests(filters: LeaveFiltersInput, user: any) {
   const { companyId, role, id, employeeId } = user;
@@ -14,7 +16,17 @@ export async function getLeaveRequests(filters: LeaveFiltersInput, user: any) {
   if (role === 'employee') {
     filters.employeeId = employeeId || id;
   } else if (role === 'manager') {
-    filters.managerId = id;
+    // Fetch manager's department since manager_id column doesn't exist
+    const managerDeptResult = await query<{ department: string }>(
+      `SELECT e.department FROM employees e
+       JOIN users u ON e.id = u.employee_id
+       WHERE u.id = $1 AND u.company_id = $2`,
+      [id, companyId]
+    );
+    const department = managerDeptResult.rows[0]?.department;
+    if (department) {
+      filters.department = department;
+    }
   }
   // Super admin and HR agent see all requests
   
@@ -44,7 +56,7 @@ export async function createLeaveRequest(
 ) {
   const { companyId, role, id: userId } = user;
   
-  const effectiveEmployeeId = role === 'employee' ? user.employeeId : input.employeeId;
+  const effectiveEmployeeId = role === 'employee' ? user.employeeId : (input.employeeId || user.employeeId);
   
   if (!effectiveEmployeeId) {
     throw new AppError('Employee ID is required', 400);
@@ -118,13 +130,17 @@ export async function createLeaveRequest(
     const employeeResult = await leavesRepository.getEmployeeInfo(effectiveEmployeeId, companyId);
     const employeeName = employeeResult?.name || 'Employé';
     
+    // Get leave type name
+    const leaveType = await leavesRepository.getLeaveTypeById(input.leaveTypeId, companyId);
+    const leaveTypeName = leaveType?.name || input.leaveTypeId;
+    
     // Send to HR agents
     await notificationService.sendNotificationToRole(companyId, 'hr_agent', {
       userId: '',
       type: 'leave_request',
       title: 'Nouvelle demande de congé',
-      message: `${employeeName} a demandé un congé - ${input.leaveTypeId}`,
-      data: { employeeName, leaveType: input.leaveTypeId, reason: input.reason || '', hasDocument: Boolean(document) },
+      message: `${employeeName} a demandé un congé - ${leaveTypeName}`,
+      data: { employeeName, leaveType: leaveTypeName, reason: input.reason || '', hasDocument: Boolean(document) },
       companyId
     });
     
@@ -133,8 +149,8 @@ export async function createLeaveRequest(
       userId: '',
       type: 'leave_request',
       title: 'Nouvelle demande de congé',
-      message: `${employeeName} a demandé un congé - ${input.leaveTypeId}`,
-      data: { employeeName, leaveType: input.leaveTypeId, reason: input.reason || '', hasDocument: Boolean(document) },
+      message: `${employeeName} a demandé un congé - ${leaveTypeName}`,
+      data: { employeeName, leaveType: leaveTypeName, reason: input.reason || '', hasDocument: Boolean(document) },
       companyId
     });
     
@@ -143,12 +159,22 @@ export async function createLeaveRequest(
       userId: '',
       type: 'leave_request',
       title: 'Nouvelle demande de congé',
-      message: `${employeeName} a demandé un congé - ${input.leaveTypeId}`,
-      data: { employeeName, leaveType: input.leaveTypeId, reason: input.reason || '', hasDocument: Boolean(document) },
+      message: `${employeeName} a demandé un congé - ${leaveTypeName}`,
+      data: { employeeName, leaveType: leaveTypeName, reason: input.reason || '', hasDocument: Boolean(document) },
       companyId
     });
+
+    // Send email to HR
+    await sendLeaveRequestEmail({
+      employeeName,
+      leaveType: leaveTypeName,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      reason: input.reason,
+      document: document,
+    });
   } catch (error) {
-    console.error('❌ Error sending leave request notifications:', error);
+    console.error('❌ Error sending leave request notifications or emails:', error);
     // Don't throw error - notification failure shouldn't break leave request creation
   }
   
@@ -196,17 +222,38 @@ export async function approveLeaveRequest(id: string, input: ReviewLeaveInput, u
     
     const employeeResult = await leavesRepository.getEmployeeInfo(request.employee_id, companyId);
     const employeeName = employeeResult?.name || 'Employé';
+    const targetUserId = employeeResult?.user_id;
     
-    await notificationService.sendNotificationToUser(request.employee_id, {
-      userId: request.employee_id,
-      type: 'leave_approved',
-      title: 'Demande de congé approuvée',
-      message: `Votre demande de congé a été approuvée: ${input.approvalNote || 'Approuvée'}`,
-      data: { employeeName, note: input.approvalNote || '' },
-      companyId
-    });
+    // Get leave type name
+    const leaveType = await leavesRepository.getLeaveTypeById(request.leave_type_id, companyId);
+    const leaveTypeName = leaveType?.name || request.leave_type_id;
+    
+    if (targetUserId) {
+      await notificationService.sendNotificationToUser(targetUserId, {
+        userId: targetUserId,
+        type: 'leave_approved',
+        title: 'Demande de congé approuvée',
+        message: `Votre demande de congé a été approuvée: ${input.approvalNote || 'Approuvée'}`,
+        data: { employeeName, note: input.approvalNote || '' },
+        companyId
+      });
+    } else {
+      console.warn(`⚠️ Cannot send notification: No user found for employee ${request.employee_id}`);
+    }
+
+    // Send email to employee
+    if (employeeResult?.email) {
+      await sendLeaveStatusEmail(employeeResult.email, {
+        employeeName,
+        status: 'approved',
+        leaveType: leaveTypeName,
+        startDate: request.start_date,
+        endDate: request.end_date,
+        note: input.approvalNote,
+      });
+    }
   } catch (error) {
-    console.error('❌ Error sending leave approval notification:', error);
+    console.error('❌ Error sending leave approval notification or email:', error);
   }
   
   return updated;
@@ -232,17 +279,38 @@ export async function rejectLeaveRequest(id: string, input: ReviewLeaveInput, us
     
     const employeeResult = await leavesRepository.getEmployeeInfo(request.employee_id, companyId);
     const employeeName = employeeResult?.name || 'Employé';
+    const targetUserId = employeeResult?.user_id;
     
-    await notificationService.sendNotificationToUser(request.employee_id, {
-      userId: request.employee_id,
-      type: 'leave_rejected',
-      title: 'Demande de congé refusée',
-      message: `Votre demande de congé a été refusée: ${input.approvalNote || 'Refusée'}`,
-      data: { employeeName, reason: input.approvalNote || '' },
-      companyId
-    });
+    // Get leave type name
+    const leaveType = await leavesRepository.getLeaveTypeById(request.leave_type_id, companyId);
+    const leaveTypeName = leaveType?.name || request.leave_type_id;
+    
+    if (targetUserId) {
+      await notificationService.sendNotificationToUser(targetUserId, {
+        userId: targetUserId,
+        type: 'leave_rejected',
+        title: 'Demande de congé refusée',
+        message: `Votre demande de congé a été refusée: ${input.approvalNote || 'Refusée'}`,
+        data: { employeeName, reason: input.approvalNote || '' },
+        companyId
+      });
+    } else {
+      console.warn(`⚠️ Cannot send notification: No user found for employee ${request.employee_id}`);
+    }
+
+    // Send email to employee
+    if (employeeResult?.email) {
+      await sendLeaveStatusEmail(employeeResult.email, {
+        employeeName,
+        status: 'rejected',
+        leaveType: leaveTypeName,
+        startDate: request.start_date,
+        endDate: request.end_date,
+        note: input.approvalNote,
+      });
+    }
   } catch (error) {
-    console.error('❌ Error sending leave rejection notification:', error);
+    console.error('❌ Error sending leave rejection notification or email:', error);
   }
   
   return updated;

@@ -39,7 +39,7 @@ export const authApi = {
 
   refresh: async (): Promise<{ accessToken: string; user: AuthUser }> => {
     const { data } = await axios.post<{ data: { accessToken: string; user: AuthUser } }>(
-      `${import.meta.env.VITE_API_URL || '/api'}/auth/refresh`,
+      `http://localhost:3002/api/auth/refresh`,
       {},
       { withCredentials: true }
     );

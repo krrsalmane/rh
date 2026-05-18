@@ -26,7 +26,7 @@ export async function findAll(filters: AbsenceFiltersInput, companyId: string) {
   if (filters.justificationStatus) { conditions.push(`a.justification_status = $${idx}`); params.push(filters.justificationStatus); idx++; }
   if (filters.startDate) { conditions.push(`a.start_date >= $${idx}`); params.push(filters.startDate); idx++; }
   if (filters.endDate) { conditions.push(`a.end_date <= $${idx}`); params.push(filters.endDate); idx++; }
-  if (filters.managerId) { conditions.push(`e.manager_id = $${idx}`); params.push(filters.managerId); idx++; }
+  if (filters.department) { conditions.push(`e.department = $${idx}`); params.push(filters.department); idx++; }
 
   const whereClause = conditions.join(' AND ');
   const countResult = await query<{ count: string }>(

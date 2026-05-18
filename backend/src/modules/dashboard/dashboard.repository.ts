@@ -45,14 +45,28 @@ export async function getAbsenceTrends(companyId: string, months: number = 6) {
   }));
 }
 
-export async function getManagerStats(managerId: string, companyId: string) {
+export async function getManagerStats(userId: string, companyId: string) {
+  // 1. Get manager's department
+  const managerDeptResult = await query<{ department: string }>(
+    `SELECT e.department FROM employees e
+     JOIN users u ON e.id = u.employee_id
+     WHERE u.id = $1 AND u.company_id = $2`,
+    [userId, companyId]
+  );
+  const department = managerDeptResult.rows[0]?.department;
+
+  if (!department) {
+    return { teamSize: 0, pendingLeaves: 0 };
+  }
+
+  // 2. Get stats for that department
   const [teamSize, pendingLeaves] = await Promise.all([
-    query<{ count: string }>('SELECT COUNT(*) as count FROM employees WHERE manager_id = $1 AND company_id = $2 AND status = \'active\'', [managerId, companyId]),
+    query<{ count: string }>('SELECT COUNT(*) as count FROM employees WHERE department = $1 AND company_id = $2 AND status = \'active\'', [department, companyId]),
     query<{ count: string }>(
       `SELECT COUNT(*) as count FROM leave_requests lr
        JOIN employees e ON lr.employee_id = e.id
-       WHERE e.manager_id = $1 AND lr.company_id = $2 AND lr.status = 'pending'`,
-      [managerId, companyId]
+       WHERE e.department = $1 AND lr.company_id = $2 AND lr.status = 'pending'`,
+      [department, companyId]
     ),
   ]);
 

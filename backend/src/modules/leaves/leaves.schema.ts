@@ -24,6 +24,7 @@ export const LeaveFiltersSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   managerId: z.string().uuid().optional(),
   excludeEmployeeId: z.string().uuid().optional(),
+  department: z.string().optional(),
 });
 
 export type CreateLeaveRequestInput = z.infer<typeof CreateLeaveRequestSchema>;

@@ -23,6 +23,7 @@ export const AbsenceFiltersSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   managerId: z.string().uuid().optional(),
+  department: z.string().optional(),
 });
 
 export type CreateAbsenceInput = z.infer<typeof CreateAbsenceSchema>;

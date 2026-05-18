@@ -43,7 +43,7 @@ export const NAVIGATION: NavSection[] = [
     section: 'PRÉSENCE',
     items: [
       { label: 'Temps', icon: Clock, path: '/time', roles: ['super_admin','hr_agent','manager','employee'] },
-      { label: 'Absences', icon: UserX, path: '/absences', roles: ['super_admin','hr_agent','employee'] },
+      { label: 'Absences', icon: UserX, path: '/absences', roles: ['super_admin','hr_agent','manager','employee'] },
       { label: 'Congés', icon: CalendarDays, path: '/leaves', roles: ['super_admin','hr_agent','manager','employee'] },
     ]
   },

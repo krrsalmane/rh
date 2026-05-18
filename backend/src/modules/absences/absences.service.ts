@@ -2,10 +2,25 @@ import * as absencesRepository from './absences.repository';
 import { CreateAbsenceInput, AbsenceFiltersInput } from './absences.schema';
 import { AppError } from '../../shared/utils/AppError';
 import { auditLog } from '../../shared/utils/auditLogger';
+import { query } from '../../config/database';
 
 export async function getAbsences(filters: AbsenceFiltersInput, user: any) {
   const { companyId, role, id } = user;
-  if (role === 'employee') filters.employeeId = id;
+  if (role === 'employee') {
+    filters.employeeId = id;
+  } else if (role === 'manager') {
+    // Fetch manager's department
+    const managerDeptResult = await query<{ department: string }>(
+      `SELECT e.department FROM employees e
+       JOIN users u ON e.id = u.employee_id
+       WHERE u.id = $1 AND u.company_id = $2`,
+      [id, companyId]
+    );
+    const department = managerDeptResult.rows[0]?.department;
+    if (department) {
+      filters.department = department;
+    }
+  }
   return absencesRepository.findAll(filters, companyId);
 }
 

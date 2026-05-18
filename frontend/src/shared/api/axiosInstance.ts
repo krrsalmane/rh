@@ -3,9 +3,9 @@ import axios from 'axios';
 import { store } from '@/store';
 import { clearCredentials, updateAccessToken } from '@/store/authSlice';
 
-const baseURL = import.meta.env.VITE_API_URL || '/api';
+const baseURL = 'http://localhost:3002/api';
 if (import.meta.env.DEV) {
-  console.log(`🌐 API base URL: ${baseURL}`);
+  console.log(`🌐 API base URL (Hardcoded for port 3002): ${baseURL}`);
 }
 
 const axiosInstance = axios.create({
