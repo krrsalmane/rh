@@ -6,6 +6,20 @@ import { AppError } from '../../shared/utils/AppError';
 import { auditLog } from '../../shared/utils/auditLogger';
 import { query } from '../../config/database';
 
+/**
+ * TIME TRACKING SYSTEM - 24-HOUR FORMAT
+ * =====================================
+ * All times in this module use 24-hour format (HH:MM):
+ * - Midnight: 00:00
+ * - Morning: 08:00, 09:00
+ * - Afternoon: 13:00, 14:00, 18:00
+ * - Evening: 20:00, 21:00, 22:00
+ * - Late night: 23:00, 23:59
+ * 
+ * No AM/PM notation is used anywhere in the system.
+ * All calculations are performed using 24-hour military time.
+ */
+
 const DAY_NAME_TO_NUMBER: Record<string, number> = {
   sunday: 0,
   monday: 1,

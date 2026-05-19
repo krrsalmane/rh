@@ -22,7 +22,16 @@ const statusColors: Record<string, string> = {
 };
 
 function formatDate(dateStr: string) {
-  try { return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  try { 
+    return new Date(dateStr).toLocaleDateString('fr-FR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false  // Force 24-hour format (23:59, not 11:59 PM)
+    }); 
+  }
   catch { return '—'; }
 }
 

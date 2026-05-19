@@ -32,34 +32,88 @@ export interface TimeEntryRow {
   employee_name?: string;
 }
 
+// Helper function to parse 24-hour time (HH:MM format) to minutes since midnight
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+// Helper function to validate and parse 24-hour time
+function parse24HourTime(time?: string): number | null {
+  if (!time || typeof time !== 'string') return null;
+  const trimmed = time.trim();
+  
+  // Match HH:MM or HH:MM:SS format
+  const match = trimmed.match(/^([0-1]?[0-9]|2[0-3]):([0-5]?[0-9])(?::([0-5]?[0-9]))?$/);
+  if (!match) return null;
+  
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  
+  // Validate 24-hour format (0-23 hours, 0-59 minutes)
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  
+  return hours * 60 + minutes;
+}
+
 function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8, lunchOut?: string, lunchIn?: string, prayerOut?: string, prayerIn?: string): { totalHours: number; overtime: number; deficit: number } {
   if (!clockIn || !clockOut) return { totalHours: 0, overtime: 0, deficit: 0 };
-  const [inH, inM] = clockIn.split(':').map(Number);
-  const [outH, outM] = clockOut.split(':').map(Number);
-  let totalMinutes = (outH * 60 + outM) - (inH * 60 + inM);
+  
+  // Parse times in 24-hour format
+  const inMinutes = parse24HourTime(clockIn);
+  const outMinutes = parse24HourTime(clockOut);
+  
+  if (inMinutes === null || outMinutes === null) return { totalHours: 0, overtime: 0, deficit: 0 };
+  
+  let totalMinutes = outMinutes - inMinutes;
+  
+  // Handle overnight shifts (edge case where employee works past midnight)
+  if (totalMinutes < 0) {
+    totalMinutes += 24 * 60; // Add 24 hours
+  }
 
+  // Subtract lunch break time (24-hour format)
   if (lunchOut && lunchIn) {
-    const [lOutH, lOutM] = lunchOut.split(':').map(Number);
-    const [lInH, lInM] = lunchIn.split(':').map(Number);
-    const lunchMinutes = (lInH * 60 + lInM) - (lOutH * 60 + lOutM);
-    if (lunchMinutes > 0) {
-      totalMinutes -= lunchMinutes;
+    const lunchOutMin = parse24HourTime(lunchOut);
+    const lunchInMin = parse24HourTime(lunchIn);
+    
+    if (lunchOutMin !== null && lunchInMin !== null) {
+      let lunchMinutes = lunchInMin - lunchOutMin;
+      if (lunchMinutes < 0) {
+        lunchMinutes += 24 * 60; // Handle overnight lunch (very rare)
+      }
+      if (lunchMinutes > 0 && lunchMinutes <= 24 * 60) {
+        totalMinutes -= lunchMinutes;
+      }
     }
   }
 
+  // Subtract prayer break time (24-hour format)
   if (prayerOut && prayerIn) {
-    const [pOutH, pOutM] = prayerOut.split(':').map(Number);
-    const [pInH, pInM] = prayerIn.split(':').map(Number);
-    const prayerMinutes = (pInH * 60 + pInM) - (pOutH * 60 + pOutM);
-    if (prayerMinutes > 0) {
-      totalMinutes -= prayerMinutes;
+    const prayerOutMin = parse24HourTime(prayerOut);
+    const prayerInMin = parse24HourTime(prayerIn);
+    
+    if (prayerOutMin !== null && prayerInMin !== null) {
+      let prayerMinutes = prayerInMin - prayerOutMin;
+      if (prayerMinutes < 0) {
+        prayerMinutes += 24 * 60; // Handle overnight prayer break (very rare)
+      }
+      if (prayerMinutes > 0 && prayerMinutes <= 24 * 60) {
+        totalMinutes -= prayerMinutes;
+      }
     }
   }
 
-  const totalHours = Math.max(0, totalMinutes / 60);
+  totalMinutes = Math.max(0, totalMinutes); // Ensure non-negative
+  const totalHours = totalMinutes / 60;
   const overtime = Math.max(0, totalHours - expectedHours);
   const deficit = Math.max(0, expectedHours - totalHours);
-  return { totalHours: Math.round(totalHours * 100) / 100, overtime: Math.round(overtime * 100) / 100, deficit: Math.round(deficit * 100) / 100 };
+  
+  return { 
+    totalHours: Math.round(totalHours * 100) / 100, 
+    overtime: Math.round(overtime * 100) / 100, 
+    deficit: Math.round(deficit * 100) / 100 
+  };
 }
 
 function formatRowDate(row: TimeEntryRow): TimeEntryRow {

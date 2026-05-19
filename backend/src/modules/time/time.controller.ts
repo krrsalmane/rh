@@ -9,6 +9,49 @@ function quoteCsv(value: unknown) {
   return `"${stringValue.replace(/"/g, '""')}"`;
 }
 
+// Helper function to detect timing issues per field (24-hour format)
+function analyzeTimeEntry(entry: any) {
+  // Returns object with which specific fields have issues
+  const fields = {
+    clockIn: false,   // Late arrival
+    clockOut: false,  // Early departure
+    lunch: false      // Long lunch break
+  };
+  
+  // Default work hours (24-hour format): 09:00 - 18:00
+  const EXPECTED_START = '09:00';
+  const EXPECTED_END = '18:00';
+  const MAX_LUNCH_DURATION = 60; // 1 hour in minutes
+  
+  // Check for late arrival (using 24-hour format string comparison)
+  if (entry.clock_in && entry.clock_in > EXPECTED_START) {
+    fields.clockIn = true;
+  }
+  
+  // Check for early departure (using 24-hour format string comparison)
+  if (entry.clock_out && entry.clock_out < EXPECTED_END) {
+    fields.clockOut = true;
+  }
+  
+  // Check for long lunch break (24-hour format)
+  if (entry.lunch_out && entry.lunch_in) {
+    const [lOutH, lOutM] = entry.lunch_out.split(':').map(Number);
+    const [lInH, lInM] = entry.lunch_in.split(':').map(Number);
+    let lunchMinutes = (lInH * 60 + lInM) - (lOutH * 60 + lOutM);
+    
+    // Handle edge case of lunch crossing midnight (very rare)
+    if (lunchMinutes < 0) {
+      lunchMinutes += 24 * 60;
+    }
+    
+    if (lunchMinutes > MAX_LUNCH_DURATION) {
+      fields.lunch = true;
+    }
+  }
+  
+  return fields;
+}
+
 export const getTimeEntries = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const filters = TimeEntryFiltersSchema.parse(req.query);
   const result = await timeService.getTimeEntries(filters, req.user!);
@@ -76,6 +119,10 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
   const rows = await timeService.exportTimeEntries(filters, req.user!);
 
   if (filters.format === 'pdf') {
+    // Generate timestamp in 24-hour format (DD/MM/YYYY HH:MM:SS)
+    const now = new Date();
+    const timestamp = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    
     const html = `
       <!DOCTYPE html>
       <html>
@@ -89,12 +136,29 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #f3f4f6; color: #1e3a8a; }
           tr:nth-child(even) { background-color: #f9fafb; }
+          tr:nth-child(odd) { background-color: #ffffff; }
+          .highlight-red { background-color: #FEE2E2 !important; }
+          .highlight-orange { background-color: #FED7AA !important; }
+          .highlight-yellow { background-color: #FEF08A !important; }
           .summary { margin-top: 20px; text-align: right; font-weight: bold; }
+          .legend { margin-top: 20px; font-size: 11px; }
+          .legend-item { margin: 5px 0; padding: 3px 8px; border-radius: 3px; }
+          .legend-late { background-color: #FEE2E2; }
+          .legend-early { background-color: #FED7AA; }
+          .legend-lunch { background-color: #FEF08A; }
         </style>
       </head>
       <body>
         <h1>Rapport de Temps de Travail</h1>
-        <p>Généré le: ${new Date().toLocaleString()}</p>
+        <p>Généré le: ${timestamp}</p>
+        
+        <div class="legend">
+          <strong>Légende:</strong>
+          <div class="legend-item legend-late">🔴 Rouge: Retard à l'arrivée</div>
+          <div class="legend-item legend-early">🟠 Orange: Départ anticipé</div>
+          <div class="legend-item legend-lunch">🟡 Jaune: Pause déjeuner supérieure à 1 heure</div>
+        </div>
+        
         <table>
           <thead>
             <tr>
@@ -102,6 +166,7 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
               <th>Date</th>
               <th>Entrée</th>
               <th>Sortie</th>
+              <th>Pause Déj.</th>
               <th>Réelles</th>
               <th>Prévues</th>
               <th>Sup.</th>
@@ -110,19 +175,36 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
             </tr>
           </thead>
           <tbody>
-            ${rows.map((row) => `
+            ${rows.map((row) => {
+              const fields = analyzeTimeEntry(row);
+              
+              const lunchDuration = row.lunch_out && row.lunch_in 
+                ? (() => {
+                    const [lOutH, lOutM] = row.lunch_out.split(':').map(Number);
+                    const [lInH, lInM] = row.lunch_in.split(':').map(Number);
+                    let minutes = (lInH * 60 + lInM) - (lOutH * 60 + lOutM);
+                    if (minutes < 0) minutes += 24 * 60;
+                    const hours = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    return `${row.lunch_out}-${row.lunch_in} (${hours}h${mins}m)`;
+                  })()
+                : '';
+              
+              return `
               <tr>
                 <td>${row.employee_name}</td>
                 <td>${row.date}</td>
-                <td>${row.clock_in || ''}</td>
-                <td>${row.clock_out || ''}</td>
+                <td class="${fields.clockIn ? 'highlight-red' : ''}">${row.clock_in || ''}</td>
+                <td class="${fields.clockOut ? 'highlight-orange' : ''}">${row.clock_out || ''}</td>
+                <td class="${fields.lunch ? 'highlight-yellow' : ''}">${lunchDuration}</td>
                 <td>${row.total_hours ?? ''}</td>
                 <td>${row.expected_hours ?? ''}</td>
                 <td>${row.overtime}</td>
                 <td>${row.deficit}</td>
                 <td>${row.source}</td>
               </tr>
-            `).join('')}
+            `;
+            }).join('')}
           </tbody>
         </table>
       </body>

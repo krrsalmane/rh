@@ -500,57 +500,111 @@ export const TimeManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Heure d'entrée</label>
+                <label className="text-sm font-medium text-slate-600">Heure d'entrée (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="09:00"
                   value={createForm.clockIn}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, clockIn: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setCreateForm((prev) => ({ ...prev, clockIn: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Heure de sortie</label>
+                <label className="text-sm font-medium text-slate-600">Heure de sortie (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="18:00"
                   value={createForm.clockOut}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, clockOut: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setCreateForm((prev) => ({ ...prev, clockOut: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Sortie Déjeuner</label>
+                <label className="text-sm font-medium text-slate-600">Sortie Déjeuner (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="12:00"
                   value={createForm.lunchOut}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, lunchOut: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setCreateForm((prev) => ({ ...prev, lunchOut: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Retour Déjeuner</label>
+                <label className="text-sm font-medium text-slate-600">Retour Déjeuner (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="13:00"
                   value={createForm.lunchIn}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, lunchIn: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setCreateForm((prev) => ({ ...prev, lunchIn: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Départ Prière</label>
+                <label className="text-sm font-medium text-slate-600">Départ Prière (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="15:00"
                   value={createForm.prayerOut}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, prayerOut: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setCreateForm((prev) => ({ ...prev, prayerOut: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Retour Prière</label>
+                <label className="text-sm font-medium text-slate-600">Retour Prière (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="15:30"
                   value={createForm.prayerIn}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, prayerIn: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setCreateForm((prev) => ({ ...prev, prayerIn: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
@@ -584,62 +638,116 @@ export const TimeManagementPage: React.FC = () => {
 
       {/* Edit Modal */}
       {editingEntry && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" lang="fr-FR">
           <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Modifier le pointage</h2>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-slate-600">Heure d'entrée</label>
+                <label className="text-sm font-medium text-slate-600">Heure d'entrée (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="09:00"
                   value={editForm.clockIn}
-                  onChange={(e) => setEditForm(f => ({ ...f, clockIn: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setEditForm(f => ({ ...f, clockIn: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Heure de sortie</label>
+                <label className="text-sm font-medium text-slate-600">Heure de sortie (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="18:00"
                   value={editForm.clockOut}
-                  onChange={(e) => setEditForm(f => ({ ...f, clockOut: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setEditForm(f => ({ ...f, clockOut: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Sortie Déjeuner</label>
+                <label className="text-sm font-medium text-slate-600">Sortie Déjeuner (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="12:00"
                   value={editForm.lunchOut}
-                  onChange={(e) => setEditForm(f => ({ ...f, lunchOut: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setEditForm(f => ({ ...f, lunchOut: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Retour Déjeuner</label>
+                <label className="text-sm font-medium text-slate-600">Retour Déjeuner (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="13:00"
                   value={editForm.lunchIn}
-                  onChange={(e) => setEditForm(f => ({ ...f, lunchIn: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setEditForm(f => ({ ...f, lunchIn: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Départ Prière</label>
+                <label className="text-sm font-medium text-slate-600">Départ Prière (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="15:00"
                   value={editForm.prayerOut}
-                  onChange={(e) => setEditForm(f => ({ ...f, prayerOut: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setEditForm(f => ({ ...f, prayerOut: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Retour Prière</label>
+                <label className="text-sm font-medium text-slate-600">Retour Prière (HH:MM)</label>
                 <input
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                  placeholder="15:30"
                   value={editForm.prayerIn}
-                  onChange={(e) => setEditForm(f => ({ ...f, prayerIn: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                      setEditForm(f => ({ ...f, prayerIn: val }));
+                    }
+                  }}
+                  maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
               <div>
