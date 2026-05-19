@@ -8,6 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
   try { await query('ALTER TABLE time_entries ADD COLUMN lunch_in VARCHAR(5)'); } catch (e) {}
   try { await query('ALTER TABLE time_entries ADD COLUMN prayer_out VARCHAR(5)'); } catch (e) {}
   try { await query('ALTER TABLE time_entries ADD COLUMN prayer_in VARCHAR(5)'); } catch (e) {}
+  try { await query('ALTER TABLE time_entries ADD COLUMN prayer2_out VARCHAR(5)'); } catch (e) {}
+  try { await query('ALTER TABLE time_entries ADD COLUMN prayer2_in VARCHAR(5)'); } catch (e) {}
 })();
 
 export interface TimeEntryRow {
@@ -21,6 +23,8 @@ export interface TimeEntryRow {
   lunch_in: string | null;
   prayer_out: string | null;
   prayer_in: string | null;
+  prayer2_out: string | null;
+  prayer2_in: string | null;
   total_hours: number | null;
   expected_hours: number | null;
   overtime: number;
@@ -36,6 +40,38 @@ export interface TimeEntryRow {
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
+}
+
+/**
+ * Count the number of prayer breaks taken in an entry
+ * Currently supports only one prayer break, but can be extended for multiple
+ */
+export function countPrayerBreaks(prayerOut?: string, prayerIn?: string): number {
+  // If both prayer times are recorded, count as 1 prayer break
+  if (prayerOut && prayerIn) {
+    const prayerOutMin = timeToMinutes(prayerOut);
+    const prayerInMin = timeToMinutes(prayerIn);
+    if (prayerOutMin !== null && prayerInMin !== null && prayerInMin > prayerOutMin) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Calculate prayer break duration in minutes
+ */
+export function calculatePrayerBreakDuration(prayerOut?: string, prayerIn?: string): number {
+  if (!prayerOut || !prayerIn) return 0;
+  
+  const prayerOutMin = timeToMinutes(prayerOut);
+  const prayerInMin = timeToMinutes(prayerIn);
+  
+  let duration = prayerInMin - prayerOutMin;
+  if (duration < 0) {
+    duration += 24 * 60; // Handle overnight prayer break
+  }
+  return Math.max(0, duration);
 }
 
 // Helper function to validate and parse 24-hour time

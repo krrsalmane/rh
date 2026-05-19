@@ -69,6 +69,7 @@ export const TimeManagementPage: React.FC = () => {
   const [editForm, setEditForm] = useState({ clockIn: '', clockOut: '', lunchOut: '', lunchIn: '', prayerOut: '', prayerIn: '', reason: '' });
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const ALLOWED_PRAYER_BREAKS = 2; // Dynamic: will come from company settings
   const [createForm, setCreateForm] = useState({
     employeeId: '',
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -76,20 +77,78 @@ export const TimeManagementPage: React.FC = () => {
     clockOut: '',
     lunchOut: '',
     lunchIn: '',
-    prayerOut: '',
-    prayerIn: '',
+    prayerBreaks: Array(ALLOWED_PRAYER_BREAKS).fill(null).map(() => ({ out: '', in: '' })),
     reason: ''
   });
+  const [prayerBreakRecordCount, setPrayerBreakRecordCount] = useState(0);
+  const [prayerBreaks, setPrayerBreaks] = useState<Record<string, { break1: { out?: string; in?: string }; break2: { out?: string; in?: string } }>>({});
+
+  const getPrayerStateKey = (employeeId: string) => `${employeeId}_${filters.startDate}`;
+
+  const getPrayerState = (employeeId: string) => {
+    const key = getPrayerStateKey(employeeId);
+    return prayerBreaks[key] || { break1: {}, break2: {} };
+  };
+
+  const setPrayerState = (employeeId: string, state: any) => {
+    const key = getPrayerStateKey(employeeId);
+    setPrayerBreaks(prev => ({ ...prev, [key]: state }));
+  };
+
+  const getPrayerDepartureButtonColor = (employeeId: string): string => {
+    const state = getPrayerState(employeeId);
+    const break1Complete = state.break1.out && state.break1.in;
+    const break2Complete = state.break2.out && state.break2.in;
+    
+    if (break1Complete && break2Complete) {
+      return 'bg-violet-100 border-violet-200 text-violet-700 cursor-default'; // Both recorded
+    }
+    if ((state.break1.out && !state.break1.in) || (state.break2.out && !state.break2.in)) {
+      return 'bg-violet-500 border-violet-600 text-white hover:bg-violet-600 shadow-sm'; // Waiting for return
+    }
+    return 'bg-violet-500 border-violet-600 text-white hover:bg-violet-600 shadow-sm'; // Ready to click
+  };
+
+  const getPrayerReturnButtonColor = (employeeId: string): string => {
+    const state = getPrayerState(employeeId);
+    const break1Complete = state.break1.out && state.break1.in;
+    const break2Complete = state.break2.out && state.break2.in;
+    
+    if (break1Complete && break2Complete) {
+      return 'bg-fuchsia-100 border-fuchsia-200 text-fuchsia-700 cursor-default'; // Both recorded
+    }
+    if ((state.break1.out && !state.break1.in) || (state.break2.out && !state.break2.in)) {
+      return 'bg-fuchsia-500 border-fuchsia-600 text-white hover:bg-fuchsia-600 shadow-sm'; // Can return
+    }
+    return 'bg-fuchsia-200 border-fuchsia-300 text-fuchsia-500 cursor-not-allowed'; // Grayed out, no departure
+  };
+
+  const canClickPrayerDeparture = (employeeId: string): boolean => {
+    const state = getPrayerState(employeeId);
+    const break1Complete = state.break1.out && state.break1.in;
+    const break2Complete = state.break2.out && state.break2.in;
+    return !(break1Complete && break2Complete);
+  };
+
+  const canClickPrayerReturn = (employeeId: string): boolean => {
+    const state = getPrayerState(employeeId);
+    const break1Waiting = state.break1.out && !state.break1.in;
+    const break2Waiting = state.break2.out && !state.break2.in;
+    return break1Waiting || break2Waiting;
+  };
 
   const handleCreateSave = async () => {
     try {
+      // Find the first prayer break pair that has both values
+      const filledPrayerBreak = createForm.prayerBreaks.find(pb => pb.out && pb.in);
+      
       await createMut.mutateAsync({
         employeeId: createForm.employeeId,
         date: createForm.date,
         lunchOut: createForm.lunchOut || undefined,
         lunchIn: createForm.lunchIn || undefined,
-        prayerOut: createForm.prayerOut || undefined,
-        prayerIn: createForm.prayerIn || undefined,
+        prayerOut: filledPrayerBreak?.out || undefined,
+        prayerIn: filledPrayerBreak?.in || undefined,
         clockIn: createForm.clockIn || undefined,
         clockOut: createForm.clockOut || undefined,
         reason: createForm.reason || undefined,
@@ -103,10 +162,10 @@ export const TimeManagementPage: React.FC = () => {
         clockOut: '',
         lunchOut: '',
         lunchIn: '',
-        prayerOut: '',
-        prayerIn: '',
+        prayerBreaks: Array(ALLOWED_PRAYER_BREAKS).fill(null).map(() => ({ out: '', in: '' })),
         reason: '',
       });
+      setPrayerBreakRecordCount(0);
     } catch {
       // handled by hook
     }
@@ -159,6 +218,26 @@ export const TimeManagementPage: React.FC = () => {
     return trimmed.length >= 5 ? trimmed.slice(0, 5) : trimmed;
   };
 
+  const getPrayerActionKey = (employeeId: string) => `${employeeId}_${filters.startDate}_prayer`;
+  
+  const getPrayerOutCount = (employeeId: string) => {
+    const entry = entries.find(e => e.employeeId === employeeId && e.date === filters.startDate);
+    return entry?.prayerOut ? 1 : 0;
+  };
+
+  const getPrayerInCount = (employeeId: string) => {
+    const entry = entries.find(e => e.employeeId === employeeId && e.date === filters.startDate);
+    return entry?.prayerIn ? 1 : 0;
+  };
+
+  const canRecordPrayerOut = (employeeId: string) => {
+    return getPrayerOutCount(employeeId) < ALLOWED_PRAYER_BREAKS;
+  };
+
+  const canRecordPrayerIn = (employeeId: string) => {
+    return getPrayerInCount(employeeId) < ALLOWED_PRAYER_BREAKS;
+  };
+
   const handleTimeAction = async (employeeId: string, action: 'morning-in' | 'morning-out' | 'lunch-out' | 'lunch-in' | 'prayer-out' | 'prayer-in') => {
     if (!employeeId) {
       window.alert('Employé invalide');
@@ -166,6 +245,77 @@ export const TimeManagementPage: React.FC = () => {
     }
 
     const timeValue = getCurrentTime();
+
+    // Handle prayer breaks specially - track locally first
+    if (action === 'prayer-out' || action === 'prayer-in') {
+      const state = getPrayerState(employeeId);
+      const newState = { ...state };
+
+      if (action === 'prayer-out') {
+        if (!newState.break1.out) {
+          newState.break1.out = timeValue;
+        } else if (newState.break1.in && !newState.break2.out) {
+          newState.break2.out = timeValue;
+        }
+      } else if (action === 'prayer-in') {
+        if (newState.break1.out && !newState.break1.in) {
+          newState.break1.in = timeValue;
+        } else if (newState.break2.out && !newState.break2.in) {
+          newState.break2.in = timeValue;
+        }
+      }
+
+      setPrayerState(employeeId, newState);
+
+      // If a break is complete, save to backend
+      const shouldSave = 
+        (newState.break1.out && newState.break1.in && (!newState.break2.out || (newState.break2.out && newState.break2.in)));
+
+      if (shouldSave) {
+        try {
+          // Save first break
+          await recordMut.mutateAsync({
+            action: 'prayer-out',
+            time: newState.break1.out,
+            employeeId,
+            date: filters.startDate
+          });
+          await recordMut.mutateAsync({
+            action: 'prayer-in',
+            time: newState.break1.in,
+            employeeId,
+            date: filters.startDate
+          });
+
+          // Save second break if complete
+          if (newState.break2.out && newState.break2.in) {
+            await recordMut.mutateAsync({
+              action: 'prayer-out',
+              time: newState.break2.out,
+              employeeId,
+              date: filters.startDate
+            });
+            await recordMut.mutateAsync({
+              action: 'prayer-in',
+              time: newState.break2.in,
+              employeeId,
+              date: filters.startDate
+            });
+          }
+
+          // Refresh details
+          if (selectedEmployeeDetailsId === employeeId) {
+            setSelectedEmployeeDetailsId(null);
+            setTimeout(() => setSelectedEmployeeDetailsId(employeeId), 100);
+          }
+        } catch {
+          // handled by hooks
+        }
+      }
+      return;
+    }
+
+    // Normal actions (morning, lunch)
     try {
       await recordMut.mutateAsync({
         action,
@@ -322,10 +472,6 @@ export const TimeManagementPage: React.FC = () => {
                     return !!rowEntry.clockIn && !rowEntry.lunchOut && !rowEntry.clockOut;
                   case 'lunch-in':
                     return !!rowEntry.lunchOut && !rowEntry.lunchIn && !rowEntry.clockOut;
-                  case 'prayer-out':
-                    return !!rowEntry.clockIn && !rowEntry.prayerOut && !rowEntry.clockOut;
-                  case 'prayer-in':
-                    return !!rowEntry.prayerOut && !rowEntry.prayerIn && !rowEntry.clockOut;
                   default:
                     return false;
                 }
@@ -376,18 +522,18 @@ export const TimeManagementPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'prayer-out'); }}
-                        disabled={!canPerform('prayer-out')}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isRecorded('prayer-out') ? 'bg-violet-50 border-violet-200 text-violet-600 cursor-default' : canPerform('prayer-out') ? 'bg-violet-500 border-violet-600 text-white hover:bg-violet-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        disabled={!canClickPrayerDeparture(emp.id)}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${getPrayerDepartureButtonColor(emp.id)}`}
                       >
-                        {isRecorded('prayer-out') && <CheckCircle className="w-3.5 h-3.5" />} Départ Prière
+                        Départ Prière
                       </button>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'prayer-in'); }}
-                        disabled={!canPerform('prayer-in')}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isRecorded('prayer-in') ? 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600 cursor-default' : canPerform('prayer-in') ? 'bg-fuchsia-500 border-fuchsia-600 text-white hover:bg-fuchsia-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        disabled={!canClickPrayerReturn(emp.id)}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${getPrayerReturnButtonColor(emp.id)}`}
                       >
-                        {isRecorded('prayer-in') && <CheckCircle className="w-3.5 h-3.5" />} Retour Prière
+                        Retour Prière
                       </button>
                       <button
                         type="button"
@@ -571,42 +717,73 @@ export const TimeManagementPage: React.FC = () => {
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Départ Prière (HH:MM)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                  placeholder="15:00"
-                  value={createForm.prayerOut}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                      setCreateForm((prev) => ({ ...prev, prayerOut: val }));
-                    }
-                  }}
-                  maxLength="5"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
-                />
+
+              {/* Multiple Prayer Breaks */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="text-sm font-semibold text-slate-700">📿 Pauses de Prière</label>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">{ALLOWED_PRAYER_BREAKS} autorisées</span>
+                </div>
+                
+                {createForm.prayerBreaks.map((prayerBreak, idx) => (
+                  <div key={idx} className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <p className="text-xs font-bold text-blue-900 mb-3">Prière #{idx + 1}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Départ (HH:MM)</label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                          placeholder="15:00"
+                          value={prayerBreak.out}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                              setCreateForm(prev => {
+                                const newBreaks = [...prev.prayerBreaks];
+                                newBreaks[idx].out = val;
+                                return { ...prev, prayerBreaks: newBreaks };
+                              });
+                            }
+                          }}
+                          maxLength="5"
+                          className="w-full mt-1 px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 font-mono text-center text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Retour (HH:MM)</label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                          placeholder="15:30"
+                          value={prayerBreak.in}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
+                              setCreateForm(prev => {
+                                const newBreaks = [...prev.prayerBreaks];
+                                newBreaks[idx].in = val;
+                                return { ...prev, prayerBreaks: newBreaks };
+                              });
+                            }
+                          }}
+                          maxLength="5"
+                          className="w-full mt-1 px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 font-mono text-center text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Retour Prière (HH:MM)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                  placeholder="15:30"
-                  value={createForm.prayerIn}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                      setCreateForm((prev) => ({ ...prev, prayerIn: val }));
-                    }
-                  }}
-                  maxLength="5"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
-                />
+
+              {/* Prayer Allowance Info */}
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mt-4">
+                <p className="text-xs font-semibold text-amber-900">ℹ️ Information</p>
+                <p className="text-xs text-amber-700 mt-1">Remplissez jusqu'à <strong>{ALLOWED_PRAYER_BREAKS} pauses de prière</strong>. Vous pouvez laisser certains champs vides si non utilisés.</p>
               </div>
+
               <div>
                 <label className="text-sm font-medium text-slate-600">Motif</label>
                 <textarea
@@ -750,6 +927,13 @@ export const TimeManagementPage: React.FC = () => {
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
+
+              {/* Prayer Allowance Info */}
+              <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                <p className="text-xs font-semibold text-blue-900">📿 Pauses de prière autorisées</p>
+                <p className="text-xs text-blue-700 mt-1">Selon votre horaire de travail, vous pouvez prendre <strong>jusqu'à 2 pauses de prière</strong> par jour. Ce nombre est calculé automatiquement en fonction de votre lieu de travail.</p>
+              </div>
+
               <div>
                 <label className="text-sm font-medium text-slate-600">Motif</label>
                 <textarea

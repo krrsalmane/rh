@@ -467,13 +467,3 @@ export function extractVariablesFromBody(body: string): string[] {
     .filter((v) => !v.startsWith('company.') && !v.startsWith('meta.'));
 }
 
-
-
-
-
-
-
-
-
-
-

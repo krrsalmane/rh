@@ -29,7 +29,7 @@ export const usersApi = {
 
 export const companyApi = {
   get: () => api.get('/settings').then((r) => r.data.data),
-  update: (data: { name?: string; address?: string; logoUrl?: string }) =>
+  update: (data: { name?: string; address?: string; logoUrl?: string; latitude?: number; longitude?: number }) =>
     api.put('/settings', data).then((r) => r.data.data),
 };
 

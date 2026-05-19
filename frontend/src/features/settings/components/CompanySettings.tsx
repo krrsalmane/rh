@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { companyApi } from '../api';
-import { Building2, Save, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Building2, MapPin, Save, Loader2, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export const CompanySettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [data, setData] = useState({ name: '', address: '', logoUrl: '' });
+  const [data, setData] = useState({ name: '', address: '', logoUrl: '', latitude: 31.629100, longitude: -8.009700 });
 
   useEffect(() => {
     companyApi.get()
@@ -91,6 +91,51 @@ export const CompanySettings: React.FC = () => {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-sky-400 focus:ring-4 focus:ring-sky-50 transition-all outline-none text-sm font-medium resize-none"
                   placeholder="Adresse complète..."
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Prayer Location Section */}
+          <div className="pt-6 border-t border-gray-50">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">Calcul des heures de prière</h4>
+                <p className="text-xs text-gray-500 mt-0.5">Utilisé pour calculer le nombre de pauses de prière autorisées par jour</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Latitude</label>
+                <input
+                  type="number"
+                  step="0.000001"
+                  min="-90"
+                  max="90"
+                  value={data.latitude}
+                  onChange={(e) => setData({ ...data, latitude: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-sky-400 focus:ring-4 focus:ring-sky-50 transition-all outline-none text-sm font-medium"
+                  placeholder="Ex: 31.629100"
+                />
+                <p className="text-xs text-gray-500 mt-2">Entre -90 et 90</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Longitude</label>
+                <input
+                  type="number"
+                  step="0.000001"
+                  min="-180"
+                  max="180"
+                  value={data.longitude}
+                  onChange={(e) => setData({ ...data, longitude: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-sky-400 focus:ring-4 focus:ring-sky-50 transition-all outline-none text-sm font-medium"
+                  placeholder="Ex: -8.009700"
+                />
+                <p className="text-xs text-gray-500 mt-2">Entre -180 et 180</p>
               </div>
             </div>
           </div>

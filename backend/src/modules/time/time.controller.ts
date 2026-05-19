@@ -15,7 +15,10 @@ function analyzeTimeEntry(entry: any) {
   const fields = {
     clockIn: false,   // Late arrival
     clockOut: false,  // Early departure
-    lunch: false      // Long lunch break
+    lunch: false,     // Long lunch break
+    prayer: false,    // Too many prayer breaks
+    prayerCount: 0,   // Number of prayer breaks taken
+    prayerAllowed: 0  // Number of prayers within work hours
   };
   
   // Default work hours (24-hour format): 09:00 - 18:00
@@ -47,6 +50,27 @@ function analyzeTimeEntry(entry: any) {
     if (lunchMinutes > MAX_LUNCH_DURATION) {
       fields.lunch = true;
     }
+  }
+  
+  // Count prayer breaks taken
+  if (entry.prayer_out && entry.prayer_in) {
+    const [pOutH, pOutM] = entry.prayer_out.split(':').map(Number);
+    const [pInH, pInM] = entry.prayer_in.split(':').map(Number);
+    const prayerOutMinutes = pOutH * 60 + pOutM;
+    const prayerInMinutes = pInH * 60 + pInM;
+    
+    if (prayerInMinutes > prayerOutMinutes) {
+      fields.prayerCount = 1;
+    }
+  }
+  
+  // For now, assume 2 prayers are allowed (Dhuhr and Asr typically)
+  // In future, calculate based on actual prayer times from location
+  fields.prayerAllowed = 2;
+  
+  // Flag if more prayers taken than allowed
+  if (fields.prayerCount > fields.prayerAllowed) {
+    fields.prayer = true;
   }
   
   return fields;
@@ -140,12 +164,14 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
           .highlight-red { background-color: #FEE2E2 !important; }
           .highlight-orange { background-color: #FED7AA !important; }
           .highlight-yellow { background-color: #FEF08A !important; }
+          .highlight-brown { background-color: #FDBF8F !important; }
           .summary { margin-top: 20px; text-align: right; font-weight: bold; }
           .legend { margin-top: 20px; font-size: 11px; }
           .legend-item { margin: 5px 0; padding: 3px 8px; border-radius: 3px; }
           .legend-late { background-color: #FEE2E2; }
           .legend-early { background-color: #FED7AA; }
           .legend-lunch { background-color: #FEF08A; }
+          .legend-prayer { background-color: #FDBF8F; }
         </style>
       </head>
       <body>
@@ -157,6 +183,7 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
           <div class="legend-item legend-late">🔴 Rouge: Retard à l'arrivée</div>
           <div class="legend-item legend-early">🟠 Orange: Départ anticipé</div>
           <div class="legend-item legend-lunch">🟡 Jaune: Pause déjeuner supérieure à 1 heure</div>
+          <div class="legend-item legend-prayer">🟤 Marron: Pauses de prière excessives</div>
         </div>
         
         <table>
@@ -167,6 +194,7 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
               <th>Entrée</th>
               <th>Sortie</th>
               <th>Pause Déj.</th>
+              <th>Pauses de Prière</th>
               <th>Réelles</th>
               <th>Prévues</th>
               <th>Sup.</th>
@@ -190,6 +218,10 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
                   })()
                 : '';
               
+              const prayerInfo = fields.prayerCount > 0 
+                ? `${fields.prayerCount}/${fields.prayerAllowed}` 
+                : '0/' + fields.prayerAllowed;
+              
               return `
               <tr>
                 <td>${row.employee_name}</td>
@@ -197,6 +229,7 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
                 <td class="${fields.clockIn ? 'highlight-red' : ''}">${row.clock_in || ''}</td>
                 <td class="${fields.clockOut ? 'highlight-orange' : ''}">${row.clock_out || ''}</td>
                 <td class="${fields.lunch ? 'highlight-yellow' : ''}">${lunchDuration}</td>
+                <td class="${fields.prayer ? 'highlight-brown' : ''}">${prayerInfo}</td>
                 <td>${row.total_hours ?? ''}</td>
                 <td>${row.expected_hours ?? ''}</td>
                 <td>${row.overtime}</td>
