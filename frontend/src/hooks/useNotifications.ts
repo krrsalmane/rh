@@ -98,10 +98,7 @@ export function useNotifications() {
   useEffect(() => {
     if (!token || !userId || !role) return;
 
-    const socketUrl =
-      import.meta.env.VITE_SOCKET_URL ||
-      import.meta.env.VITE_API_URL?.replace(/\/api$/, '') ||
-      'http://localhost:3002';
+    const socketUrl = 'http://localhost:3002'; // Hardcoded for port 3002
 
     const newSocket = io(socketUrl, {
       auth: { token }

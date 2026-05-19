@@ -7,6 +7,8 @@ export interface TimeEntry {
   date: string;
   clockIn: string | null;
   clockOut: string | null;
+  lunchOut: string | null;
+  lunchIn: string | null;
   totalHours: number | null;
   expectedHours: number;
   overtime: number;
@@ -30,6 +32,8 @@ export interface CreateTimeEntryDto {
   date: string;
   clockIn?: string;
   clockOut?: string;
+  lunchOut?: string;
+  lunchIn?: string;
   expectedHours?: number;
   source?: 'manual' | 'system' | 'import';
   reason?: string;

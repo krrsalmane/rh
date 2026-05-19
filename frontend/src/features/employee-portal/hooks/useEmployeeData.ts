@@ -67,7 +67,7 @@ export function useEmployeeData() {
   const { data: timeEntries, isLoading: timeLoading, error: timeError } = useQuery({
     queryKey: ['employee-time-entries'],
     queryFn: async () => {
-      const response = await axiosInstance.get('/time/entries');
+      const response = await axiosInstance.get('/time-entries');
       return response.data.data;
     },
   });

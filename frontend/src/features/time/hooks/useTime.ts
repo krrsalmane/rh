@@ -37,6 +37,19 @@ export function useCreateTimeEntry() {
   });
 }
 
+export function useGenerateDefaultTimeEntries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (date: string) => timeApi.generateDefaultTimeEntries(date),
+    onSuccess: (res: any) => {
+      toast.success(res.data?.message || 'Pointages générés avec succès');
+      qc.invalidateQueries({ queryKey: [TIME_KEY] });
+      qc.invalidateQueries({ queryKey: [TIME_SUMMARY_KEY] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Erreur lors de la génération'),
+  });
+}
+
 export function useUpdateTimeEntry() {
   const qc = useQueryClient();
   return useMutation({
@@ -46,6 +59,40 @@ export function useUpdateTimeEntry() {
       toast.success('Pointage mis à jour');
       qc.invalidateQueries({ queryKey: [TIME_KEY] });
       qc.invalidateQueries({ queryKey: [TIME_KEY, variables.id] });
+      qc.invalidateQueries({ queryKey: [TIME_SUMMARY_KEY] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Erreur'),
+  });
+}
+
+export function useExportTimeReport() {
+  return useMutation({
+    mutationFn: (filters: { employeeId?: string; startDate?: string; endDate?: string; format?: string }) =>
+      timeApi.exportTimeReport(filters),
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Erreur'),
+  });
+}
+
+export function useClockIn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (time?: string) => timeApi.clockIn(time),
+    onSuccess: () => {
+      toast.success('Pointage d\'entrée enregistré');
+      qc.invalidateQueries({ queryKey: [TIME_KEY] });
+      qc.invalidateQueries({ queryKey: [TIME_SUMMARY_KEY] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Erreur'),
+  });
+}
+
+export function useClockOut() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (time?: string) => timeApi.clockOut(time),
+    onSuccess: () => {
+      toast.success('Pointage de sortie enregistré');
+      qc.invalidateQueries({ queryKey: [TIME_KEY] });
       qc.invalidateQueries({ queryKey: [TIME_SUMMARY_KEY] });
     },
     onError: (err: any) => toast.error(err?.response?.data?.message || 'Erreur'),

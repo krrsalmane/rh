@@ -5,12 +5,22 @@ export const CreateTimeEntrySchema = z.object({
   date: z.string(),
   clockIn: z.string().optional(),
   clockOut: z.string().optional(),
+  lunchOut: z.string().optional(),
+  lunchIn: z.string().optional(),
   expectedHours: z.number().optional(),
   source: z.enum(['manual', 'system', 'import']).default('manual'),
   reason: z.string().optional(),
 });
 
-export const UpdateTimeEntrySchema = CreateTimeEntrySchema.partial().omit({ employeeId: true });
+export const UpdateTimeEntrySchema = z.object({
+  clockIn: z.string().optional(),
+  clockOut: z.string().optional(),
+  lunchOut: z.string().optional(),
+  lunchIn: z.string().optional(),
+  expectedHours: z.number().optional(),
+  source: z.enum(['manual', 'system', 'import']).optional(),
+  reason: z.string().optional(),
+});
 
 export const TimeEntryFiltersSchema = z.object({
   employeeId: z.string().uuid().optional(),
@@ -19,6 +29,7 @@ export const TimeEntryFiltersSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   managerId: z.string().uuid().optional(),
+  format: z.enum(['csv', 'pdf']).optional(),
 });
 
 export type CreateTimeEntryInput = z.infer<typeof CreateTimeEntrySchema>;
