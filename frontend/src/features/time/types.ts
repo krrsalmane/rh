@@ -27,6 +27,13 @@ export interface TimeEntryFilters {
   limit: number;
 }
 
+export interface TimeActionDto {
+  action: 'morning-in' | 'morning-out' | 'lunch-out' | 'lunch-in' | 'prayer-out' | 'prayer-in';
+  time?: string;
+  employeeId?: string;
+  date?: string;
+}
+
 export interface CreateTimeEntryDto {
   employeeId: string;
   date: string;

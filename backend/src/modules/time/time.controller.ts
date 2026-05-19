@@ -65,6 +65,12 @@ export const clockOut = asyncHandler(async (req: Request, res: Response): Promis
   res.status(200).json({ status: 'success', data: entry });
 });
 
+export const recordTimeAction = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const { action, time, employeeId, date } = req.body as { action: string; time?: string; employeeId?: string; date?: string };
+  const entry = await timeService.recordTimeAction(req.user!, action, time, employeeId, date);
+  res.status(200).json({ status: 'success', data: entry });
+});
+
 export const exportTimeEntries = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const filters = TimeEntryFiltersSchema.parse(req.query);
   const rows = await timeService.exportTimeEntries(filters, req.user!);

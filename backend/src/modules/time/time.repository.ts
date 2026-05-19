@@ -49,6 +49,22 @@ function calculateHours(clockIn?: string, clockOut?: string, expectedHours: numb
   return { totalHours: Math.round(totalHours * 100) / 100, overtime: Math.round(overtime * 100) / 100, deficit: Math.round(deficit * 100) / 100 };
 }
 
+function formatRowDate(row: TimeEntryRow): TimeEntryRow {
+  if (row && row.date) {
+    const rawDate = row.date as any;
+    if (rawDate instanceof Date) {
+      const d = rawDate;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      row.date = `${year}-${month}-${day}`;
+    } else if (typeof row.date === 'string') {
+      row.date = row.date.slice(0, 10);
+    }
+  }
+  return row;
+}
+
 export async function findAll(filters: TimeEntryFiltersInput, companyId: string) {
   const conditions: string[] = ['te.company_id = $1'];
   const params: unknown[] = [companyId];
@@ -78,12 +94,12 @@ export async function findAll(filters: TimeEntryFiltersInput, companyId: string)
     [...params, filters.limit, offset]
   );
 
-  return { items: result.rows, pagination: { page: filters.page, limit: filters.limit, total, totalPages: Math.ceil(total / filters.limit) } };
+  return { items: result.rows.map(formatRowDate), pagination: { page: filters.page, limit: filters.limit, total, totalPages: Math.ceil(total / filters.limit) } };
 }
 
 export async function findById(id: string, companyId: string): Promise<TimeEntryRow | null> {
   const result = await query<TimeEntryRow>('SELECT * FROM time_entries WHERE id = $1 AND company_id = $2', [id, companyId]);
-  return result.rows[0] || null;
+  return result.rows[0] ? formatRowDate(result.rows[0]) : null;
 }
 
 export async function findByEmployeeAndDate(employeeId: string, date: string, companyId: string): Promise<TimeEntryRow | null> {
@@ -91,7 +107,7 @@ export async function findByEmployeeAndDate(employeeId: string, date: string, co
     'SELECT * FROM time_entries WHERE employee_id = $1 AND company_id = $2 AND date = $3',
     [employeeId, companyId, date]
   );
-  return result.rows[0] || null;
+  return result.rows[0] ? formatRowDate(result.rows[0]) : null;
 }
 
 export async function findForExport(filters: TimeEntryFiltersInput, companyId: string) {
@@ -112,7 +128,7 @@ export async function findForExport(filters: TimeEntryFiltersInput, companyId: s
      WHERE ${whereClause} ORDER BY te.date DESC, te.clock_in DESC`,
     params
   );
-  return result.rows;
+  return result.rows.map(formatRowDate);
 }
 
 export async function create(input: CreateTimeEntryInput, companyId: string, userId: string): Promise<TimeEntryRow> {

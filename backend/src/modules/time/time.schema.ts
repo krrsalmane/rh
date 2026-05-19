@@ -22,6 +22,13 @@ export const UpdateTimeEntrySchema = z.object({
   reason: z.string().optional(),
 });
 
+export const TimeActionSchema = z.object({
+  action: z.enum(['morning-in', 'morning-out', 'lunch-out', 'lunch-in', 'prayer-out', 'prayer-in']),
+  time: z.string().optional(),
+  employeeId: z.string().uuid().optional(),
+  date: z.string().optional(),
+});
+
 export const TimeEntryFiltersSchema = z.object({
   employeeId: z.string().uuid().optional(),
   startDate: z.string().optional(),

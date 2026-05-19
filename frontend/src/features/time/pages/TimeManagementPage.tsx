@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Clock, Loader2, ChevronLeft, ChevronRight, Filter, Download } from 'lucide-react';
+import { Clock, Loader2, ChevronLeft, ChevronRight, Filter, Download, Edit3, Trash2 } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { useTimeEntries, useTimeSummary, useExportTimeReport, useUpdateTimeEntry, useCreateTimeEntry, useGenerateDefaultTimeEntries } from '../hooks/useTime';
+import { useTimeEntries, useTimeSummary, useExportTimeReport, useUpdateTimeEntry, useCreateTimeEntry, useRecordTimeAction, useDeleteTimeEntry } from '../hooks/useTime';
 import { useEmployees } from '@/features/employees/hooks/useEmployees';
 import type { TimeEntryFilters, TimeEntry } from '../types';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -13,32 +13,34 @@ export const TimeManagementPage: React.FC = () => {
 
   const [filters, setFilters] = useState<TimeEntryFilters>({ 
     page: 1, 
-    limit: 20,
-    startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-    endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
+    limit: 100,
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd')
   });
 
+  const authEmployeeId = useAppSelector((s) => s.auth.user?.employeeId);
+  const userId = useAppSelector((s) => s.auth.user?.id);
+  const effectiveAuthId = authEmployeeId || userId;
   const exportMut = useExportTimeReport();
   const updateMut = useUpdateTimeEntry();
   const createMut = useCreateTimeEntry();
-  const generateMut = useGenerateDefaultTimeEntries();
+  const recordMut = useRecordTimeAction();
+  const deleteMut = useDeleteTimeEntry();
   const { data: employeesData } = useEmployees({ limit: 100 });
 
-  const handleGenerateDefaults = async () => {
-    const dateStr = format(new Date(), 'yyyy-MM-dd');
-    if (window.confirm(`Générer les pointages par défaut pour tous les employés pour la date du ${dateStr} ?`)) {
-      try {
-        await generateMut.mutateAsync(dateStr);
-      } catch {
-        // handled by hook
-      }
-    }
-  };
   const { data, isLoading } = useTimeEntries(filters);
   const { data: summary } = useTimeSummary({ startDate: filters.startDate, endDate: filters.endDate });
 
   const entries: TimeEntry[] = data?.data || [];
+  const employeeList = role === 'employee'
+    ? employeesData?.data?.filter((emp: any) => emp.id === effectiveAuthId) ?? []
+    : employeesData?.data ?? [];
   const pagination = data?.pagination;
+
+  const [selectedEmployeeDetailsId, setSelectedEmployeeDetailsId] = useState<string | null>(null);
+  const selectedEmployeeEntry = selectedEmployeeDetailsId
+    ? entries.find((entry) => entry.employeeId === selectedEmployeeDetailsId && entry.date === filters.startDate)
+    : null;
 
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [editForm, setEditForm] = useState({ clockIn: '', clockOut: '', lunchOut: '', lunchIn: '', reason: '' });
@@ -67,7 +69,15 @@ export const TimeManagementPage: React.FC = () => {
         source: 'manual'
       });
       setIsCreateOpen(false);
-      setCreateForm({ employeeId: '', date: format(new Date(), 'yyyy-MM-dd'), clockIn: '', clockOut: '', reason: '' });
+      setCreateForm({
+        employeeId: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        clockIn: '',
+        clockOut: '',
+        lunchOut: '',
+        lunchIn: '',
+        reason: '',
+      });
     } catch {
       // handled by hook
     }
@@ -76,10 +86,10 @@ export const TimeManagementPage: React.FC = () => {
   const handleEditClick = (entry: TimeEntry) => {
     setEditingEntry(entry);
     setEditForm({
-      clockIn: entry.clockIn || '',
-      clockOut: entry.clockOut || '',
-      lunchOut: entry.lunchOut || '',
-      lunchIn: entry.lunchIn || '',
+      clockIn: formatTimeValue(entry.clockIn),
+      clockOut: formatTimeValue(entry.clockOut),
+      lunchOut: formatTimeValue(entry.lunchOut),
+      lunchIn: formatTimeValue(entry.lunchIn),
       reason: ''
     });
   };
@@ -98,6 +108,52 @@ export const TimeManagementPage: React.FC = () => {
         }
       });
       setEditingEntry(null);
+    } catch {
+      // handled by hook
+    }
+  };
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const formatTimeValue = (time?: string | null) => {
+    if (!time) return '';
+    const trimmed = time.trim();
+    return trimmed.length >= 5 ? trimmed.slice(0, 5) : trimmed;
+  };
+
+  const handleTimeAction = async (employeeId: string, action: 'morning-in' | 'morning-out' | 'lunch-out' | 'lunch-in' | 'prayer-out' | 'prayer-in') => {
+    if (!employeeId) {
+      window.alert('Employé invalide');
+      return;
+    }
+
+    const timeValue = getCurrentTime();
+    try {
+      await recordMut.mutateAsync({ 
+        action, 
+        time: timeValue, 
+        employeeId, 
+        date: filters.startDate 
+      });
+      
+      // Force refresh of details if this employee was being viewed
+      if (selectedEmployeeDetailsId === employeeId) {
+        setSelectedEmployeeDetailsId(null);
+        setTimeout(() => setSelectedEmployeeDetailsId(employeeId), 100);
+      }
+    } catch {
+      // handled by hooks
+    }
+  };
+
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      await deleteMut.mutateAsync(id);
     } catch {
       // handled by hook
     }
@@ -131,35 +187,7 @@ export const TimeManagementPage: React.FC = () => {
     <div className="space-y-6 animate-fade-in-up" id="time-management-page">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center">
-            <Clock className="w-5 h-5 text-sky-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Gestion du temps</h1>
-            <p className="text-sm text-slate-400">Suivi des pointages et heures de travail</p>
-          </div>
-        </div>
         <div className="flex gap-2">
-          {canManage && (
-            <>
-              <button
-                type="button"
-                onClick={handleGenerateDefaults}
-                disabled={generateMut.isLoading}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl font-medium text-sm hover:bg-amber-600 transition-all disabled:opacity-50"
-              >
-                {generateMut.isLoading ? 'Génération...' : 'Générer par défaut'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-medium text-sm hover:bg-emerald-700 transition-all"
-              >
-              Créer un pointage
-            </button>
-          </>
-          )}
           <button
             type="button"
             disabled={exportMut.isLoading}
@@ -178,6 +206,15 @@ export const TimeManagementPage: React.FC = () => {
             <Download className="w-4 h-4" />
             {exportMut.isLoading ? 'Export en cours...' : 'Export PDF'}
           </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-medium text-sm hover:bg-emerald-700 transition-all"
+            >
+              Ajouter pointage
+            </button>
+          )}
         </div>
       </div>
 
@@ -214,130 +251,200 @@ export const TimeManagementPage: React.FC = () => {
           <span className="text-sm font-semibold">Filtres :</span>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-slate-400 font-bold uppercase">Début</label>
+          <label className="text-xs text-slate-400 font-bold uppercase">Date de Pointage</label>
           <input 
             type="date" 
             value={filters.startDate} 
-            onChange={(e) => setFilters(f => ({ ...f, startDate: e.target.value, page: 1 }))}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-slate-400 font-bold uppercase">Fin</label>
-          <input 
-            type="date" 
-            value={filters.endDate} 
-            onChange={(e) => setFilters(f => ({ ...f, endDate: e.target.value, page: 1 }))}
+            onChange={(e) => setFilters(f => ({ ...f, startDate: e.target.value, endDate: e.target.value, page: 1 }))}
             className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
           />
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-sky-400 animate-spin" />
           </div>
-        ) : entries.length === 0 ? (
+        ) : employeeList.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
             <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">Aucun pointage trouvé pour cette période</p>
+            <p className="font-medium">Aucun employé trouvé pour cette période</p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Employé</th>
-                <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Entrée</th>
-                <th className="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sortie</th>
-                <th className="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Déjeuner</th>
-                <th className="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">H. Réelles</th>
-                <th className="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">H. Prévues</th>
-                <th className="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Solde</th>
-                {canManage && <th className="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {entries.map((entry) => {
-                let isLunchTooLong = false;
-                if (entry.lunchOut && entry.lunchIn) {
-                  const [oH, oM] = entry.lunchOut.split(':').map(Number);
-                  const [iH, iM] = entry.lunchIn.split(':').map(Number);
-                  const diff = (iH * 60 + iM) - (oH * 60 + oM);
-                  isLunchTooLong = diff > 60; // Max 1h
-                }
-                return (
-                  <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-800 text-sm">{entry.employeeName}</p>
-                      <p className="text-xs text-slate-400">{entry.department}</p>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{formatDate(entry.date)}</td>
-                    <td className="px-6 py-4 text-center text-sm font-mono">{entry.clockIn || '--:--'}</td>
-                    <td className="px-6 py-4 text-center text-sm font-mono">{entry.clockOut || '--:--'}</td>
-                    <td className={`px-6 py-4 text-center text-sm font-mono ${isLunchTooLong ? 'text-red-600 font-bold' : 'text-slate-600'}`}>
-                      {entry.lunchOut && entry.lunchIn ? `${entry.lunchOut} - ${entry.lunchIn}` : '--:--'}
-                    </td>
-                  <td className="px-6 py-4 text-center text-sm font-bold text-slate-700">{Number(entry.totalHours || 0).toFixed(1)}h</td>
-                  <td className="px-6 py-4 text-center text-sm text-slate-400">{Number(entry.expectedHours || 0).toFixed(1)}h</td>
-                  <td className="px-6 py-4 text-center">
-                    {Number(entry.overtime || 0) > 0 && (
-                      <span className="text-xs font-bold text-emerald-600">+{Number(entry.overtime || 0).toFixed(1)}h</span>
-                    )}
-                    {Number(entry.deficit || 0) > 0 && (
-                      <span className="text-xs font-bold text-rose-600">-{Number(entry.deficit || 0).toFixed(1)}h</span>
-                    )}
-                    {entry.overtime === 0 && entry.deficit === 0 && (
-                      <span className="text-xs text-slate-300">0.0h</span>
-                    )}
-                  </td>
-                  {canManage && (
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleEditClick(entry)}
-                        className="text-sky-600 hover:text-sky-700 text-sm font-semibold"
-                      >
-                        Modifier
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              })}
-            </tbody>
-          </table>
-        )}
+          <div className="divide-y divide-slate-100">
+              {employeeList.map((emp: any) => {
+                const rowEntry = entries.find((entry) => entry.employeeId === emp.id && entry.date === filters.startDate);
+                const isSelected = emp.id === selectedEmployeeDetailsId;
+                
+                const canPerform = (action: string) => {
+                  if (!rowEntry) return action === 'morning-in';
+                  switch (action) {
+                    case 'morning-in':
+                      return !rowEntry.clockIn;
+                    case 'morning-out':
+                      return !!rowEntry.clockIn || !!rowEntry.lunchIn;
+                    case 'lunch-out':
+                      return !!rowEntry.clockIn || !!rowEntry.lunchIn;
+                    case 'lunch-in':
+                      return !!rowEntry.lunchOut;
+                    case 'prayer-out':
+                      return !!rowEntry.clockIn;
+                    case 'prayer-in':
+                      return rowEntry.reason === 'Prayer clock out';
+                    default:
+                      return false;
+                  }
+                };
 
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
-            <p className="text-sm text-slate-400">Page {pagination.page} sur {pagination.totalPages}</p>
-            <div className="flex gap-2">
-              <button disabled={pagination.page <= 1} onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
-                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button disabled={pagination.page >= pagination.totalPages} onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
-                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                // Helper to check if an action has been recorded in the rowEntry
+                const isRecorded = (action: string) => {
+                  if (!rowEntry) return false;
+                  switch (action) {
+                    case 'morning-in': return !!rowEntry.clockIn && rowEntry.reason === 'Morning clock in';
+                    case 'morning-out': return !!rowEntry.clockOut && rowEntry.reason === 'Morning clock out';
+                    case 'lunch-out': return !!rowEntry.lunchOut;
+                    case 'lunch-in': return !!rowEntry.lunchIn;
+                    case 'prayer-out': return !!rowEntry.clockOut && rowEntry.reason === 'Prayer clock out';
+                    case 'prayer-in': return !!rowEntry.clockIn && rowEntry.reason === 'Prayer clock in';
+                    default: return false;
+                  }
+                };
+
+                return (
+                  <div
+                    key={emp.id}
+                    className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 ${isSelected ? 'bg-slate-50' : ''}`}
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{emp.firstName} {emp.lastName}</p>
+                      {emp.department && <p className="text-xs text-slate-400">{emp.department}</p>}
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-start sm:justify-end items-center">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'morning-in'); }}
+                        disabled={!canPerform('morning-in')}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${isRecorded('morning-in') ? 'bg-emerald-800' : 'bg-emerald-600 hover:bg-emerald-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        Morning Clock In
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'morning-out'); }}
+                        disabled={!canPerform('morning-out')}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${isRecorded('morning-out') ? 'bg-slate-800' : 'bg-slate-600 hover:bg-slate-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        Leave
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'lunch-out'); }}
+                        disabled={!canPerform('lunch-out')}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${isRecorded('lunch-out') ? 'bg-orange-800' : 'bg-orange-600 hover:bg-orange-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        Lunch Clock Out
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'lunch-in'); }}
+                        disabled={!canPerform('lunch-in')}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${isRecorded('lunch-in') ? 'bg-lime-800' : 'bg-lime-600 hover:bg-lime-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        Back from Lunch
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'prayer-out'); }}
+                        disabled={!canPerform('prayer-out')}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${isRecorded('prayer-out') ? 'bg-violet-800' : 'bg-violet-600 hover:bg-violet-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        Prayer Clock Out
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'prayer-in'); }}
+                        disabled={!canPerform('prayer-in')}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${isRecorded('prayer-in') ? 'bg-indigo-800' : 'bg-indigo-600 hover:bg-indigo-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        Back from Prayer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedEmployeeDetailsId((prev) => (prev === emp.id ? null : emp.id));
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-medium text-sm hover:bg-slate-200 transition-all"
+                      >
+                        Détails
+                      </button>
+                      {canManage && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); if (rowEntry) handleEditClick(rowEntry); }}
+                            disabled={!rowEntry}
+                            className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${rowEntry ? 'bg-slate-100 text-sky-600 hover:bg-slate-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} transition`}
+                            aria-label="Modifier"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); if (rowEntry) handleDeleteEntry(rowEntry.id); }}
+                            disabled={!rowEntry}
+                            className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${rowEntry ? 'bg-slate-100 text-rose-600 hover:bg-slate-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} transition`}
+                            aria-label="Supprimer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          )}
+        </div>
+        {selectedEmployeeDetailsId && (
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-3">Time Entry Details</h2>
+            {selectedEmployeeEntry ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-500">Clock In</p>
+                  <p className="font-medium">{formatTimeValue(selectedEmployeeEntry.clockIn) || '--:--'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-500">Clock Out</p>
+                  <p className="font-medium">{formatTimeValue(selectedEmployeeEntry.clockOut) || '--:--'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-500">Lunch Out</p>
+                  <p className="font-medium">{formatTimeValue(selectedEmployeeEntry.lunchOut) || '--:--'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-500">Lunch In</p>
+                  <p className="font-medium">{formatTimeValue(selectedEmployeeEntry.lunchIn) || '--:--'}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No records for this date.</p>
+            )}
           </div>
         )}
-      </div>
-
-      {/* Create Modal */}
       {isCreateOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
-            <h2 className="text-xl font-bold mb-4">Créer un pointage</h2>
+            <h2 className="text-xl font-bold mb-4">Ajouter un pointage</h2>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-slate-600">Employé <span className="text-red-500">*</span></label>
                 <select
                   value={createForm.employeeId}
-                  onChange={(e) => setCreateForm(f => ({ ...f, employeeId: e.target.value }))}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, employeeId: e.target.value }))}
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
                   required
                 >
@@ -352,7 +459,7 @@ export const TimeManagementPage: React.FC = () => {
                 <input
                   type="date"
                   value={createForm.date}
-                  onChange={(e) => setCreateForm(f => ({ ...f, date: e.target.value }))}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, date: e.target.value }))}
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
                   required
                 />
@@ -362,7 +469,7 @@ export const TimeManagementPage: React.FC = () => {
                 <input
                   type="time"
                   value={createForm.clockIn}
-                  onChange={(e) => setCreateForm(f => ({ ...f, clockIn: e.target.value }))}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, clockIn: e.target.value }))}
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
                 />
               </div>
@@ -371,7 +478,7 @@ export const TimeManagementPage: React.FC = () => {
                 <input
                   type="time"
                   value={createForm.clockOut}
-                  onChange={(e) => setCreateForm(f => ({ ...f, clockOut: e.target.value }))}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, clockOut: e.target.value }))}
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
                 />
               </div>
@@ -380,7 +487,7 @@ export const TimeManagementPage: React.FC = () => {
                 <input
                   type="time"
                   value={createForm.lunchOut}
-                  onChange={(e) => setCreateForm(f => ({ ...f, lunchOut: e.target.value }))}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, lunchOut: e.target.value }))}
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
                 />
               </div>
@@ -389,7 +496,7 @@ export const TimeManagementPage: React.FC = () => {
                 <input
                   type="time"
                   value={createForm.lunchIn}
-                  onChange={(e) => setCreateForm(f => ({ ...f, lunchIn: e.target.value }))}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, lunchIn: e.target.value }))}
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
                 />
               </div>
@@ -397,7 +504,7 @@ export const TimeManagementPage: React.FC = () => {
                 <label className="text-sm font-medium text-slate-600">Motif</label>
                 <textarea
                   value={createForm.reason}
-                  onChange={(e) => setCreateForm(f => ({ ...f, reason: e.target.value }))}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, reason: e.target.value }))}
                   placeholder="Ex: Oubli de pointage..."
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 h-24"
                 />
@@ -426,10 +533,10 @@ export const TimeManagementPage: React.FC = () => {
       {editingEntry && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
-            <h2 className="text-xl font-bold mb-4">Modifier le pointage</h2>
+            <h2 className="text-xl font-bold mb-4">Edit Time Entry</h2>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-slate-600">Heure d'entrée</label>
+                <label className="text-sm font-medium text-slate-600">Clock In</label>
                 <input
                   type="time"
                   value={editForm.clockIn}
@@ -438,7 +545,7 @@ export const TimeManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Heure de sortie</label>
+                <label className="text-sm font-medium text-slate-600">Clock Out</label>
                 <input
                   type="time"
                   value={editForm.clockOut}
@@ -447,7 +554,7 @@ export const TimeManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Sortie Déjeuner</label>
+                <label className="text-sm font-medium text-slate-600">Lunch Out</label>
                 <input
                   type="time"
                   value={editForm.lunchOut}
@@ -456,7 +563,7 @@ export const TimeManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Retour Déjeuner</label>
+                <label className="text-sm font-medium text-slate-600">Lunch In</label>
                 <input
                   type="time"
                   value={editForm.lunchIn}
@@ -465,11 +572,11 @@ export const TimeManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Motif de la modification</label>
+                <label className="text-sm font-medium text-slate-600">Modification Reason</label>
                 <textarea
                   value={editForm.reason}
                   onChange={(e) => setEditForm(f => ({ ...f, reason: e.target.value }))}
-                  placeholder="Ex: Oubli de pointage, correction erreur..."
+                  placeholder="Ex: Forgot to clock in, correction..."
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 h-24"
                 />
               </div>
@@ -479,14 +586,14 @@ export const TimeManagementPage: React.FC = () => {
                 onClick={() => setEditingEntry(null)}
                 className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 font-medium"
               >
-                Annuler
+                Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={updateMut.isLoading}
                 className="px-4 py-2 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-medium disabled:opacity-50"
               >
-                {updateMut.isLoading ? 'Enregistrement...' : 'Enregistrer'}
+                {updateMut.isLoading ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import * as timeApi from '../api';
-import type { TimeEntryFilters, CreateTimeEntryDto, UpdateTimeEntryDto, CreateWorkScheduleDto } from '../types';
+import type { TimeEntryFilters, CreateTimeEntryDto, UpdateTimeEntryDto, CreateWorkScheduleDto, TimeActionDto } from '../types';
 
 const TIME_KEY = 'time-entries';
 const TIME_SUMMARY_KEY = 'time-summary';
@@ -65,6 +65,19 @@ export function useUpdateTimeEntry() {
   });
 }
 
+export function useDeleteTimeEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => timeApi.deleteTimeEntry(id),
+    onSuccess: () => {
+      toast.success('Pointage supprimé');
+      qc.invalidateQueries({ queryKey: [TIME_KEY] });
+      qc.invalidateQueries({ queryKey: [TIME_SUMMARY_KEY] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Erreur'),
+  });
+}
+
 export function useExportTimeReport() {
   return useMutation({
     mutationFn: (filters: { employeeId?: string; startDate?: string; endDate?: string; format?: string }) =>
@@ -92,6 +105,19 @@ export function useClockOut() {
     mutationFn: (time?: string) => timeApi.clockOut(time),
     onSuccess: () => {
       toast.success('Pointage de sortie enregistré');
+      qc.invalidateQueries({ queryKey: [TIME_KEY] });
+      qc.invalidateQueries({ queryKey: [TIME_SUMMARY_KEY] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Erreur'),
+  });
+}
+
+export function useRecordTimeAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: TimeActionDto) => timeApi.recordTimeAction(dto),
+    onSuccess: () => {
+      toast.success('Pointage enregistré');
       qc.invalidateQueries({ queryKey: [TIME_KEY] });
       qc.invalidateQueries({ queryKey: [TIME_SUMMARY_KEY] });
     },

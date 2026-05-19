@@ -4,10 +4,18 @@ import type {
   TimeEntryFilters,
   CreateTimeEntryDto,
   UpdateTimeEntryDto,
+  TimeActionDto,
   TimeSummary,
   WorkSchedule,
   CreateWorkScheduleDto,
 } from './types';
+
+function normalizeDateValue(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (trimmed.length >= 10) return trimmed.slice(0, 10);
+  return trimmed;
+}
 
 function mapTimeEntry(raw: Record<string, unknown>): TimeEntry {
   return {
@@ -16,7 +24,7 @@ function mapTimeEntry(raw: Record<string, unknown>): TimeEntry {
     employeeId: (raw.employee_id ?? raw.employeeId) as string,
     employeeName: (raw.employee_name ?? raw.employeeName ?? '') as string,
     department: (raw.department ?? '') as string,
-    date: (raw.date as string),
+    date: normalizeDateValue(raw.date),
     clockIn: (raw.clock_in ?? raw.clockIn) as string | null,
     clockOut: (raw.clock_out ?? raw.clockOut) as string | null,
     lunchOut: (raw.lunch_out ?? raw.lunchOut) as string | null,
@@ -142,6 +150,11 @@ export async function clockIn(time?: string) {
 
 export async function clockOut(time?: string) {
   const { data } = await axiosInstance.post('/time-entries/clock-out', { time });
+  return { ...data, data: mapTimeEntry(data.data) };
+}
+
+export async function recordTimeAction(dto: TimeActionDto) {
+  const { data } = await axiosInstance.post('/time-entries/time-action', dto);
   return { ...data, data: mapTimeEntry(data.data) };
 }
 

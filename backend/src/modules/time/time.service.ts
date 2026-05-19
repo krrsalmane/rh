@@ -159,6 +159,102 @@ export async function clockOut(user: any, clockOutTime?: string) {
   return updated;
 }
 
+export async function recordTimeAction(user: any, action: string, actionTime?: string, employeeId?: string, date?: string) {
+  const { companyId, role, id: userId, employeeId: selfEmployeeId } = user;
+  const effectiveEmployeeId = role === 'employee' ? selfEmployeeId : employeeId;
+  if (!effectiveEmployeeId) {
+    throw new AppError('Employee ID is required', 400);
+  }
+  if (role === 'manager') {
+    const employee = await employeesRepository.findById(effectiveEmployeeId, companyId);
+    if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const actionDate = date || today;
+  const time = actionTime || new Date().toTimeString().slice(0, 5);
+  const existing = await timeRepository.findByEmployeeAndDate(effectiveEmployeeId, actionDate, companyId);
+
+  if (action === 'morning-in') {
+    if (existing && existing.clock_in) {
+      throw new AppError('Morning Clock In already recorded for today', 400);
+    }
+  }
+
+  if (action === 'morning-out') {
+    if (!existing || (!existing.clock_in && !existing.lunch_in)) {
+      throw new AppError('You must Morning Clock In before leaving', 400);
+    }
+    if (existing && existing.clock_out && existing.reason !== 'Prayer clock out' && existing.reason !== 'Lunch clock out') {
+       throw new AppError('Leave already recorded for today', 400);
+    }
+  }
+
+  if (action === 'lunch-out') {
+    if (!existing || (!existing.clock_in && !existing.lunch_in)) {
+      throw new AppError('You must Morning Clock In before lunch break', 400);
+    }
+  }
+
+  if (action === 'lunch-in') {
+    if (!existing || !existing.lunch_out) {
+      throw new AppError('You must Lunch Clock Out before returning from lunch', 400);
+    }
+  }
+
+  if (action === 'prayer-out') {
+    if (!existing || !existing.clock_in) {
+      throw new AppError('You must Morning Clock In before prayer break', 400);
+    }
+  }
+
+  if (action === 'prayer-in') {
+    if (existing?.reason !== 'Prayer clock out') {
+      throw new AppError('You must Prayer Clock Out before returning from prayer', 400);
+    }
+  }
+
+  const payload: Partial<CreateTimeEntryInput> = { source: 'system' };
+  if (action === 'morning-in' || action === 'prayer-in') {
+    payload.clockIn = time;
+  }
+  if (action === 'morning-out' || action === 'prayer-out') {
+    payload.clockOut = time;
+  }
+  if (action === 'lunch-out') {
+    payload.lunchOut = time;
+  }
+  if (action === 'lunch-in') {
+    payload.lunchIn = time;
+  }
+
+  payload.reason = {
+    'morning-in': 'Morning clock in',
+    'morning-out': 'Morning clock out',
+    'lunch-out': 'Lunch clock out',
+    'lunch-in': 'Back from lunch',
+    'prayer-out': 'Prayer clock out',
+    'prayer-in': 'Prayer clock in',
+  }[action];
+
+  if (existing) {
+    const updated = await timeRepository.update(existing.id, payload, companyId, userId);
+    await auditLog({ userId, companyId, action: 'UPDATE', entity: 'time_entry', entityId: existing.id, oldValue: existing as unknown as Record<string, unknown>, newValue: payload as Record<string, unknown> });
+    return updated;
+  }
+
+  const input: CreateTimeEntryInput = {
+    employeeId: effectiveEmployeeId,
+    date: actionDate,
+    source: 'system',
+    ...payload,
+  };
+
+  const entry = await timeRepository.create(input, companyId, userId);
+  await auditLog({ userId, companyId, action: 'CREATE', entity: 'time_entry', entityId: entry.id, newValue: input as unknown as Record<string, unknown> });
+  return entry;
+}
+
 export async function getTimeSummary(employeeId: string, startDate: string, endDate: string, user: any) {
   const { companyId, role, id: userId } = user;
   if (role === 'employee' && employeeId && employeeId !== user.employeeId && employeeId !== userId) throw new AppError('Access denied', 403);
