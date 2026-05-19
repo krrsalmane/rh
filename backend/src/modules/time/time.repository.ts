@@ -2,10 +2,12 @@ import { query } from '../../config/database';
 import { CreateTimeEntryInput, TimeEntryFiltersInput } from './time.schema';
 import { v4 as uuidv4 } from 'uuid';
 
-// Initialize columns for lunch break
+// Initialize columns for lunch and prayer breaks
 (async () => {
   try { await query('ALTER TABLE time_entries ADD COLUMN lunch_out VARCHAR(5)'); } catch (e) {}
   try { await query('ALTER TABLE time_entries ADD COLUMN lunch_in VARCHAR(5)'); } catch (e) {}
+  try { await query('ALTER TABLE time_entries ADD COLUMN prayer_out VARCHAR(5)'); } catch (e) {}
+  try { await query('ALTER TABLE time_entries ADD COLUMN prayer_in VARCHAR(5)'); } catch (e) {}
 })();
 
 export interface TimeEntryRow {
@@ -17,6 +19,8 @@ export interface TimeEntryRow {
   clock_out: string | null;
   lunch_out: string | null;
   lunch_in: string | null;
+  prayer_out: string | null;
+  prayer_in: string | null;
   total_hours: number | null;
   expected_hours: number | null;
   overtime: number;
@@ -28,7 +32,7 @@ export interface TimeEntryRow {
   employee_name?: string;
 }
 
-function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8, lunchOut?: string, lunchIn?: string): { totalHours: number; overtime: number; deficit: number } {
+function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8, lunchOut?: string, lunchIn?: string, prayerOut?: string, prayerIn?: string): { totalHours: number; overtime: number; deficit: number } {
   if (!clockIn || !clockOut) return { totalHours: 0, overtime: 0, deficit: 0 };
   const [inH, inM] = clockIn.split(':').map(Number);
   const [outH, outM] = clockOut.split(':').map(Number);
@@ -40,6 +44,15 @@ function calculateHours(clockIn?: string, clockOut?: string, expectedHours: numb
     const lunchMinutes = (lInH * 60 + lInM) - (lOutH * 60 + lOutM);
     if (lunchMinutes > 0) {
       totalMinutes -= lunchMinutes;
+    }
+  }
+
+  if (prayerOut && prayerIn) {
+    const [pOutH, pOutM] = prayerOut.split(':').map(Number);
+    const [pInH, pInM] = prayerIn.split(':').map(Number);
+    const prayerMinutes = (pInH * 60 + pInM) - (pOutH * 60 + pOutM);
+    if (prayerMinutes > 0) {
+      totalMinutes -= prayerMinutes;
     }
   }
 
@@ -133,12 +146,12 @@ export async function findForExport(filters: TimeEntryFiltersInput, companyId: s
 
 export async function create(input: CreateTimeEntryInput, companyId: string, userId: string): Promise<TimeEntryRow> {
   const expectedHours = input.expectedHours || 8;
-  const { totalHours, overtime, deficit } = calculateHours(input.clockIn, input.clockOut, expectedHours, input.lunchOut, input.lunchIn);
+  const { totalHours, overtime, deficit } = calculateHours(input.clockIn, input.clockOut, expectedHours, input.lunchOut, input.lunchIn, input.prayerOut, input.prayerIn);
   const id = uuidv4();
   await query(
-    `INSERT INTO time_entries (id, company_id, employee_id, date, clock_in, clock_out, lunch_out, lunch_in, total_hours, expected_hours, overtime, deficit, source, modified_by, reason)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-    [id, companyId, input.employeeId, input.date, input.clockIn || null, input.clockOut || null, input.lunchOut || null, input.lunchIn || null,
+    `INSERT INTO time_entries (id, company_id, employee_id, date, clock_in, clock_out, lunch_out, lunch_in, prayer_out, prayer_in, total_hours, expected_hours, overtime, deficit, source, modified_by, reason)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+    [id, companyId, input.employeeId, input.date, input.clockIn || null, input.clockOut || null, input.lunchOut || null, input.lunchIn || null, input.prayerOut || null, input.prayerIn || null,
      totalHours, expectedHours, overtime, deficit, input.source, userId, input.reason || null]
   );
   return (await findById(id, companyId))!;
@@ -151,13 +164,15 @@ export async function update(id: string, input: Partial<CreateTimeEntryInput>, c
   const clockOut = input.clockOut ?? existing.clock_out ?? undefined;
   const lunchOut = input.lunchOut ?? existing.lunch_out ?? undefined;
   const lunchIn = input.lunchIn ?? existing.lunch_in ?? undefined;
+  const prayerOut = input.prayerOut ?? existing.prayer_out ?? undefined;
+  const prayerIn = input.prayerIn ?? existing.prayer_in ?? undefined;
   const expectedHours = input.expectedHours ?? existing.expected_hours ?? 8;
-  const { totalHours, overtime, deficit } = calculateHours(clockIn, clockOut, expectedHours, lunchOut, lunchIn);
+  const { totalHours, overtime, deficit } = calculateHours(clockIn, clockOut, expectedHours, lunchOut, lunchIn, prayerOut, prayerIn);
 
   await query(
-    `UPDATE time_entries SET clock_in = $1, clock_out = $2, lunch_out = $3, lunch_in = $4, total_hours = $5, expected_hours = $6, overtime = $7, deficit = $8, source = $9, modified_by = $10, reason = $11
-     WHERE id = $12 AND company_id = $13`,
-    [clockIn || null, clockOut || null, lunchOut || null, lunchIn || null, totalHours, expectedHours,
+    `UPDATE time_entries SET clock_in = $1, clock_out = $2, lunch_out = $3, lunch_in = $4, prayer_out = $5, prayer_in = $6, total_hours = $7, expected_hours = $8, overtime = $9, deficit = $10, source = $11, modified_by = $12, reason = $13
+     WHERE id = $14 AND company_id = $15`,
+    [clockIn || null, clockOut || null, lunchOut || null, lunchIn || null, prayerOut || null, prayerIn || null, totalHours, expectedHours,
      overtime, deficit, input.source || existing.source, userId, input.reason || existing.reason, id, companyId]
   );
   return findById(id, companyId);

@@ -185,7 +185,7 @@ export async function recordTimeAction(user: any, action: string, actionTime?: s
     if (!existing || (!existing.clock_in && !existing.lunch_in)) {
       throw new AppError('You must Morning Clock In before leaving', 400);
     }
-    if (existing && existing.clock_out && existing.reason !== 'Prayer clock out' && existing.reason !== 'Lunch clock out') {
+    if (existing && existing.clock_out) {
        throw new AppError('Leave already recorded for today', 400);
     }
   }
@@ -209,17 +209,23 @@ export async function recordTimeAction(user: any, action: string, actionTime?: s
   }
 
   if (action === 'prayer-in') {
-    if (existing?.reason !== 'Prayer clock out') {
+    if (!existing || !existing.prayer_out) {
       throw new AppError('You must Prayer Clock Out before returning from prayer', 400);
     }
   }
 
   const payload: Partial<CreateTimeEntryInput> = { source: 'system' };
-  if (action === 'morning-in' || action === 'prayer-in') {
+  if (action === 'morning-in') {
     payload.clockIn = time;
   }
-  if (action === 'morning-out' || action === 'prayer-out') {
+  if (action === 'morning-out') {
     payload.clockOut = time;
+  }
+  if (action === 'prayer-out') {
+    payload.prayerOut = time;
+  }
+  if (action === 'prayer-in') {
+    payload.prayerIn = time;
   }
   if (action === 'lunch-out') {
     payload.lunchOut = time;

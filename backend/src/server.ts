@@ -13,7 +13,15 @@ initializeStorage();
 async function startServer() {
   try {
     console.log('🔄 Checking database migrations...');
-    execSync('npm run db:migrate -- --no-seed', { stdio: 'inherit' });
+    try {
+      execSync('npm run db:migrate -- --no-seed', { stdio: 'inherit' });
+    } catch (migrationError: any) {
+      console.error('❌ Migration failed with exit code:', migrationError.status);
+      console.error('💡 Make sure MySQL is running and accessible at:', process.env.DATABASE_URL);
+      console.error('   For Docker setup: docker-compose up db -d');
+      console.error('   Then retry: npm run dev');
+      throw migrationError;
+    }
 
     const client = await getClient();
     console.log('✅ Database connected');

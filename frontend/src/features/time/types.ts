@@ -9,6 +9,8 @@ export interface TimeEntry {
   clockOut: string | null;
   lunchOut: string | null;
   lunchIn: string | null;
+  prayerOut: string | null;
+  prayerIn: string | null;
   totalHours: number | null;
   expectedHours: number;
   overtime: number;
