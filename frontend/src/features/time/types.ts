@@ -11,6 +11,8 @@ export interface TimeEntry {
   lunchIn: string | null;
   prayerOut: string | null;
   prayerIn: string | null;
+  prayer2Out: string | null;
+  prayer2In: string | null;
   totalHours: number | null;
   expectedHours: number;
   overtime: number;
@@ -30,7 +32,7 @@ export interface TimeEntryFilters {
 }
 
 export interface TimeActionDto {
-  action: 'morning-in' | 'morning-out' | 'lunch-out' | 'lunch-in' | 'prayer-out' | 'prayer-in';
+  action: 'morning-in' | 'morning-out' | 'lunch-out' | 'lunch-in' | 'prayer-out' | 'prayer-in' | 'prayer2-out' | 'prayer2-in';
   time?: string;
   employeeId?: string;
   date?: string;
@@ -43,6 +45,10 @@ export interface CreateTimeEntryDto {
   clockOut?: string;
   lunchOut?: string;
   lunchIn?: string;
+  prayerOut?: string;
+  prayerIn?: string;
+  prayer2Out?: string;
+  prayer2In?: string;
   expectedHours?: number;
   source?: 'manual' | 'system' | 'import';
   reason?: string;

@@ -216,7 +216,7 @@ export async function recordTimeAction(user: any, action: string, actionTime?: s
     }
   }
 
-  if (action === 'prayer-out') {
+  if (action === 'prayer-out' || action === 'prayer2-out') {
     if (!existing || !existing.clock_in) {
       throw new AppError('You must Morning Clock In before prayer break', 400);
     }
@@ -225,6 +225,12 @@ export async function recordTimeAction(user: any, action: string, actionTime?: s
   if (action === 'prayer-in') {
     if (!existing || !existing.prayer_out) {
       throw new AppError('You must Prayer Clock Out before returning from prayer', 400);
+    }
+  }
+
+  if (action === 'prayer2-in') {
+    if (!existing || !existing.prayer2_out) {
+      throw new AppError('You must Prayer 2 Clock Out before returning from prayer', 400);
     }
   }
 
@@ -241,6 +247,12 @@ export async function recordTimeAction(user: any, action: string, actionTime?: s
   if (action === 'prayer-in') {
     payload.prayerIn = time;
   }
+  if (action === 'prayer2-out') {
+    payload.prayer2Out = time;
+  }
+  if (action === 'prayer2-in') {
+    payload.prayer2In = time;
+  }
   if (action === 'lunch-out') {
     payload.lunchOut = time;
   }
@@ -255,6 +267,8 @@ export async function recordTimeAction(user: any, action: string, actionTime?: s
     'lunch-in': 'Back from lunch',
     'prayer-out': 'Prayer clock out',
     'prayer-in': 'Prayer clock in',
+    'prayer2-out': 'Prayer 2 clock out',
+    'prayer2-in': 'Prayer 2 clock in',
   }[action];
 
   if (existing) {

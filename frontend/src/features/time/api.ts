@@ -31,6 +31,8 @@ function mapTimeEntry(raw: Record<string, unknown>): TimeEntry {
     lunchIn: (raw.lunch_in ?? raw.lunchIn) as string | null,
     prayerOut: (raw.prayer_out ?? raw.prayerOut) as string | null,
     prayerIn: (raw.prayer_in ?? raw.prayerIn) as string | null,
+    prayer2Out: (raw.prayer2_out ?? raw.prayer2Out) as string | null,
+    prayer2In: (raw.prayer2_in ?? raw.prayer2In) as string | null,
     totalHours: (raw.total_hours ?? raw.totalHours) as number | null,
     expectedHours: (raw.expected_hours ?? raw.expectedHours ?? 0) as number,
     overtime: (raw.overtime as number) || 0,

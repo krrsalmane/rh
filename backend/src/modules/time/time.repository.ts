@@ -92,7 +92,7 @@ function parse24HourTime(time?: string): number | null {
   return hours * 60 + minutes;
 }
 
-function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8, lunchOut?: string, lunchIn?: string, prayerOut?: string, prayerIn?: string): { totalHours: number; overtime: number; deficit: number } {
+function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8, lunchOut?: string, lunchIn?: string, prayerOut?: string, prayerIn?: string, prayer2Out?: string, prayer2In?: string): { totalHours: number; overtime: number; deficit: number } {
   if (!clockIn || !clockOut) return { totalHours: 0, overtime: 0, deficit: 0 };
   
   // Parse times in 24-hour format
@@ -140,9 +140,30 @@ function calculateHours(clockIn?: string, clockOut?: string, expectedHours: numb
     }
   }
 
+  // Subtract second prayer break time
+  if (prayer2Out && prayer2In) {
+    const prayer2OutMin = parse24HourTime(prayer2Out);
+    const prayer2InMin = parse24HourTime(prayer2In);
+    
+    if (prayer2OutMin !== null && prayer2InMin !== null) {
+      let prayer2Minutes = prayer2InMin - prayer2OutMin;
+      if (prayer2Minutes < 0) {
+        prayer2Minutes += 24 * 60;
+      }
+      if (prayer2Minutes > 0 && prayer2Minutes <= 24 * 60) {
+        totalMinutes -= prayer2Minutes;
+      }
+    }
+  }
+
   totalMinutes = Math.max(0, totalMinutes); // Ensure non-negative
   const totalHours = totalMinutes / 60;
-  const overtime = Math.max(0, totalHours - expectedHours);
+  let overtime = Math.max(0, totalHours - expectedHours);
+  
+  if (overtime < 1) {
+    overtime = 0;
+  }
+  
   const deficit = Math.max(0, expectedHours - totalHours);
   
   return { 
@@ -236,12 +257,12 @@ export async function findForExport(filters: TimeEntryFiltersInput, companyId: s
 
 export async function create(input: CreateTimeEntryInput, companyId: string, userId: string): Promise<TimeEntryRow> {
   const expectedHours = input.expectedHours || 8;
-  const { totalHours, overtime, deficit } = calculateHours(input.clockIn, input.clockOut, expectedHours, input.lunchOut, input.lunchIn, input.prayerOut, input.prayerIn);
+  const { totalHours, overtime, deficit } = calculateHours(input.clockIn, input.clockOut, expectedHours, input.lunchOut, input.lunchIn, input.prayerOut, input.prayerIn, input.prayer2Out, input.prayer2In);
   const id = uuidv4();
   await query(
-    `INSERT INTO time_entries (id, company_id, employee_id, date, clock_in, clock_out, lunch_out, lunch_in, prayer_out, prayer_in, total_hours, expected_hours, overtime, deficit, source, modified_by, reason)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
-    [id, companyId, input.employeeId, input.date, input.clockIn || null, input.clockOut || null, input.lunchOut || null, input.lunchIn || null, input.prayerOut || null, input.prayerIn || null,
+    `INSERT INTO time_entries (id, company_id, employee_id, date, clock_in, clock_out, lunch_out, lunch_in, prayer_out, prayer_in, prayer2_out, prayer2_in, total_hours, expected_hours, overtime, deficit, source, modified_by, reason)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+    [id, companyId, input.employeeId, input.date, input.clockIn || null, input.clockOut || null, input.lunchOut || null, input.lunchIn || null, input.prayerOut || null, input.prayerIn || null, input.prayer2Out || null, input.prayer2In || null,
      totalHours, expectedHours, overtime, deficit, input.source, userId, input.reason || null]
   );
   return (await findById(id, companyId))!;
@@ -256,13 +277,15 @@ export async function update(id: string, input: Partial<CreateTimeEntryInput>, c
   const lunchIn = input.lunchIn ?? existing.lunch_in ?? undefined;
   const prayerOut = input.prayerOut ?? existing.prayer_out ?? undefined;
   const prayerIn = input.prayerIn ?? existing.prayer_in ?? undefined;
+  const prayer2Out = input.prayer2Out ?? existing.prayer2_out ?? undefined;
+  const prayer2In = input.prayer2In ?? existing.prayer2_in ?? undefined;
   const expectedHours = input.expectedHours ?? existing.expected_hours ?? 8;
-  const { totalHours, overtime, deficit } = calculateHours(clockIn, clockOut, expectedHours, lunchOut, lunchIn, prayerOut, prayerIn);
+  const { totalHours, overtime, deficit } = calculateHours(clockIn, clockOut, expectedHours, lunchOut, lunchIn, prayerOut, prayerIn, prayer2Out, prayer2In);
 
   await query(
-    `UPDATE time_entries SET clock_in = $1, clock_out = $2, lunch_out = $3, lunch_in = $4, prayer_out = $5, prayer_in = $6, total_hours = $7, expected_hours = $8, overtime = $9, deficit = $10, source = $11, modified_by = $12, reason = $13
-     WHERE id = $14 AND company_id = $15`,
-    [clockIn || null, clockOut || null, lunchOut || null, lunchIn || null, prayerOut || null, prayerIn || null, totalHours, expectedHours,
+    `UPDATE time_entries SET clock_in = $1, clock_out = $2, lunch_out = $3, lunch_in = $4, prayer_out = $5, prayer_in = $6, prayer2_out = $7, prayer2_in = $8, total_hours = $9, expected_hours = $10, overtime = $11, deficit = $12, source = $13, modified_by = $14, reason = $15
+     WHERE id = $16 AND company_id = $17`,
+    [clockIn || null, clockOut || null, lunchOut || null, lunchIn || null, prayerOut || null, prayerIn || null, prayer2Out || null, prayer2In || null, totalHours, expectedHours,
      overtime, deficit, input.source || existing.source, userId, input.reason || existing.reason, id, companyId]
   );
   return findById(id, companyId);

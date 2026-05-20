@@ -14,6 +14,8 @@ export const CreateTimeEntrySchema = z.object({
   lunchIn: TimeFormat24H.optional(),
   prayerOut: TimeFormat24H.optional(),
   prayerIn: TimeFormat24H.optional(),
+  prayer2Out: TimeFormat24H.optional(),
+  prayer2In: TimeFormat24H.optional(),
   expectedHours: z.number().optional(),
   source: z.enum(['manual', 'system', 'import']).default('manual'),
   reason: z.string().optional(),
@@ -26,13 +28,15 @@ export const UpdateTimeEntrySchema = z.object({
   lunchIn: TimeFormat24H.optional(),
   prayerOut: TimeFormat24H.optional(),
   prayerIn: TimeFormat24H.optional(),
+  prayer2Out: TimeFormat24H.optional(),
+  prayer2In: TimeFormat24H.optional(),
   expectedHours: z.number().optional(),
   source: z.enum(['manual', 'system', 'import']).optional(),
   reason: z.string().optional(),
 });
 
 export const TimeActionSchema = z.object({
-  action: z.enum(['morning-in', 'morning-out', 'lunch-out', 'lunch-in', 'prayer-out', 'prayer-in']),
+  action: z.enum(['morning-in', 'morning-out', 'lunch-out', 'lunch-in', 'prayer-out', 'prayer-in', 'prayer2-out', 'prayer2-in']),
   time: TimeFormat24H.optional(),
   employeeId: z.string().uuid().optional(),
   date: z.string().optional(),
