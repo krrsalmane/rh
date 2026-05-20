@@ -65,7 +65,7 @@ export const LoginPage: React.FC = () => {
           <div className="mb-14">
             <img 
               src="/assets/images/mayagroup-logo.png" 
-              alt="Maya Group" 
+              alt="PROFImax" 
               className="h-24 object-contain"
             />
           </div>
@@ -96,7 +96,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="relative z-10">
-          <p className="text-slate-600 text-xs">Maya HR Platform · v1.0</p>
+          <p className="text-slate-600 text-xs">PROFImax HR Platform · v1.0</p>
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export const LoginPage: React.FC = () => {
           <div className="mb-8 lg:hidden">
             <img 
               src="/assets/images/mayagroup-logo.png" 
-              alt="Maya Group" 
+              alt="PROFImax" 
               className="h-10 object-contain"
             />
           </div>
@@ -191,7 +191,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 text-white font-semibold py-3 rounded-xl transition-all text-sm shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed mt-2"
+              className="btn-primary w-full mt-2"
             >
               {isSubmitting ? (
                 <>
@@ -205,7 +205,7 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <p className="text-center text-xs text-slate-400 mt-8">
-            Maya HR Platform · © {new Date().getFullYear()}
+            PROFImax HR Platform · © {new Date().getFullYear()}
           </p>
         </div>
       </div>

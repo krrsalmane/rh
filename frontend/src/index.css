@@ -1,64 +1,58 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Sky blue primary (#0ea5e9) */
-  --color-primary-50:  #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+  /* PROFImax Primary Palette (RGB format for Tailwind opacity support) */
+  --color-primary-50:  240 244 248;
+  --color-primary-100: 217 226 236;
+  --color-primary-200: 188 204 220;
+  --color-primary-300: 159 179 200;
+  --color-primary-400: 130 154 177;
+  --color-primary-500: 26 86 219;  /* #1a56db */
+  --color-primary-600: 30 58 138;
+  --color-primary-700: 30 64 175;
+  --color-primary-800: 30 58 138;
+  --color-primary-900: 23 37 84;
 
-  --color-background: #0f172a;
-  --color-surface:    #1e293b;
+  --color-background: 248 250 252;
+  --color-surface:    255 255 255;
 
-  --glass-bg:     rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --radius: 0px; /* Square corners requirement */
 }
 
 @layer base {
   body {
-    @apply bg-white text-gray-900 antialiased;
-    font-family: 'Inter', sans-serif;
-  }
-
-  .dark body {
-    @apply bg-[#0f172a] text-slate-200;
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Google Sans', 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
   }
 
   ::selection {
-    @apply bg-sky-500/30;
+    @apply bg-blue-600/20;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-slate-800/70 border border-white/5 rounded-2xl shadow-2xl backdrop-blur-xl p-6 transition-all duration-300;
+    @apply bg-white border border-slate-200 shadow-sm p-6 transition-all duration-200;
   }
 
   .glass-card:hover {
-    @apply border-white/10 shadow-sky-500/5 -translate-y-0.5;
+    @apply border-slate-300 shadow-md;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 bg-sky-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-sky-500/20 hover:bg-sky-600 hover:-translate-y-0.5 active:translate-y-0;
+    @apply inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium transition-colors hover:bg-blue-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
   }
 
   .input-field {
-    @apply w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-slate-400 outline-none transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100;
+    @apply w-full bg-white border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500;
   }
 
-  /* Force select options color */
   select option {
-    @apply text-gray-900 bg-white;
+    @apply text-slate-900 bg-white;
   }
 }
 

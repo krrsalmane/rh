@@ -29,7 +29,7 @@ export function AppLayout() {
   const { user, role } = useAppSelector((state) => state.auth);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  const pageTitle = PAGE_TITLES[location.pathname] ?? 'Maya HR';
+  const pageTitle = PAGE_TITLES[location.pathname] ?? 'PROFImax HR';
 
   const handleLogout = async () => {
     try { await authApi.logout(); } catch { /* ignore */ }
@@ -77,7 +77,7 @@ export function AppLayout() {
                     {user?.email}
                   </p>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center flex-shrink-0 shadow">
+                <div className="w-8 h-8 rounded-none bg-sky-500 flex items-center justify-center flex-shrink-0 shadow">
                   <span className="text-white text-xs font-bold">{initials}</span>
                 </div>
                 <ChevronDown className="w-4 h-4 transition-colors text-gray-400 hidden sm:block" />

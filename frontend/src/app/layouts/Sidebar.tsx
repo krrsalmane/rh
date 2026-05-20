@@ -54,7 +54,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
           <div className="flex items-center gap-2.5 overflow-hidden">
             <img
               src="/assets/images/mayagroup-logo.png"
-              alt="Maya Group"
+              alt="PROFImax"
               className="h-24 object-contain"
             />
           </div>
@@ -119,20 +119,20 @@ export function Sidebar({ collapsed }: SidebarProps) {
       <div className="border-t border-slate-800 p-3">
         {collapsed ? (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-none bg-sky-600 flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-bold">{initials}</span>
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-none text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
               title="Se déconnecter"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
-            <div className="w-9 h-9 rounded-full bg-sky-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-sky-900/40">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-none">
+            <div className="w-9 h-9 rounded-none bg-sky-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-sky-900/40">
               <span className="text-white text-sm font-bold">{initials}</span>
             </div>
             <div className="flex-1 min-w-0">
