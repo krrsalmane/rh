@@ -35,21 +35,16 @@ const config: Config = {
         },
         background: 'rgb(var(--color-background) / <alpha-value>)',
         surface:    'rgb(var(--color-surface) / <alpha-value>)',
+        navy: {
+          DEFAULT: 'rgb(var(--color-navy) / <alpha-value>)',
+          light: 'rgb(17 43 79 / <alpha-value>)',
+        },
       },
       fontFamily: {
-        sans: ['Google Sans', 'IBM Plex Sans Arabic', 'sans-serif'],
-        inter: ['Google Sans', 'sans-serif'],
+        sans: ['Inter', 'IBM Plex Sans Arabic', 'system-ui', '-apple-system', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
-      borderRadius: {
-        'none': '0px',
-        'sm': '0px',
-        DEFAULT: '0px',
-        'md': '0px',
-        'lg': '0px',
-        'xl': '0px',
-        '2xl': '0px',
-        '3xl': '0px',
-      },
+
       screens: {
         'xs': '475px',
         '3xl': '1600px',

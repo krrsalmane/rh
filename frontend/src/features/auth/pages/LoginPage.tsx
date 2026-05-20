@@ -57,8 +57,8 @@ export const LoginPage: React.FC = () => {
       {/* ── Left panel ── */}
       <div className="hidden lg:flex lg:w-2/5 bg-slate-900 flex-col justify-between p-12 relative overflow-hidden">
         {/* Decorative blobs */}
-        <div className="absolute -top-24 -left-24 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-sky-800/20 rounded-full blur-3xl" />
+        <div className="absolute -top-24 -left-24 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-primary-800/20 rounded-full blur-3xl" />
 
         <div className="relative z-10">
           {/* Brand */}
@@ -73,7 +73,7 @@ export const LoginPage: React.FC = () => {
           <h2 className="text-4xl font-bold text-white mb-3 leading-tight">
             Plateforme RH
             <br />
-            <span className="text-sky-400">intelligente</span>
+            <span className="text-primary-400">intelligente</span>
           </h2>
           <p className="text-slate-400 text-base mb-10">
             Gérez vos ressources humaines en toute simplicité.
@@ -86,8 +86,8 @@ export const LoginPage: React.FC = () => {
               'Congés & Absences',
             ].map((item) => (
               <li key={item} className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-sky-500/20 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-3.5 h-3.5 text-sky-400" />
+                <div className="w-6 h-6 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-3.5 h-3.5 text-primary-400" />
                 </div>
                 <span className="text-slate-300 text-sm">{item}</span>
               </li>
@@ -144,7 +144,7 @@ export const LoginPage: React.FC = () => {
                   className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm text-slate-800 placeholder-slate-400 outline-none transition-all
                     ${errors.email
                       ? 'border-red-300 bg-red-50 focus:ring-2 focus:ring-red-200'
-                      : 'border-slate-200 bg-slate-50 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white'
+                      : 'border-slate-200 bg-slate-50 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:bg-white'
                     }`}
                 />
               </div>
@@ -170,7 +170,7 @@ export const LoginPage: React.FC = () => {
                   className={`w-full pl-10 pr-12 py-3 rounded-xl border text-sm text-slate-800 placeholder-slate-400 outline-none transition-all
                     ${errors.password
                       ? 'border-red-300 bg-red-50 focus:ring-2 focus:ring-red-200'
-                      : 'border-slate-200 bg-slate-50 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:bg-white'
+                      : 'border-slate-200 bg-slate-50 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:bg-white'
                     }`}
                 />
                 <button

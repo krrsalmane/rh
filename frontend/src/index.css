@@ -1,32 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* PROFImax Primary Palette (RGB format for Tailwind opacity support) */
-  --color-primary-50:  240 244 248;
-  --color-primary-100: 217 226 236;
-  --color-primary-200: 188 204 220;
-  --color-primary-300: 159 179 200;
-  --color-primary-400: 130 154 177;
-  --color-primary-500: 26 86 219;  /* #1a56db */
-  --color-primary-600: 30 58 138;
-  --color-primary-700: 30 64 175;
-  --color-primary-800: 30 58 138;
-  --color-primary-900: 23 37 84;
+  /* ProfiMax Primary Palette (RGB format for Tailwind opacity support) */
+  --color-primary-50:  235 242 255;   /* lightest blue tint */
+  --color-primary-100: 204 224 255;   /* very light blue */
+  --color-primary-200: 153 193 255;   /* light blue */
+  --color-primary-300: 77 148 255;    /* medium-light blue */
+  --color-primary-400: 0 163 255;     /* #00A3FF - Bright Blue (accents, hovers) */
+  --color-primary-500: 0 82 204;      /* #0052CC - Deep Primary Blue */
+  --color-primary-600: 0 65 163;      /* darker primary */
+  --color-primary-700: 0 52 130;      /* deep blue */
+  --color-primary-800: 17 43 79;      /* #112B4F - Dark Navy alt */
+  --color-primary-900: 15 27 61;      /* #0F1B3D - Dark Navy */
 
-  --color-background: 248 250 252;
+  --color-background: 248 249 250;    /* #F8F9FA - Light Gray */
   --color-surface:    255 255 255;
 
-  --radius: 0px; /* Square corners requirement */
+  --color-navy: 15 27 61;             /* #0F1B3D - for dark headers/footers */
 }
 
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
-    font-family: 'Google Sans', 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
   }
 
   ::selection {
@@ -36,19 +36,19 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white border border-slate-200 shadow-sm p-6 transition-all duration-200;
+    @apply bg-white border border-slate-100 shadow-sm p-6 rounded-xl transition-all duration-200;
   }
 
   .glass-card:hover {
-    @apply border-slate-300 shadow-md;
+    @apply border-slate-200 shadow-lg;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium transition-colors hover:bg-blue-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-500 text-white font-semibold transition-all duration-200 hover:bg-primary-400 hover:shadow-lg hover:shadow-primary-500/25 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
   }
 
   .input-field {
-    @apply w-full bg-white border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500;
+    @apply w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500;
   }
 
   select option {

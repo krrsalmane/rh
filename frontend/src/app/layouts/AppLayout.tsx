@@ -47,16 +47,16 @@ export function AppLayout() {
       {/* ── Main column ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-white">
         {/* ── Topbar ── */}
-        <header className="h-14 border-b flex items-center justify-between px-4 sm:px-6 flex-shrink-0 z-40 transition-colors bg-white border-gray-100">
+        <header className="h-14 border-b flex items-center justify-between px-4 sm:px-6 flex-shrink-0 z-40 transition-colors bg-navy border-navy-light">
           {/* Left: mobile menu + page title */}
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => dispatch(setMobileSidebarOpen(true))}
-              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors lg:hidden"
+              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors lg:hidden"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="text-base font-semibold transition-colors text-gray-800 truncate max-w-xs sm:max-w-none">
+            <h2 className="text-base font-semibold transition-colors text-white truncate max-w-xs sm:max-w-none">
               {pageTitle}
             </h2>
           </div>
@@ -67,20 +67,20 @@ export function AppLayout() {
             <Notifications />
             
             {/* User Dropdown */}
-            <div className="relative pl-3 ml-1 border-l border-gray-200">
+            <div className="relative pl-3 ml-1 border-l border-white/10">
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex items-center gap-2.5 p-1 rounded-lg transition-colors hover:bg-gray-50"
+                className="flex items-center gap-2.5 p-1 rounded-lg transition-colors hover:bg-white/10"
               >
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-semibold leading-none transition-colors text-gray-800 truncate max-w-32">
+                  <p className="text-sm font-semibold leading-none transition-colors text-white truncate max-w-32">
                     {user?.email}
                   </p>
                 </div>
-                <div className="w-8 h-8 rounded-none bg-sky-500 flex items-center justify-center flex-shrink-0 shadow">
+                <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0 shadow">
                   <span className="text-white text-xs font-bold">{initials}</span>
                 </div>
-                <ChevronDown className="w-4 h-4 transition-colors text-gray-400 hidden sm:block" />
+                <ChevronDown className="w-4 h-4 transition-colors text-slate-400 hidden sm:block" />
               </button>
 
               {isMenuOpen && (
@@ -91,7 +91,7 @@ export function AppLayout() {
                       <p className="text-sm font-bold truncate transition-colors text-gray-900">
                         {user?.email}
                       </p>
-                      <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-sky-600 bg-sky-100 px-1.5 py-0.5 rounded mt-1">
+                      <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-primary-600 bg-primary-100 px-1.5 py-0.5 rounded mt-1">
                         {role?.replace('_', ' ')}
                       </span>
                     </div>

@@ -904,7 +904,7 @@ export const TimeManagementPage: React.FC = () => {
               <button
                 onClick={handleSaveEdit}
                 disabled={updateMut.isLoading}
-                className="btn-primary"
+                className="px-4 py-2 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-medium disabled:opacity-50 transition-all"
               >
                 {updateMut.isLoading ? 'Enregistrement...' : 'Enregistrer'}
               </button>
