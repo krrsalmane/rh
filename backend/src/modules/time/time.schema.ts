@@ -17,6 +17,7 @@ export const CreateTimeEntrySchema = z.object({
   prayer2Out: TimeFormat24H.optional(),
   prayer2In: TimeFormat24H.optional(),
   expectedHours: z.number().optional(),
+  overtime: z.number().optional(),
   source: z.enum(['manual', 'system', 'import']).default('manual'),
   reason: z.string().optional(),
 });
@@ -31,6 +32,7 @@ export const UpdateTimeEntrySchema = z.object({
   prayer2Out: TimeFormat24H.optional(),
   prayer2In: TimeFormat24H.optional(),
   expectedHours: z.number().optional(),
+  overtime: z.number().optional(),
   source: z.enum(['manual', 'system', 'import']).optional(),
   reason: z.string().optional(),
 });

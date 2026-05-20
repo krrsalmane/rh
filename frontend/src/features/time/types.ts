@@ -50,6 +50,7 @@ export interface CreateTimeEntryDto {
   prayer2Out?: string;
   prayer2In?: string;
   expectedHours?: number;
+  overtime?: number;
   source?: 'manual' | 'system' | 'import';
   reason?: string;
 }

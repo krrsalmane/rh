@@ -257,7 +257,8 @@ export async function findForExport(filters: TimeEntryFiltersInput, companyId: s
 
 export async function create(input: CreateTimeEntryInput, companyId: string, userId: string): Promise<TimeEntryRow> {
   const expectedHours = input.expectedHours || 8;
-  const { totalHours, overtime, deficit } = calculateHours(input.clockIn, input.clockOut, expectedHours, input.lunchOut, input.lunchIn, input.prayerOut, input.prayerIn, input.prayer2Out, input.prayer2In);
+  const { totalHours, overtime: calculatedOvertime, deficit } = calculateHours(input.clockIn, input.clockOut, expectedHours, input.lunchOut, input.lunchIn, input.prayerOut, input.prayerIn, input.prayer2Out, input.prayer2In);
+  const overtime = input.overtime !== undefined ? input.overtime : calculatedOvertime;
   const id = uuidv4();
   await query(
     `INSERT INTO time_entries (id, company_id, employee_id, date, clock_in, clock_out, lunch_out, lunch_in, prayer_out, prayer_in, prayer2_out, prayer2_in, total_hours, expected_hours, overtime, deficit, source, modified_by, reason)
@@ -280,7 +281,8 @@ export async function update(id: string, input: Partial<CreateTimeEntryInput>, c
   const prayer2Out = input.prayer2Out ?? existing.prayer2_out ?? undefined;
   const prayer2In = input.prayer2In ?? existing.prayer2_in ?? undefined;
   const expectedHours = input.expectedHours ?? existing.expected_hours ?? 8;
-  const { totalHours, overtime, deficit } = calculateHours(clockIn, clockOut, expectedHours, lunchOut, lunchIn, prayerOut, prayerIn, prayer2Out, prayer2In);
+  const { totalHours, overtime: calculatedOvertime, deficit } = calculateHours(clockIn, clockOut, expectedHours, lunchOut, lunchIn, prayerOut, prayerIn, prayer2Out, prayer2In);
+  const overtime = input.overtime !== undefined ? input.overtime : calculatedOvertime;
 
   await query(
     `UPDATE time_entries SET clock_in = $1, clock_out = $2, lunch_out = $3, lunch_in = $4, prayer_out = $5, prayer_in = $6, prayer2_out = $7, prayer2_in = $8, total_hours = $9, expected_hours = $10, overtime = $11, deficit = $12, source = $13, modified_by = $14, reason = $15

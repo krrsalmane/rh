@@ -66,7 +66,7 @@ export const TimeManagementPage: React.FC = () => {
     : null;
 
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
-  const [editForm, setEditForm] = useState({ clockIn: '', clockOut: '', lunchOut: '', lunchIn: '', prayerOut: '', prayerIn: '', prayer2Out: '', prayer2In: '', reason: '' });
+  const [editForm, setEditForm] = useState({ clockIn: '', clockOut: '', lunchOut: '', lunchIn: '', prayerOut: '', prayerIn: '', prayer2Out: '', prayer2In: '', overtime: '', reason: '' });
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const ALLOWED_PRAYER_BREAKS = 2; // Dynamic: will come from company settings
@@ -128,12 +128,21 @@ export const TimeManagementPage: React.FC = () => {
       prayerIn: formatTimeValue(entry.prayerIn),
       prayer2Out: formatTimeValue(entry.prayer2Out),
       prayer2In: formatTimeValue(entry.prayer2In),
+      overtime: entry.overtime !== undefined ? String(entry.overtime) : '',
       reason: ''
     });
   };
 
   const handleSaveEdit = async () => {
     if (!editingEntry) return;
+    
+    // Only send overtime if the user manually modified it in the form.
+    // If they didn't touch it, send undefined so the backend recalculates it based on the new times.
+    const originalOvertime = editingEntry.overtime !== undefined ? String(editingEntry.overtime) : '';
+    const overtimeToSend = editForm.overtime !== originalOvertime 
+      ? (editForm.overtime === '' ? 0 : Number(editForm.overtime)) 
+      : undefined;
+
     try {
       await updateMut.mutateAsync({
         id: editingEntry.id,
@@ -146,6 +155,7 @@ export const TimeManagementPage: React.FC = () => {
           prayerIn: editForm.prayerIn || undefined,
           prayer2Out: editForm.prayer2Out || undefined,
           prayer2In: editForm.prayer2In || undefined,
+          overtime: overtimeToSend,
           reason: editForm.reason
         }
       });
@@ -226,6 +236,13 @@ export const TimeManagementPage: React.FC = () => {
 
   const formatDate = (d: string) => {
     try { return format(new Date(d), 'dd MMM yyyy', { locale: fr }); } catch { return d; }
+  };
+
+  const formatOvertime = (decimalHours?: number | null) => {
+    if (!decimalHours || decimalHours < 1) return '--';
+    const hours = Math.floor(decimalHours);
+    const minutes = Math.round((decimalHours - hours) * 60);
+    return `+${hours}h${minutes > 0 ? `${minutes}m` : ''}`;
   };
 
   return (
@@ -482,9 +499,7 @@ export const TimeManagementPage: React.FC = () => {
                           <div className="space-y-1">
                             <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Heures Sup.</p>
                             <p className="font-mono text-lg font-medium text-emerald-600">
-                              {rowEntry.overtime && rowEntry.overtime >= 1 
-                                ? `+${rowEntry.overtime}h` 
-                                : '--'}
+                              {formatOvertime(rowEntry.overtime)}
                             </p>
                           </div>
                         </div>
@@ -846,6 +861,19 @@ export const TimeManagementPage: React.FC = () => {
                     }
                   }}
                   maxLength="5"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-600">Heures Sup. (en heures décimales, ex: 1.5)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  placeholder="0"
+                  value={editForm.overtime}
+                  onChange={(e) => setEditForm(f => ({ ...f, overtime: e.target.value }))}
                   className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
                 />
               </div>
