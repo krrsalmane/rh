@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 :root {
-  /* ProfiMax Primary Palette (RGB format for Tailwind opacity support) */
+  /* Maya HR Primary Palette (RGB format for Tailwind opacity support) */
   --color-primary-50:  235 242 255;   /* lightest blue tint */
   --color-primary-100: 204 224 255;   /* very light blue */
   --color-primary-200: 153 193 255;   /* light blue */

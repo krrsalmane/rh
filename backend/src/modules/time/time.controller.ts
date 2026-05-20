@@ -221,6 +221,13 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
               const prayerInfo = fields.prayerCount > 0 
                 ? `${fields.prayerCount}/${fields.prayerAllowed}` 
                 : '0/' + fields.prayerAllowed;
+
+              // Format overtime as 'X h Y min' for human-readable export
+              const overtimeDecimal = Number(row.overtime) || 0;
+              const overtimeTotalMinutes = Math.max(0, Math.round(overtimeDecimal * 60));
+              const overtimeHours = Math.floor(overtimeTotalMinutes / 60);
+              const overtimeMins = overtimeTotalMinutes % 60;
+              const overtimeFormatted = overtimeHours > 0 ? `${overtimeHours} h ${overtimeMins} min` : `${overtimeMins} min`;
               
               return `
               <tr>
@@ -232,7 +239,7 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
                 <td class="${fields.prayer ? 'highlight-brown' : ''}">${prayerInfo}</td>
                 <td>${row.total_hours ?? ''}</td>
                 <td>${row.expected_hours ?? ''}</td>
-                <td>${row.overtime}</td>
+                <td>${overtimeFormatted}</td>
                 <td>${row.deficit}</td>
                 <td>${row.source}</td>
               </tr>
@@ -267,19 +274,27 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
   ];
 
   const csv = [headers.map(quoteCsv).join(',')]
-    .concat(rows.map((row) => [
-      row.employee_name,
-      row.date,
-      row.clock_in || '',
-      row.clock_out || '',
-      row.total_hours?.toString() ?? '',
-      row.expected_hours?.toString() ?? '',
-      row.overtime.toString(),
-      row.deficit.toString(),
-      row.source,
-      row.reason || '',
-      row.created_at,
-    ].map(quoteCsv).join(',')))
+    .concat(rows.map((row) => {
+      const overtimeDecimal = Number(row.overtime) || 0;
+      const overtimeTotalMinutes = Math.max(0, Math.round(overtimeDecimal * 60));
+      const overtimeHours = Math.floor(overtimeTotalMinutes / 60);
+      const overtimeMins = overtimeTotalMinutes % 60;
+      const overtimeFormatted = overtimeHours > 0 ? `${overtimeHours} h ${overtimeMins} min` : `${overtimeMins} min`;
+
+      return [
+        row.employee_name,
+        row.date,
+        row.clock_in || '',
+        row.clock_out || '',
+        row.total_hours?.toString() ?? '',
+        row.expected_hours?.toString() ?? '',
+        overtimeFormatted,
+        row.deficit.toString(),
+        row.source,
+        row.reason || '',
+        row.created_at,
+      ].map(quoteCsv).join(',');
+    }))
     .join('\n');
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');

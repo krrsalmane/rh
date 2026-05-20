@@ -239,10 +239,11 @@ export const TimeManagementPage: React.FC = () => {
   };
 
   const formatOvertime = (decimalHours?: number | null) => {
-    if (!decimalHours || decimalHours < 1) return '--';
-    const hours = Math.floor(decimalHours);
-    const minutes = Math.round((decimalHours - hours) * 60);
-    return `+${hours}h${minutes > 0 ? `${minutes}m` : ''}`;
+    if (!decimalHours || decimalHours <= 0) return '0 min';
+    const totalMinutes = Math.max(0, Math.round(decimalHours * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return hours > 0 ? `${hours} h ${minutes} min` : `${minutes} min`;
   };
 
   return (

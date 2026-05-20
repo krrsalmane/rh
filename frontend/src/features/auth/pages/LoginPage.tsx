@@ -65,7 +65,7 @@ export const LoginPage: React.FC = () => {
           <div className="mb-14">
             <img 
               src="/assets/images/mayagroup-logo.png" 
-              alt="PROFImax" 
+              alt="Maya HR" 
               className="h-24 object-contain"
             />
           </div>
@@ -96,7 +96,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="relative z-10">
-          <p className="text-slate-600 text-xs">PROFImax HR Platform · v1.0</p>
+          <p className="text-slate-600 text-xs">Maya HR Platform · v1.0</p>
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export const LoginPage: React.FC = () => {
           <div className="mb-8 lg:hidden">
             <img 
               src="/assets/images/mayagroup-logo.png" 
-              alt="PROFImax" 
+              alt="Maya HR" 
               className="h-10 object-contain"
             />
           </div>
@@ -205,7 +205,7 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <p className="text-center text-xs text-slate-400 mt-8">
-            PROFImax HR Platform · © {new Date().getFullYear()}
+            Maya HR Platform · © {new Date().getFullYear()}
           </p>
         </div>
       </div>

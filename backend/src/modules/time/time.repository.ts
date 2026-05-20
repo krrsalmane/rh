@@ -92,7 +92,7 @@ function parse24HourTime(time?: string): number | null {
   return hours * 60 + minutes;
 }
 
-function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8, lunchOut?: string, lunchIn?: string, prayerOut?: string, prayerIn?: string, prayer2Out?: string, prayer2In?: string): { totalHours: number; overtime: number; deficit: number } {
+function calculateHours(clockIn?: string, clockOut?: string, expectedHours: number = 8, lunchOut?: string, lunchIn?: string, prayerOut?: string, prayerIn?: string, prayer2Out?: string, prayer2In?: string): { totalHours: number; overtime: number; deficit: number; overtimeMinutes?: number; overtimeHours?: number; overtimeFormatted?: string } {
   if (!clockIn || !clockOut) return { totalHours: 0, overtime: 0, deficit: 0 };
   
   // Parse times in 24-hour format
@@ -158,18 +158,27 @@ function calculateHours(clockIn?: string, clockOut?: string, expectedHours: numb
 
   totalMinutes = Math.max(0, totalMinutes); // Ensure non-negative
   const totalHours = totalMinutes / 60;
-  let overtime = Math.max(0, totalHours - expectedHours);
-  
-  if (overtime < 1) {
-    overtime = 0;
-  }
-  
+
+  // Overtime in raw decimal hours (kept for compatibility), and also as minutes + formatted string
+  const overtimeDecimal = Math.max(0, totalHours - expectedHours);
+  const overtimeMinutesTotal = Math.max(0, Math.round(overtimeDecimal * 60));
+  const overtimeHours = Math.floor(overtimeMinutesTotal / 60);
+  const overtimeMinutes = overtimeMinutesTotal % 60;
+  const overtimeFormatted = overtimeHours > 0
+    ? `${overtimeHours}h and ${overtimeMinutes} min`
+    : `${overtimeMinutes} min`;
+
   const deficit = Math.max(0, expectedHours - totalHours);
-  
-  return { 
-    totalHours: Math.round(totalHours * 100) / 100, 
-    overtime: Math.round(overtime * 100) / 100, 
-    deficit: Math.round(deficit * 100) / 100 
+
+  return {
+    totalHours: Math.round(totalHours * 100) / 100,
+    // legacy numeric value (decimal hours) kept for compatibility
+    overtime: Math.round(overtimeDecimal * 100) / 100,
+    // new fields for precise display
+    overtimeMinutes: overtimeMinutesTotal,
+    overtimeHours,
+    overtimeFormatted,
+    deficit: Math.round(deficit * 100) / 100,
   };
 }
 
