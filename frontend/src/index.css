@@ -357,6 +357,31 @@
     cursor: not-allowed;
   }
 
+  /* Icon-only button (search, filter, download) */
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: #6B7280;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+
+  .btn-icon:hover:not(:disabled) {
+    background: rgba(107, 114, 128, 0.06);
+    color: #374151;
+  }
+
+  .btn-icon svg {
+    width: 18px;
+    height: 18px;
+    color: inherit;
+  }
+
   .file-upload-zone {
     border: 1.5px dashed #d1d5db;
     border-radius: 8px;

@@ -96,9 +96,7 @@ export const LeavesPage: React.FC = () => {
           </div>
         </div>
         {canCreate && (
-          <button onClick={() => navigate('/leaves/request')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 bg-violet-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-violet-500/20 hover:bg-violet-600 hover:-translate-y-0.5 active:translate-y-0 w-full sm:w-auto justify-center"
-            id="new-leave-btn">
+          <button onClick={() => navigate('/leaves/request')} className="btn-primary" id="new-leave-btn">
             <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nouvelle demande</span><span className="sm:hidden">Ajouter</span>
           </button>
         )}

@@ -56,8 +56,7 @@ export const LeaveTypesPage: React.FC = () => {
           </div>
         </div>
         {canEdit && !showForm && (
-          <button onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-indigo-500/20 hover:bg-indigo-600 hover:-translate-y-0.5 transition-all">
+          <button onClick={() => setShowForm(true)} className="btn-primary">
             <Plus className="w-4 h-4" /> Nouveau type
           </button>
         )}

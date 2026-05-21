@@ -96,13 +96,7 @@ export const TasksPage: React.FC = () => {
           <p className="text-slate-500 text-sm">Organisez et suivez le travail de l'équipe</p>
         </div>
         {canManage && (
-          <button
-            onClick={() => {
-              setEditingTask(null);
-              setIsModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-xl hover:bg-sky-700 transition-all shadow-sm shadow-sky-200"
-          >
+          <button onClick={() => { setEditingTask(null); setIsModalOpen(true); }} className="btn-primary">
             <Plus className="w-4 h-4" />
             Nouvelle Tâche
           </button>

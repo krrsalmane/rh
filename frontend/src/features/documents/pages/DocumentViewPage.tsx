@@ -120,11 +120,7 @@ export const DocumentViewPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button 
-            onClick={handlePrint}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"
-            title="Imprimer"
-          >
+          <button onClick={handlePrint} className="btn-icon" title="Imprimer">
             <Printer className="w-4 h-4" />
           </button>
           <div className="h-4 w-px bg-slate-800 mx-2" />

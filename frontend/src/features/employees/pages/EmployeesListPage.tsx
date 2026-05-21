@@ -72,11 +72,7 @@ export const EmployeesListPage: React.FC = () => {
         </div>
 
         {canCreate && (
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-sky-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-sky-500/20 hover:bg-sky-600 hover:-translate-y-0.5 active:translate-y-0"
-            id="new-employee-btn"
-          >
+          <button onClick={handleCreate} className="btn-primary" id="new-employee-btn">
             <Plus className="w-4 h-4" />
             Nouvel employé
           </button>

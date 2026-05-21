@@ -29,12 +29,8 @@ export const TemplatesPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Modèles de documents</h1>
           <p className="text-sm text-slate-500 mt-1">Créez et gérez vos modèles de documents professionnels</p>
         </div>
-        <button
-          onClick={() => navigate('/templates/new')}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg font-semibold text-sm transition-all hover:bg-slate-800 shadow-sm"
-          id="new-template-btn"
-        >
-          <Plus className="w-4 h-4" /> 
+        <button onClick={() => navigate('/templates/new')} className="btn-primary" id="new-template-btn">
+          <Plus className="w-4 h-4" />
           Nouveau modèle
         </button>
       </div>

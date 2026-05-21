@@ -51,13 +51,9 @@ export const DocumentsPage: React.FC = () => {
           id="generate-doc-btn"
         >
           <Zap className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Générer un document</span><span className="sm:hidden">Générer</span>
+        <button onClick={() => navigate('/documents/generate')} className="btn-primary" id="generate-doc-btn">
+          <Zap className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Générer un document</span><span className="sm:hidden">Générer</span>
         </button>
-      </div>
-
-      {/* Document List */}
-      <DocumentList
-        documents={data?.data || []}
-        isLoading={isLoading}
         onPreview={(doc) => navigate(ROUTES.DOCUMENT_VIEW.replace(':id', doc.id))}
         onDownload={handleDownload}
         onArchive={handleArchive}

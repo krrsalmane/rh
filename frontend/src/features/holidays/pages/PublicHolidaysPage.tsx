@@ -72,8 +72,7 @@ export const PublicHolidaysPage: React.FC = () => {
             {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           {canEdit && !showForm && (
-            <button onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all">
+            <button onClick={() => setShowForm(true)} className="btn-primary">
               <Plus className="w-4 h-4" /> Ajouter
             </button>
           )}
