@@ -6,6 +6,7 @@ import { useEmployees } from '@/features/employees/hooks/useEmployees';
 import type { TimeEntryFilters, TimeEntry } from '../types';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Modal, FormFooter } from '@/shared/components/forms';
 
 export const TimeManagementPage: React.FC = () => {
   const role = useAppSelector((s) => s.auth.role);
@@ -518,10 +519,12 @@ export const TimeManagementPage: React.FC = () => {
           </div>
         )}
       </div>
-      {isCreateOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
-            <h2 className="text-xl font-bold mb-4">Ajouter un pointage</h2>
+      <Modal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="Ajouter un pointage"
+        size="large"
+      >
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-slate-600">Employé <span className="text-red-500">*</span></label>
@@ -696,31 +699,23 @@ export const TimeManagementPage: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setIsCreateOpen(false)}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 font-medium"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleCreateSave}
-                disabled={!createForm.employeeId || !createForm.date || createMut.isLoading}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium disabled:opacity-50"
-              >
-                {createMut.isLoading ? 'Création...' : 'Créer'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <FormFooter
+              onCancel={() => setIsCreateOpen(false)}
+              submitText={createMut.isLoading ? 'Création...' : 'Créer'}
+              submitType="button"
+              onSubmit={handleCreateSave}
+              disabled={!createForm.employeeId || !createForm.date || createMut.isLoading}
+              isLoading={createMut.isLoading}
+            />
+      </Modal>
 
-      {/* Edit Modal */}
-      {editingEntry && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" lang="fr-FR">
-          <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Modifier le pointage</h2>
-            <div className="space-y-4">
+      <Modal
+        isOpen={!!editingEntry}
+        onClose={() => setEditingEntry(null)}
+        title="Modifier le pointage"
+        size="large"
+      >
+            <div className="space-y-4" lang="fr-FR">
               <div>
                 <label className="text-sm font-medium text-slate-600">Heure d'entrée (HH:MM)</label>
                 <input
@@ -895,24 +890,14 @@ export const TimeManagementPage: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setEditingEntry(null)}
-                className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 font-medium"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                disabled={updateMut.isLoading}
-                className="px-4 py-2 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-medium disabled:opacity-50 transition-all"
-              >
-                {updateMut.isLoading ? 'Enregistrement...' : 'Enregistrer'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <FormFooter
+              onCancel={() => setEditingEntry(null)}
+              submitText={updateMut.isLoading ? 'Enregistrement...' : 'Enregistrer'}
+              submitType="button"
+              onSubmit={handleSaveEdit}
+              isLoading={updateMut.isLoading}
+            />
+      </Modal>
     </div>
   );
 };

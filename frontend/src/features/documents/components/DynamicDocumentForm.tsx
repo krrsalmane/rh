@@ -1,5 +1,13 @@
 import React from 'react';
 import type { VariableSchema } from '../types';
+import {
+  FormCard,
+  FormField,
+  FormGrid,
+  FormInput,
+  FormSelect,
+  FormTextarea,
+} from '@/shared/components/forms';
 
 interface Props {
   variableSchema: VariableSchema[];
@@ -15,7 +23,12 @@ function resolveValue(obj: Record<string, unknown>, path: string): unknown {
   }, obj);
 }
 
-export const DynamicDocumentForm: React.FC<Props> = ({ variableSchema, employeeData, formData, onFormDataChange }) => {
+export const DynamicDocumentForm: React.FC<Props> = ({
+  variableSchema,
+  employeeData,
+  formData,
+  onFormDataChange,
+}) => {
   const autoFillVars = variableSchema.filter((v) => v.autoFill);
   const manualVars = variableSchema.filter((v) => !v.autoFill);
 
@@ -24,91 +37,86 @@ export const DynamicDocumentForm: React.FC<Props> = ({ variableSchema, employeeD
   };
 
   return (
-    <div className="space-y-6" id="dynamic-document-form">
-      {/* Auto-filled fields (read-only display) */}
+    <div id="dynamic-document-form">
       {autoFillVars.length > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <span className="w-5 h-5 rounded bg-sky-100 text-sky-600 flex items-center justify-center text-[10px]">🔒</span>
-            Champs pré-remplis depuis le dossier employé
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <FormCard title="Champs pré-remplis depuis le dossier employé">
+          <FormGrid>
             {autoFillVars.map((v) => {
               const rawPath = v.name.replace(/^employee\./, '');
               const val = resolveValue(employeeData, rawPath);
               return (
-                <div key={v.name} className="bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
-                  <label className="block text-xs font-medium text-slate-400 mb-0.5">{v.label}</label>
-                  <p className="text-sm font-medium text-slate-700">
+                <div
+                  key={v.name}
+                  className="rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2"
+                >
+                  <span className="form-label mb-1">{v.label}</span>
+                  <p className="text-sm font-medium text-[#1A1A2E]">
                     {val !== undefined && val !== null && val !== '' ? String(val) : '—'}
                   </p>
                 </div>
               );
             })}
-          </div>
-        </div>
+          </FormGrid>
+        </FormCard>
       )}
 
-      {/* Manual fields */}
       {manualVars.length > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <span className="w-5 h-5 rounded bg-amber-100 text-amber-600 flex items-center justify-center text-[10px]">✏️</span>
-            Champs à renseigner
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormCard title="Champs à renseigner">
+          <FormGrid>
             {manualVars.map((v) => {
               const fieldName = v.name.replace(/^form\./, '');
               const currentVal = formData[fieldName] ?? v.defaultValue ?? '';
 
               return (
-                <div key={v.name} className={v.type === 'textarea' ? 'md:col-span-2' : ''}>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">
-                    {v.label}
-                    {v.required && <span className="text-rose-500 ml-1">*</span>}
-                  </label>
+                <FormField
+                  key={v.name}
+                  label={v.label}
+                  required={v.required}
+                  className={v.type === 'textarea' ? 'md:col-span-2' : ''}
+                >
                   {renderField(v, currentVal, (val) => handleChange(fieldName, val))}
-                </div>
+                </FormField>
               );
             })}
-          </div>
-        </div>
+          </FormGrid>
+        </FormCard>
       )}
     </div>
   );
 };
 
-function renderField(v: VariableSchema, value: unknown, onChange: (val: unknown) => void) {
+function renderField(
+  v: VariableSchema,
+  value: unknown,
+  onChange: (val: unknown) => void
+) {
   const strVal = value !== undefined && value !== null ? String(value) : '';
 
   switch (v.type) {
     case 'textarea':
       return (
-        <textarea
+        <FormTextarea
           value={strVal}
           onChange={(e) => onChange(e.target.value)}
-          className="input-field min-h-[80px] resize-none"
           placeholder={v.label}
           required={v.required}
         />
       );
     case 'date':
       return (
-        <input
+        <FormInput
           type="date"
           value={strVal}
           onChange={(e) => onChange(e.target.value)}
-          className="input-field"
           required={v.required}
         />
       );
     case 'number':
       return (
-        <input
+        <FormInput
           type="number"
           value={strVal}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="input-field"
           placeholder={v.label}
           required={v.required}
         />
@@ -116,39 +124,41 @@ function renderField(v: VariableSchema, value: unknown, onChange: (val: unknown)
     case 'currency':
       return (
         <div className="relative">
-          <input
+          <FormInput
             type="number"
             value={strVal}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="input-field pr-16"
             placeholder="0"
             required={v.required}
-            step="100"
+            step={100}
+            className="pr-14"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">MAD</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#9CA3AF]">
+            MAD
+          </span>
         </div>
       );
     case 'select':
       return (
-        <select
+        <FormSelect
           value={strVal}
           onChange={(e) => onChange(e.target.value)}
-          className="input-field"
           required={v.required}
         >
           <option value="">Sélectionner...</option>
           {(v.options || []).map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
           ))}
-        </select>
+        </FormSelect>
       );
     default:
       return (
-        <input
+        <FormInput
           type="text"
           value={strVal}
           onChange={(e) => onChange(e.target.value)}
-          className="input-field"
           placeholder={v.label}
           required={v.required}
         />

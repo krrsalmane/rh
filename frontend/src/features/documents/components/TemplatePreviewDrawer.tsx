@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Eye, Code, Info, Pencil, Zap } from 'lucide-react';
+import { Eye, Code, Info, Pencil, Zap } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import type { Template } from '../types';
+import { Modal } from '@/shared/components/forms';
 
 interface Props {
   template: Template | null;
@@ -94,44 +95,32 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
   const { header, body, footer, showHeader, showFooter } = parseTemplateParts(template.body || '');
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 transition-opacity duration-300",
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <div
-        className={cn(
-          "fixed top-0 right-0 h-full w-[480px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col",
-          isOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-semibold text-slate-900 truncate">{template.name}</h2>
-              <div className="flex items-center gap-2 mt-2">
-                <span className={cn("px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border", categoryColors[template.category])}>
-                  {template.category}
-                </span>
-                <span className={cn("px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border", statusColors[template.status])}>
-                  {template.status}
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium">v{template.version}</span>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={template.name}
+      size="wide"
+      footer={
+        <>
+          <button type="button" className="btn-form-cancel w-full sm:w-auto" onClick={() => onEdit(template)}>
+            <Pencil className="mr-2 inline h-4 w-4" />
+            Modifier le modèle
+          </button>
+          <button type="button" className="btn-form-submit w-full sm:w-auto" onClick={() => onGenerate(template)}>
+            <Zap className="mr-2 inline h-4 w-4" />
+            Utiliser ce modèle
+          </button>
+        </>
+      }
+    >
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className={cn('rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider', categoryColors[template.category])}>
+              {template.category}
+            </span>
+            <span className={cn('rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider', statusColors[template.status])}>
+              {template.status}
+            </span>
+            <span className="text-[10px] font-medium text-[#9CA3AF]">v{template.version}</span>
           </div>
 
           {/* Tabs */}
@@ -159,10 +148,8 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto min-h-0 bg-slate-50/30">
+        <div className="max-h-[50vh] overflow-y-auto rounded-md border border-[#E5E7EB] bg-[#F9FAFB]">
           {activeTab === 'preview' && (
             <div className="h-full p-4">
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
@@ -279,25 +266,6 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
             </div>
           )}
         </div>
-
-        {/* Footer Actions */}
-        <div className="p-6 border-t border-slate-100 space-y-3 bg-white">
-          <button
-            onClick={() => onEdit(template)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-          >
-            <Pencil className="w-4 h-4" />
-            Modifier le modèle
-          </button>
-          <button
-            onClick={() => onGenerate(template)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
-          >
-            <Zap className="w-4 h-4 fill-white" />
-            Utiliser ce modèle
-          </button>
-        </div>
-      </div>
-    </>
+    </Modal>
   );
 };

@@ -5,6 +5,13 @@ import { usePublicHolidays, useCreatePublicHoliday, useUpdatePublicHoliday, useD
 import type { PublicHoliday, CreatePublicHolidayDto } from '../types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import {
+  FormCard,
+  FormField,
+  FormGrid,
+  FormInput,
+  FormFooter,
+} from '@/shared/components/forms';
 
 const EMPTY_FORM: CreatePublicHolidayDto = { name: '', date: '', year: new Date().getFullYear(), isRecurring: false };
 
@@ -44,7 +51,7 @@ export const PublicHolidaysPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in-up" id="public-holidays-page">
+    <div className="form-page space-y-6 animate-fade-in-up" id="public-holidays-page">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -74,32 +81,45 @@ export const PublicHolidaysPage: React.FC = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-amber-100 shadow-sm p-6 space-y-4">
-          <h2 className="text-base font-bold text-slate-800">{editingId ? 'Modifier le jour férié' : 'Nouveau jour férié'}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Nom du jour férié</label>
-              <input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="ex: Fête du Travail"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Date</label>
-              <input type="date" value={form.date} onChange={(e) => setForm(f => ({ ...f, date: e.target.value }))} required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200" />
-            </div>
-          </div>
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" checked={form.isRecurring} onChange={(e) => setForm(f => ({ ...f, isRecurring: e.target.checked }))}
-              className="w-4 h-4 rounded accent-amber-500" />
-            <span className="text-sm text-slate-700">Récurrent chaque année</span>
-          </label>
-          <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-            <button type="submit" disabled={createMut.isPending || updateMut.isPending}
-              className="px-6 py-2 bg-amber-500 text-white rounded-xl text-sm font-bold hover:bg-amber-600 disabled:opacity-50">
-              {editingId ? 'Mettre à jour' : 'Enregistrer'}
-            </button>
-            <button type="button" onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY_FORM); }} className="px-4 py-2 text-sm text-slate-500">Annuler</button>
-          </div>
+        <form onSubmit={handleSubmit}>
+          <FormCard title={editingId ? 'Modifier le jour férié' : 'Nouveau jour férié'}>
+            <FormGrid>
+              <FormField label="Nom du jour férié" required>
+                <FormInput
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  required
+                  placeholder="ex: Fête du Travail"
+                />
+              </FormField>
+              <FormField label="Date" required>
+                <FormInput
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                  required
+                />
+              </FormField>
+            </FormGrid>
+            <label className="flex cursor-pointer select-none items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.isRecurring}
+                onChange={(e) => setForm((f) => ({ ...f, isRecurring: e.target.checked }))}
+                className="h-4 w-4 rounded accent-[#2563EB]"
+              />
+              <span className="text-sm text-[#374151]">Récurrent chaque année</span>
+            </label>
+          </FormCard>
+          <FormFooter
+            onCancel={() => {
+              setShowForm(false);
+              setEditingId(null);
+              setForm(EMPTY_FORM);
+            }}
+            submitText={editingId ? 'Mettre à jour' : 'Enregistrer'}
+            isLoading={createMut.isPending || updateMut.isPending}
+          />
         </form>
       )}
 

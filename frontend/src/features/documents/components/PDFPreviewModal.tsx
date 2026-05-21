@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { X, Download, Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import axios from '@/shared/api/axiosInstance';
+import { Modal } from '@/shared/components/forms';
 
 interface Props {
   isOpen: boolean;
@@ -16,7 +17,8 @@ export const PDFPreviewModal: React.FC<Props> = ({ isOpen, documentId, documentN
   useEffect(() => {
     if (isOpen && documentId) {
       setLoading(true);
-      axios.get(`/documents/${documentId}/pdf`, { responseType: 'blob' })
+      axios
+        .get(`/documents/${documentId}/pdf`, { responseType: 'blob' })
         .then((res) => {
           const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
           setPdfUrl(url);
@@ -25,17 +27,14 @@ export const PDFPreviewModal: React.FC<Props> = ({ isOpen, documentId, documentN
         .finally(() => setLoading(false));
     }
     return () => {
-      if (pdfUrl) { window.URL.revokeObjectURL(pdfUrl); setPdfUrl(null); }
+      if (pdfUrl) {
+        window.URL.revokeObjectURL(pdfUrl);
+        setPdfUrl(null);
+      }
     };
   }, [isOpen, documentId]);
 
-  useEffect(() => {
-    if (isOpen) { document.body.style.overflow = 'hidden'; }
-    else { document.body.style.overflow = ''; }
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
-
-  if (!isOpen || !documentId) return null;
+  if (!documentId) return null;
 
   const handleDownload = async () => {
     try {
@@ -48,46 +47,44 @@ export const PDFPreviewModal: React.FC<Props> = ({ isOpen, documentId, documentN
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch { /* handled */ }
+    } catch {
+      /* handled */
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl max-h-[90vh] flex flex-col animate-fade-in-up" id="pdf-preview-modal">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
-          <h2 className="text-lg font-bold text-slate-800">{documentName || 'Aperçu PDF'}</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDownload}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-sky-600 bg-sky-50 hover:bg-sky-100 rounded-xl transition-colors"
-            >
-              <Download className="w-4 h-4" /> Télécharger
-            </button>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-              <X className="w-5 h-5" />
-            </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={documentName || 'Aperçu PDF'}
+      size="wide"
+      id="pdf-preview-modal"
+      footer={
+        <>
+          <button type="button" className="btn-form-cancel" onClick={onClose}>
+            Fermer
+          </button>
+          <button type="button" className="btn-form-submit inline-flex items-center gap-2" onClick={handleDownload}>
+            <Download className="h-4 w-4" /> Télécharger
+          </button>
+        </>
+      }
+    >
+      <div className="min-h-[400px] overflow-hidden rounded-md border border-[#E5E7EB]">
+        {loading && (
+          <div className="flex min-h-[400px] items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-[#2563EB]" />
           </div>
-        </div>
-
-        {/* PDF Viewer */}
-        <div className="flex-1 overflow-hidden">
-          {loading && (
-            <div className="flex items-center justify-center h-full min-h-[500px]">
-              <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
-            </div>
-          )}
-          {!loading && pdfUrl && (
-            <iframe src={pdfUrl} className="w-full h-full min-h-[500px]" title="PDF Preview" />
-          )}
-          {!loading && !pdfUrl && (
-            <div className="flex items-center justify-center h-full min-h-[500px] text-slate-400">
-              Impossible de charger le PDF
-            </div>
-          )}
-        </div>
+        )}
+        {!loading && pdfUrl && (
+          <iframe src={pdfUrl} className="h-[min(70vh,600px)] w-full" title="PDF Preview" />
+        )}
+        {!loading && !pdfUrl && (
+          <div className="flex min-h-[400px] items-center justify-center text-[#9CA3AF]">
+            Impossible de charger le PDF
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };

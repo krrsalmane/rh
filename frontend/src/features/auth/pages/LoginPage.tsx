@@ -32,7 +32,10 @@ export const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);
     try {
-      const response = await authApi.login(data);
+      const response = await authApi.login({
+        email: data.email.trim(),
+        password: data.password,
+      });
       const { accessToken, user } = response.data;
       dispatch(
         setCredentials({
@@ -123,6 +126,14 @@ export const LoginPage: React.FC = () => {
             <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-6 text-sm">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <span>{serverError}</span>
+            </div>
+          )}
+
+          {import.meta.env.DEV && (
+            <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <p className="font-medium text-slate-700 mb-1">Compte de démonstration</p>
+              <p>Email : <span className="font-mono">admin@hrms.com</span></p>
+              <p>Mot de passe : <span className="font-mono">Admin@1234</span></p>
             </div>
           )}
 

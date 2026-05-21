@@ -17,7 +17,8 @@ interface UserRow {
 }
 
 export async function login(input: LoginInput) {
-  const result = await query<UserRow>('SELECT * FROM users WHERE email = $1', [input.email]);
+  const email = input.email.trim().toLowerCase();
+  const result = await query<UserRow>('SELECT * FROM users WHERE LOWER(email) = $1', [email]);
   const user = result.rows[0];
   if (!user) throw new AppError('Invalid email or password', 401);
   if (!user.is_active) throw new AppError('Account is deactivated', 403);

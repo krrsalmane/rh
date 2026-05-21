@@ -265,7 +265,7 @@ export const DocumentGenerator: React.FC<Props> = ({
                 value={employeeSearch}
                 onChange={(e) => setEmployeeSearch(e.target.value)}
                 placeholder="Rechercher un employé..."
-                className="input-field mb-2"
+                className="form-input mb-2"
                 id="gen-employee-search"
               />
               {!selectedEmployeeId && employees.length > 0 && (

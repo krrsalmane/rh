@@ -7,6 +7,7 @@ import type { LeaveFilters, LeaveRequest } from '../types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { downloadLeaveRequestDocument } from '../api';
+import { Modal, FormCard } from '@/shared/components/forms';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   pending:   { label: 'En attente', bg: 'bg-amber-50', text: 'text-amber-700' },
@@ -316,23 +317,16 @@ export const LeavesPage: React.FC = () => {
           </table>
         </div>
       </div>
-      {selectedRequestId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800">Détails de la demande</h2>
-                <p className="text-sm text-slate-400">Consultez le motif et le justificatif avant décision</p>
-              </div>
-              <button
-                onClick={() => setSelectedRequestId(null)}
-                className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-5 px-6 py-6">
+      <Modal
+        isOpen={!!selectedRequestId}
+        onClose={() => setSelectedRequestId(null)}
+        title="Détails de la demande"
+        size="wide"
+      >
+        <p className="mb-4 text-sm text-[#6B7280]">
+          Consultez le motif et le justificatif avant décision
+        </p>
+        <div className="space-y-4">
               {selectedRequestLoading ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-7 w-7 animate-spin text-violet-500" />
@@ -340,34 +334,34 @@ export const LeavesPage: React.FC = () => {
               ) : selectedRequest ? (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-slate-50 p-4">
-                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <FormCard className="!mb-0 !p-4">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">
                         <User className="h-4 w-4" /> Demandeur
                       </div>
-                      <p className="text-sm font-semibold text-slate-800">{selectedRequest.employeeName}</p>
-                      <p className="text-xs text-slate-400">{selectedRequest.department || 'Département non renseigné'}</p>
-                    </div>
-                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-sm font-semibold text-[#1A1A2E]">{selectedRequest.employeeName}</p>
+                      <p className="text-xs text-[#9CA3AF]">{selectedRequest.department || 'Département non renseigné'}</p>
+                    </FormCard>
+                    <FormCard className="!mb-0 !p-4">
                       <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                         <CalendarDays className="h-4 w-4" /> Période
                       </div>
                       <p className="text-sm font-semibold text-slate-800">
                         {formatDate(selectedRequest.startDate)} → {formatDate(selectedRequest.endDate)}
                       </p>
-                      <p className="text-xs text-slate-400">{selectedRequest.workingDays ?? '—'} jours ouvrables</p>
-                    </div>
+                      <p className="text-xs text-[#9CA3AF]">{selectedRequest.workingDays ?? '—'} jours ouvrables</p>
+                    </FormCard>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-100 p-4">
+                    <FormCard className="!mb-0 !p-4">
                       <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                         <FileText className="h-4 w-4" /> Motif
                       </div>
                       <p className="text-sm leading-6 text-slate-700">
                         {selectedRequest.reason || 'Aucun motif renseigné.'}
                       </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-100 p-4">
+                    </FormCard>
+                    <FormCard className="!mb-0 !p-4">
                       <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                         <Paperclip className="h-4 w-4" /> Justificatif
                       </div>
@@ -378,13 +372,13 @@ export const LeavesPage: React.FC = () => {
                         <button
                           onClick={handleDownloadDocument}
                           disabled={downloadLoading}
-                          className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                          className="btn-form-cancel mt-3 inline-flex items-center gap-2"
                         >
                           {downloadLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                           Télécharger le fichier
                         </button>
                       )}
-                    </div>
+                    </FormCard>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-3">
@@ -431,12 +425,10 @@ export const LeavesPage: React.FC = () => {
                   )}
                 </>
               ) : (
-                <div className="py-10 text-center text-sm text-slate-400">Impossible de charger les détails.</div>
+                <div className="py-10 text-center text-sm text-[#9CA3AF]">Impossible de charger les détails.</div>
               )}
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">

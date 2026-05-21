@@ -41,7 +41,7 @@ export const EmployeeFilters: React.FC<Props> = ({ filters, onFiltersChange, tot
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Rechercher par nom, email, CIN..."
-            className="input-field pl-10"
+            className="form-input pl-10"
             id="employee-search-input"
           />
         </div>
@@ -50,7 +50,7 @@ export const EmployeeFilters: React.FC<Props> = ({ filters, onFiltersChange, tot
         <select
           value={filters.department || ''}
           onChange={(e) => onFiltersChange({ ...filters, department: e.target.value || undefined, page: 1 })}
-          className="input-field w-auto min-w-[160px]"
+          className="form-input w-auto min-w-[160px]"
           id="employee-department-filter"
         >
           <option value="">Département</option>
@@ -63,7 +63,7 @@ export const EmployeeFilters: React.FC<Props> = ({ filters, onFiltersChange, tot
         <select
           value={filters.status || ''}
           onChange={(e) => onFiltersChange({ ...filters, status: e.target.value || undefined, page: 1 })}
-          className="input-field w-auto min-w-[140px]"
+          className="form-input w-auto min-w-[140px]"
           id="employee-status-filter"
         >
           <option value="">Statut</option>
@@ -76,7 +76,7 @@ export const EmployeeFilters: React.FC<Props> = ({ filters, onFiltersChange, tot
         <select
           value={filters.contractType || ''}
           onChange={(e) => onFiltersChange({ ...filters, contractType: e.target.value || undefined, page: 1 })}
-          className="input-field w-auto min-w-[140px]"
+          className="form-input w-auto min-w-[140px]"
           id="employee-contract-filter"
         >
           <option value="">Contrat</option>

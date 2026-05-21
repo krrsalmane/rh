@@ -1,4 +1,3 @@
-import axios from 'axios';
 import axiosInstance from '@/shared/api/axiosInstance';
 
 export interface LoginPayload {
@@ -38,10 +37,9 @@ export const authApi = {
   },
 
   refresh: async (): Promise<{ accessToken: string; user: AuthUser }> => {
-    const { data } = await axios.post<{ data: { accessToken: string; user: AuthUser } }>(
-      `http://localhost:3002/api/auth/refresh`,
-      {},
-      { withCredentials: true }
+    const { data } = await axiosInstance.post<{ data: { accessToken: string; user: AuthUser } }>(
+      '/auth/refresh',
+      {}
     );
     return data.data;
   },

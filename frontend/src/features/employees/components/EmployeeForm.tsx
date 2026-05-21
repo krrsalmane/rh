@@ -5,6 +5,15 @@ import { z } from 'zod';
 import { useAppSelector } from '@/store/hooks';
 import { useDepartments } from '../hooks/useEmployees';
 import { useWorkSchedules } from '@/features/time/hooks/useTime';
+import {
+  FormCard,
+  FormField,
+  FormGrid,
+  FormFooter,
+  FormInput,
+  FormSelect,
+  FormTextarea,
+} from '@/shared/components/forms';
 import type { CreateEmployeeDto, Employee } from '../types';
 
 const employeeFormSchema = z.object({
@@ -45,9 +54,8 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
     handleSubmit,
     reset,
     formState: { errors },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<FormData>({
-    resolver: zodResolver(employeeFormSchema) as any,
+    resolver: zodResolver(employeeFormSchema) as never,
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -108,78 +116,73 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8" id="employee-form">
-      {/* Section 1 — Personal Info */}
-      <div>
-        <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center text-xs font-bold">1</span>
-          Informations personnelles
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Prénom *</label>
-            <input {...register('firstName')} className="input-field" placeholder="Prénom" id="emp-firstName" />
-            {errors.firstName && <p className="text-xs text-rose-500 mt-1">{errors.firstName.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Nom *</label>
-            <input {...register('lastName')} className="input-field" placeholder="Nom" id="emp-lastName" />
-            {errors.lastName && <p className="text-xs text-rose-500 mt-1">{errors.lastName.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">CIN</label>
-            <input {...register('cin')} className="input-field" placeholder="CIN" id="emp-cin" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">CNE</label>
-            <input {...register('cne')} className="input-field" placeholder="CNE" id="emp-cne" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
-            <input {...register('email')} type="email" className="input-field" placeholder="email@exemple.com" id="emp-email" />
-            {errors.email && <p className="text-xs text-rose-500 mt-1">{errors.email.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Téléphone</label>
-            <input {...register('phone')} className="input-field" placeholder="+212 6XX XXX XXX" id="emp-phone" />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-600 mb-1">Adresse</label>
-            <textarea {...register('address')} className="input-field min-h-[80px] resize-none" placeholder="Adresse" id="emp-address" />
-          </div>
-        </div>
-      </div>
+    <form onSubmit={handleSubmit(handleFormSubmit)} id="employee-form">
+      <FormCard title="Informations personnelles">
+        <FormGrid>
+          <FormField label="Prénom" required error={errors.firstName?.message}>
+            <FormInput
+              {...register('firstName')}
+              placeholder="Prénom"
+              id="emp-firstName"
+              hasError={!!errors.firstName}
+            />
+          </FormField>
+          <FormField label="Nom" required error={errors.lastName?.message}>
+            <FormInput
+              {...register('lastName')}
+              placeholder="Nom"
+              id="emp-lastName"
+              hasError={!!errors.lastName}
+            />
+          </FormField>
+          <FormField label="CIN">
+            <FormInput {...register('cin')} placeholder="CIN" id="emp-cin" />
+          </FormField>
+          <FormField label="CNE">
+            <FormInput {...register('cne')} placeholder="CNE" id="emp-cne" />
+          </FormField>
+          <FormField label="Email" error={errors.email?.message}>
+            <FormInput
+              {...register('email')}
+              type="email"
+              placeholder="email@exemple.com"
+              id="emp-email"
+              hasError={!!errors.email}
+            />
+          </FormField>
+          <FormField label="Téléphone">
+            <FormInput {...register('phone')} placeholder="+212 6XX XXX XXX" id="emp-phone" />
+          </FormField>
+        </FormGrid>
+        <FormField label="Adresse">
+          <FormTextarea {...register('address')} placeholder="Adresse" id="emp-address" rows={3} />
+        </FormField>
+      </FormCard>
 
-      {/* Section 2 — Professional Info */}
-      <div>
-        <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center text-xs font-bold">2</span>
-          Informations professionnelles
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Date d'embauche *</label>
-            <input {...register('hireDate')} type="date" className="input-field" id="emp-hireDate" />
-            {errors.hireDate && <p className="text-xs text-rose-500 mt-1">{errors.hireDate.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Type de contrat *</label>
-            <select {...register('contractType')} className="input-field" id="emp-contractType">
+      <FormCard title="Informations professionnelles">
+        <FormGrid>
+          <FormField label="Date d'embauche" required error={errors.hireDate?.message}>
+            <FormInput
+              {...register('hireDate')}
+              type="date"
+              id="emp-hireDate"
+              hasError={!!errors.hireDate}
+            />
+          </FormField>
+          <FormField label="Type de contrat" required>
+            <FormSelect {...register('contractType')} id="emp-contractType">
               <option value="CDI">CDI</option>
               <option value="CDD">CDD</option>
               <option value="internship">Stage</option>
               <option value="freelance">Freelance</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Fonction</label>
-            <input {...register('function')} className="input-field" placeholder="Fonction" id="emp-function" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Département</label>
-            <input
+            </FormSelect>
+          </FormField>
+          <FormField label="Fonction">
+            <FormInput {...register('function')} placeholder="Fonction" id="emp-function" />
+          </FormField>
+          <FormField label="Département">
+            <FormInput
               {...register('department')}
-              className="input-field"
               placeholder="Département"
               list="department-options"
               id="emp-department"
@@ -189,78 +192,49 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
                 <option key={d} value={d} />
               ))}
             </datalist>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Statut</label>
-            <select {...register('status')} className="input-field" id="emp-status">
+          </FormField>
+          <FormField label="Statut">
+            <FormSelect {...register('status')} id="emp-status">
               <option value="active">Actif</option>
               <option value="inactive">Inactif</option>
               <option value="terminated">Résilié</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Horaire de travail</label>
-            <select {...register('workScheduleId')} className="input-field" id="emp-workScheduleId">
+            </FormSelect>
+          </FormField>
+          <FormField label="Horaire de travail">
+            <FormSelect {...register('workScheduleId')} id="emp-workScheduleId">
               <option value="">Par défaut (8h/jour)</option>
-              {schedules.map((s: any) => (
-                <option key={s.id} value={s.id}>{s.name} ({s.dailyHours || 8}h/j)</option>
+              {schedules.map((s: { id: string; name: string; dailyHours?: number }) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.dailyHours || 8}h/j)
+                </option>
               ))}
-            </select>
-          </div>
-        </div>
-      </div>
+            </FormSelect>
+          </FormField>
+        </FormGrid>
+      </FormCard>
 
-      {/* Section 3 — Compensation (super_admin only) */}
       {isSuperAdmin && (
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center text-xs font-bold">3</span>
-            Rémunération
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Salaire (MAD)</label>
-              <input
-                {...register('salary', { valueAsNumber: true })}
-                type="number"
-                className="input-field"
-                placeholder="0"
-                min="0"
-                max="999999"
-                step="100"
-                id="emp-salary"
-              />
-              {errors.salary && <p className="text-xs text-rose-500 mt-1">{errors.salary.message}</p>}
-            </div>
-          </div>
-        </div>
+        <FormCard title="Rémunération">
+          <FormField label="Salaire (MAD)" error={errors.salary?.message}>
+            <FormInput
+              {...register('salary', { valueAsNumber: true })}
+              type="number"
+              placeholder="0"
+              min={0}
+              max={999999}
+              step={100}
+              id="emp-salary"
+              hasError={!!errors.salary}
+            />
+          </FormField>
+        </FormCard>
       )}
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
-          id="emp-form-cancel"
-        >
-          Annuler
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="px-5 py-2.5 text-sm font-semibold text-white bg-sky-500 hover:bg-sky-600 rounded-xl transition-colors shadow-lg shadow-sky-500/20 disabled:opacity-50 inline-flex items-center gap-2"
-          id="emp-form-submit"
-        >
-          {isSubmitting && (
-            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-          )}
-          {employee ? 'Enregistrer' : 'Créer l\'employé'}
-        </button>
-      </div>
+      <FormFooter
+        onCancel={onCancel}
+        submitText={employee ? 'Enregistrer' : "Créer l'employé"}
+        isLoading={isSubmitting}
+      />
     </form>
   );
 };

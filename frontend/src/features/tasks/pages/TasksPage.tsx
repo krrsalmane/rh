@@ -8,6 +8,16 @@ import { useAppSelector } from '@/store/hooks';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/useTasks';
 import { useEmployees } from '@/features/employees/hooks/useEmployees';
 import type { Task, TaskStatus, TaskPriority, CreateTaskDto } from '../types';
+import {
+  Modal,
+  FormCard,
+  FormField,
+  FormGrid,
+  FormInput,
+  FormSelect,
+  FormTextarea,
+  FormFooter,
+} from '@/shared/components/forms';
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bg: string }> = {
   pending: { label: 'À faire', color: 'text-slate-600', bg: 'bg-slate-100' },
@@ -197,101 +207,63 @@ export const TasksPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-zoom-in">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800">
-                {editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <Plus className="w-6 h-6 rotate-45" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateOrUpdate} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Titre</label>
-                <input 
-                  name="title"
-                  defaultValue={editingTask?.title}
-                  required
-                  placeholder="Ex: Réviser le contrat de M. Smith"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Description</label>
-                <textarea 
-                  name="description"
-                  defaultValue={editingTask?.description || ''}
-                  rows={3}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Assigné à</label>
-                  <select 
-                    name="assignedTo"
-                    defaultValue={editingTask?.assignedTo || ''}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                  >
-                    <option value="">Non assigné</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Priorité</label>
-                  <select 
-                    name="priority"
-                    defaultValue={editingTask?.priority || 'medium'}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                  >
-                    <option value="low">Basse</option>
-                    <option value="medium">Moyenne</option>
-                    <option value="high">Haute</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Date d'échéance</label>
-                <input 
-                  name="dueDate"
-                  type="date"
-                  defaultValue={editingTask?.dueDate?.split('T')[0] || ''}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                />
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit"
-                  disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-xl transition-all shadow-md shadow-sky-100 flex items-center justify-center gap-2"
-                >
-                  {(createTaskMutation.isPending || updateTaskMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingTask ? 'Mettre à jour' : 'Créer la tâche'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingTask ? 'Modifier la tâche' : 'Nouvelle tâche'}
+      >
+        <form onSubmit={handleCreateOrUpdate}>
+          <FormCard title="Détails">
+            <FormField label="Titre" required>
+              <FormInput
+                name="title"
+                defaultValue={editingTask?.title}
+                required
+                placeholder="Ex: Réviser le contrat de M. Smith"
+              />
+            </FormField>
+            <FormField label="Description">
+              <FormTextarea
+                name="description"
+                defaultValue={editingTask?.description || ''}
+                rows={3}
+              />
+            </FormField>
+            <FormGrid>
+              <FormField label="Assigné à">
+                <FormSelect name="assignedTo" defaultValue={editingTask?.assignedTo || ''}>
+                  <option value="">Non assigné</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormField>
+              <FormField label="Priorité">
+                <FormSelect name="priority" defaultValue={editingTask?.priority || 'medium'}>
+                  <option value="low">Basse</option>
+                  <option value="medium">Moyenne</option>
+                  <option value="high">Haute</option>
+                  <option value="urgent">Urgent</option>
+                </FormSelect>
+              </FormField>
+            </FormGrid>
+            <FormField label="Date d'échéance">
+              <FormInput
+                name="dueDate"
+                type="date"
+                defaultValue={editingTask?.dueDate?.split('T')[0] || ''}
+              />
+            </FormField>
+          </FormCard>
+          <FormFooter
+            onCancel={() => setIsModalOpen(false)}
+            submitText={editingTask ? 'Mettre à jour' : 'Créer la tâche'}
+            isLoading={createTaskMutation.isPending || updateTaskMutation.isPending}
+          />
+        </form>
+      </Modal>
     </div>
   );
 };

@@ -14,7 +14,7 @@ async function startServer() {
   try {
     console.log('🔄 Checking database migrations...');
     try {
-      execSync('npm run db:migrate -- --no-seed', { stdio: 'inherit' });
+      execSync('npm run db:migrate:seed', { stdio: 'inherit' });
     } catch (migrationError: any) {
       console.error('❌ Migration failed with exit code:', migrationError.status);
       console.error('💡 Make sure MySQL is running and accessible at:', process.env.DATABASE_URL);

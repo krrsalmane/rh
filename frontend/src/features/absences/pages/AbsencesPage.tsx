@@ -4,9 +4,19 @@ import { useAppSelector } from '@/store/hooks';
 import { useAbsences, useMarkUnjustified, useDeleteAbsence, useCreateAbsence } from '../hooks/useAbsences';
 import { useEmployees } from '@/features/employees/hooks/useEmployees';
 import { useNavigate } from 'react-router-dom';
-import type { AbsenceFilters, Absence, CreateAbsenceInput } from '../types';
+import type { AbsenceFilters, Absence, CreateAbsenceDto } from '../types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import {
+  Modal,
+  FormCard,
+  FormField,
+  FormGrid,
+  FormInput,
+  FormSelect,
+  FormTextarea,
+  FormFooter,
+} from '@/shared/components/forms';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   pending: { label: 'En attente', bg: 'bg-amber-50', text: 'text-amber-700' },
@@ -22,7 +32,7 @@ export const AbsencesPage: React.FC = () => {
   const [filters, setFilters] = useState<AbsenceFilters>({ page: 1, limit: 20 });
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newAbsence, setNewAbsence] = useState<Partial<CreateAbsenceInput>>({});
+  const [newAbsence, setNewAbsence] = useState<Partial<CreateAbsenceDto>>({});
 
   const { data, isLoading } = useAbsences({ ...filters, justificationStatus: statusFilter || undefined });
   const { data: employeesData } = useEmployees({ limit: 100 });
@@ -40,7 +50,7 @@ export const AbsencesPage: React.FC = () => {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    createMut.mutate(newAbsence as CreateAbsenceInput, {
+    createMut.mutate(newAbsence as CreateAbsenceDto, {
       onSuccess: () => {
         setIsModalOpen(false);
         setNewAbsence({});
@@ -71,101 +81,75 @@ export const AbsencesPage: React.FC = () => {
         )}
       </div>
 
-      {/* Creation Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-zoom-in">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800">Signaler une absence</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <Plus className="w-6 h-6 rotate-45" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Employé</label>
-                <select 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Signaler une absence"
+      >
+        <form onSubmit={handleCreate}>
+          <FormCard title="Informations">
+            <FormField label="Employé" required>
+              <FormSelect
+                required
+                value={newAbsence.employeeId || ''}
+                onChange={(e) => setNewAbsence({ ...newAbsence, employeeId: e.target.value })}
+              >
+                <option value="">Sélectionner un employé...</option>
+                {(employeesData?.data || []).map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </FormSelect>
+            </FormField>
+
+            <FormGrid>
+              <FormField label="Date de début" required>
+                <FormInput
+                  type="date"
                   required
-                  value={newAbsence.employeeId || ''}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, employeeId: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
-                >
-                  <option value="">Sélectionner un employé...</option>
-                  {(employeesData?.data || []).map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Date de début</label>
-                  <input 
-                    type="date"
-                    required
-                    value={newAbsence.startDate || ''}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, startDate: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Date de fin</label>
-                  <input 
-                    type="date"
-                    required
-                    value={newAbsence.endDate || ''}
-                    onChange={(e) => setNewAbsence({ ...newAbsence, endDate: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Type d'absence</label>
-                <select 
-                  value={newAbsence.type || ''}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, type: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
-                >
-                  <option value="">Sélectionner un type...</option>
-                  <option value="Maladie">Maladie</option>
-                  <option value="Injustifiée">Injustifiée</option>
-                  <option value="Autre">Autre</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Motif / Commentaire</label>
-                <textarea 
-                  value={newAbsence.reason || ''}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, reason: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all resize-none"
+                  value={newAbsence.startDate || ''}
+                  onChange={(e) => setNewAbsence({ ...newAbsence, startDate: e.target.value })}
                 />
-              </div>
+              </FormField>
+              <FormField label="Date de fin" required>
+                <FormInput
+                  type="date"
+                  required
+                  value={newAbsence.endDate || ''}
+                  onChange={(e) => setNewAbsence({ ...newAbsence, endDate: e.target.value })}
+                />
+              </FormField>
+            </FormGrid>
 
-              <div className="pt-4 flex gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={createMut.isPending}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all shadow-md shadow-rose-100 flex items-center justify-center gap-2"
-                >
-                  {createMut.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Enregistrer l'absence
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <FormField label="Type d'absence">
+              <FormSelect
+                value={newAbsence.type || ''}
+                onChange={(e) => setNewAbsence({ ...newAbsence, type: e.target.value })}
+              >
+                <option value="">Sélectionner un type...</option>
+                <option value="Maladie">Maladie</option>
+                <option value="Injustifiée">Injustifiée</option>
+                <option value="Autre">Autre</option>
+              </FormSelect>
+            </FormField>
+
+            <FormField label="Motif / Commentaire">
+              <FormTextarea
+                value={newAbsence.reason || ''}
+                onChange={(e) => setNewAbsence({ ...newAbsence, reason: e.target.value })}
+                rows={3}
+              />
+            </FormField>
+          </FormCard>
+
+          <FormFooter
+            onCancel={() => setIsModalOpen(false)}
+            submitText="Enregistrer l'absence"
+            isLoading={createMut.isPending}
+          />
+        </form>
+      </Modal>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
