@@ -26,6 +26,7 @@ export const EmployeeFormModal: React.FC<Props> = ({
     id="employee-modal"
   >
     <EmployeeForm
+      key={employee?.id ?? 'new'}
       employee={employee}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}

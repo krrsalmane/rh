@@ -1,27 +1,18 @@
 import React, { useState } from 'react';
-import { UserX, Plus, FileCheck, FileX, Info, Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { UserX, Plus, FileCheck, FileX, Info, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { useAbsences, useMarkUnjustified, useDeleteAbsence, useCreateAbsence } from '../hooks/useAbsences';
 import { useEmployees } from '@/features/employees/hooks/useEmployees';
+import { Modal, FormCard, FormField, FormGrid, FormInput, FormSelect, FormTextarea, FormFooter } from '@/shared/components/forms';
 import { useNavigate } from 'react-router-dom';
 import type { AbsenceFilters, Absence, CreateAbsenceDto } from '../types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Modal,
-  FormCard,
-  FormField,
-  FormGrid,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  FormFooter,
-} from '@/shared/components/forms';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  pending: { label: 'En attente', bg: 'bg-amber-50', text: 'text-amber-700' },
+  pending:   { label: 'En attente', bg: 'bg-amber-50', text: 'text-amber-700' },
   justified: { label: 'Justifiée', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  unjustified: { label: 'Non justifiée', bg: 'bg-rose-50', text: 'text-rose-700' },
+  unjustified:{ label: 'Non justifiée', bg: 'bg-rose-50', text: 'text-rose-700' },
 };
 
 export const AbsencesPage: React.FC = () => {
@@ -32,14 +23,17 @@ export const AbsencesPage: React.FC = () => {
   const [filters, setFilters] = useState<AbsenceFilters>({ page: 1, limit: 20 });
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newAbsence, setNewAbsence] = useState<Partial<CreateAbsenceDto>>({});
+  const [newAbsence, setNewAbsence] = useState<CreateAbsenceDto>({ employeeId: '', startDate: '', endDate: '', type: '', reason: '' });
 
   const { data, isLoading } = useAbsences({ ...filters, justificationStatus: statusFilter || undefined });
-  const { data: employeesData } = useEmployees({ limit: 100 });
-  
+  const { data: employeesData, isLoading: employeesLoading, isError: employeesError } = useEmployees({
+    page: 1,
+    limit: 100,
+    status: 'active',
+  });
   const createMut = useCreateAbsence();
-  const deleteMut = useDeleteAbsence();
   const markUnjustifiedMut = useMarkUnjustified();
+  const deleteMut = useDeleteAbsence();
 
   const absences: Absence[] = data?.data || [];
   const pagination = data?.pagination;
@@ -50,12 +44,8 @@ export const AbsencesPage: React.FC = () => {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    createMut.mutate(newAbsence as CreateAbsenceDto, {
-      onSuccess: () => {
-        setIsModalOpen(false);
-        setNewAbsence({});
-      }
-    });
+    if (!newAbsence.employeeId || !newAbsence.startDate || !newAbsence.endDate) return;
+    createMut.mutate(newAbsence, { onSuccess: () => { setIsModalOpen(false); setNewAbsence({ employeeId: '', startDate: '', endDate: '', type: '', reason: '' }); } });
   };
 
   return (
@@ -67,18 +57,15 @@ export const AbsencesPage: React.FC = () => {
             <UserX className="w-5 h-5 text-rose-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Gestion des absences</h1>
-            {pagination && <p className="text-sm text-slate-400">{pagination.total} absence{pagination.total !== 1 ? 's' : ''} au total</p>}
+            <h1 className="text-2xl font-bold text-slate-800">Absences</h1>
+            <p className="text-sm text-slate-400">Gestion des absences et justificatifs</p>
           </div>
         </div>
-        {canManage && (
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-500 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-rose-500/20 hover:bg-rose-600 hover:-translate-y-0.5 active:translate-y-0"
-          >
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all">
             <Plus className="w-4 h-4" /> Signaler une absence
           </button>
-        )}
+        </div>
       </div>
 
       <Modal
@@ -90,12 +77,20 @@ export const AbsencesPage: React.FC = () => {
           <FormCard title="Informations">
             <FormField label="Employé" required>
               <FormSelect
-                required
+                name="employeeId"
                 value={newAbsence.employeeId || ''}
                 onChange={(e) => setNewAbsence({ ...newAbsence, employeeId: e.target.value })}
+                disabled={employeesLoading}
+                required
               >
-                <option value="">Sélectionner un employé...</option>
-                {(employeesData?.data || []).map((emp) => (
+                <option value="">
+                  {employeesLoading
+                    ? 'Chargement des employés...'
+                    : employeesError
+                      ? 'Erreur de chargement'
+                      : 'Sélectionner un employé...'}
+                </option>
+                {(employeesData?.data ?? []).map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName}
                   </option>
@@ -105,28 +100,15 @@ export const AbsencesPage: React.FC = () => {
 
             <FormGrid>
               <FormField label="Date de début" required>
-                <FormInput
-                  type="date"
-                  required
-                  value={newAbsence.startDate || ''}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, startDate: e.target.value })}
-                />
+                <FormInput name="startDate" type="date" value={newAbsence.startDate || ''} onChange={(e) => setNewAbsence({ ...newAbsence, startDate: e.target.value })} />
               </FormField>
               <FormField label="Date de fin" required>
-                <FormInput
-                  type="date"
-                  required
-                  value={newAbsence.endDate || ''}
-                  onChange={(e) => setNewAbsence({ ...newAbsence, endDate: e.target.value })}
-                />
+                <FormInput name="endDate" type="date" value={newAbsence.endDate || ''} onChange={(e) => setNewAbsence({ ...newAbsence, endDate: e.target.value })} />
               </FormField>
             </FormGrid>
 
             <FormField label="Type d'absence">
-              <FormSelect
-                value={newAbsence.type || ''}
-                onChange={(e) => setNewAbsence({ ...newAbsence, type: e.target.value })}
-              >
+              <FormSelect name="type" value={newAbsence.type || ''} onChange={(e) => setNewAbsence({ ...newAbsence, type: e.target.value })}>
                 <option value="">Sélectionner un type...</option>
                 <option value="Maladie">Maladie</option>
                 <option value="Injustifiée">Injustifiée</option>
@@ -135,18 +117,15 @@ export const AbsencesPage: React.FC = () => {
             </FormField>
 
             <FormField label="Motif / Commentaire">
-              <FormTextarea
-                value={newAbsence.reason || ''}
-                onChange={(e) => setNewAbsence({ ...newAbsence, reason: e.target.value })}
-                rows={3}
-              />
+              <FormTextarea name="reason" value={newAbsence.reason || ''} onChange={(e) => setNewAbsence({ ...newAbsence, reason: e.target.value })} rows={3} />
             </FormField>
-          </FormCard>
 
+          </FormCard>
           <FormFooter
             onCancel={() => setIsModalOpen(false)}
             submitText="Enregistrer l'absence"
             isLoading={createMut.isPending}
+            disabled={employeesLoading}
           />
         </form>
       </Modal>
@@ -255,3 +234,5 @@ export const AbsencesPage: React.FC = () => {
     </div>
   );
 };
+
+export default AbsencesPage;

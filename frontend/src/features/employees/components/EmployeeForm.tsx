@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,13 +6,13 @@ import { useAppSelector } from '@/store/hooks';
 import { useDepartments } from '../hooks/useEmployees';
 import { useWorkSchedules } from '@/features/time/hooks/useTime';
 import {
-  FormCard,
   FormField,
   FormGrid,
-  FormFooter,
   FormInput,
   FormSelect,
   FormTextarea,
+  FormWizard,
+  type FormWizardStep,
 } from '@/shared/components/forms';
 import type { CreateEmployeeDto, Employee } from '../types';
 
@@ -35,6 +35,12 @@ const employeeFormSchema = z.object({
 
 type FormData = z.infer<typeof employeeFormSchema>;
 
+const STEP_FIELDS: Record<string, (keyof FormData)[]> = {
+  personal: ['firstName', 'lastName', 'email'],
+  professional: ['hireDate', 'contractType'],
+  compensation: ['salary'],
+};
+
 interface Props {
   employee?: Employee;
   onSubmit: (data: CreateEmployeeDto) => void;
@@ -49,10 +55,36 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
   const { data: schedulesResult } = useWorkSchedules();
   const schedules = Array.isArray(schedulesResult) ? schedulesResult : [];
 
+  const [step, setStep] = useState(0);
+
+  const steps: FormWizardStep[] = useMemo(() => {
+    const list: FormWizardStep[] = [
+      {
+        id: 'personal',
+        title: 'Informations personnelles',
+        description: 'Identité et coordonnées de l\'employé',
+      },
+      {
+        id: 'professional',
+        title: 'Informations professionnelles',
+        description: 'Contrat, poste et horaires',
+      },
+    ];
+    if (isSuperAdmin) {
+      list.push({
+        id: 'compensation',
+        title: 'Rémunération',
+        description: 'Salaire (visible uniquement par le super administrateur)',
+      });
+    }
+    return list;
+  }, [isSuperAdmin]);
+
   const {
     register,
     handleSubmit,
     reset,
+    trigger,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(employeeFormSchema) as never,
@@ -95,6 +127,23 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
     }
   }, [employee, reset]);
 
+  useEffect(() => {
+    if (step >= steps.length) setStep(Math.max(0, steps.length - 1));
+  }, [steps.length, step]);
+
+  const currentStepId = steps[step]?.id;
+
+  const validateCurrentStep = async () => {
+    const fields = STEP_FIELDS[currentStepId] ?? [];
+    if (fields.length === 0) return true;
+    return trigger(fields);
+  };
+
+  const handleNext = async () => {
+    const ok = await validateCurrentStep();
+    if (ok) setStep((s) => Math.min(s + 1, steps.length - 1));
+  };
+
   const handleFormSubmit = (data: FormData) => {
     const dto: CreateEmployeeDto = {
       firstName: data.firstName,
@@ -117,104 +166,118 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} id="employee-form">
-      <FormCard title="Informations personnelles">
-        <FormGrid>
-          <FormField label="Prénom" required error={errors.firstName?.message}>
-            <FormInput
-              {...register('firstName')}
-              placeholder="Prénom"
-              id="emp-firstName"
-              hasError={!!errors.firstName}
-            />
-          </FormField>
-          <FormField label="Nom" required error={errors.lastName?.message}>
-            <FormInput
-              {...register('lastName')}
-              placeholder="Nom"
-              id="emp-lastName"
-              hasError={!!errors.lastName}
-            />
-          </FormField>
-          <FormField label="CIN">
-            <FormInput {...register('cin')} placeholder="CIN" id="emp-cin" />
-          </FormField>
-          <FormField label="CNE">
-            <FormInput {...register('cne')} placeholder="CNE" id="emp-cne" />
-          </FormField>
-          <FormField label="Email" error={errors.email?.message}>
-            <FormInput
-              {...register('email')}
-              type="email"
-              placeholder="email@exemple.com"
-              id="emp-email"
-              hasError={!!errors.email}
-            />
-          </FormField>
-          <FormField label="Téléphone">
-            <FormInput {...register('phone')} placeholder="+212 6XX XXX XXX" id="emp-phone" />
-          </FormField>
-        </FormGrid>
-        <FormField label="Adresse">
-          <FormTextarea {...register('address')} placeholder="Adresse" id="emp-address" rows={3} />
-        </FormField>
-      </FormCard>
+      <FormWizard
+        steps={steps}
+        currentStep={step}
+        onCancel={onCancel}
+        onBack={() => setStep((s) => Math.max(0, s - 1))}
+        onNext={handleNext}
+        onSubmit={handleSubmit(handleFormSubmit)}
+        onStepClick={(index) => {
+          if (index < step) setStep(index);
+        }}
+        isLoading={isSubmitting}
+        submitText={employee ? 'Enregistrer' : "Créer l'employé"}
+      >
+        {currentStepId === 'personal' && (
+          <>
+            <FormGrid>
+              <FormField label="Prénom" required error={errors.firstName?.message}>
+                <FormInput
+                  {...register('firstName')}
+                  placeholder="Prénom"
+                  id="emp-firstName"
+                  hasError={!!errors.firstName}
+                />
+              </FormField>
+              <FormField label="Nom" required error={errors.lastName?.message}>
+                <FormInput
+                  {...register('lastName')}
+                  placeholder="Nom"
+                  id="emp-lastName"
+                  hasError={!!errors.lastName}
+                />
+              </FormField>
+              <FormField label="CIN">
+                <FormInput {...register('cin')} placeholder="CIN" id="emp-cin" />
+              </FormField>
+              <FormField label="CNE">
+                <FormInput {...register('cne')} placeholder="CNE" id="emp-cne" />
+              </FormField>
+              <FormField label="Email" error={errors.email?.message}>
+                <FormInput
+                  {...register('email')}
+                  type="email"
+                  placeholder="email@exemple.com"
+                  id="emp-email"
+                  hasError={!!errors.email}
+                />
+              </FormField>
+              <FormField label="Téléphone">
+                <FormInput {...register('phone')} placeholder="+212 6XX XXX XXX" id="emp-phone" />
+              </FormField>
+            </FormGrid>
+            <FormField label="Adresse">
+              <FormTextarea {...register('address')} placeholder="Adresse" id="emp-address" rows={3} />
+            </FormField>
+          </>
+        )}
 
-      <FormCard title="Informations professionnelles">
-        <FormGrid>
-          <FormField label="Date d'embauche" required error={errors.hireDate?.message}>
-            <FormInput
-              {...register('hireDate')}
-              type="date"
-              id="emp-hireDate"
-              hasError={!!errors.hireDate}
-            />
-          </FormField>
-          <FormField label="Type de contrat" required>
-            <FormSelect {...register('contractType')} id="emp-contractType">
-              <option value="CDI">CDI</option>
-              <option value="CDD">CDD</option>
-              <option value="internship">Stage</option>
-              <option value="freelance">Freelance</option>
-            </FormSelect>
-          </FormField>
-          <FormField label="Fonction">
-            <FormInput {...register('function')} placeholder="Fonction" id="emp-function" />
-          </FormField>
-          <FormField label="Département">
-            <FormInput
-              {...register('department')}
-              placeholder="Département"
-              list="department-options"
-              id="emp-department"
-            />
-            <datalist id="department-options">
-              {departments.map((d) => (
-                <option key={d} value={d} />
-              ))}
-            </datalist>
-          </FormField>
-          <FormField label="Statut">
-            <FormSelect {...register('status')} id="emp-status">
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="terminated">Résilié</option>
-            </FormSelect>
-          </FormField>
-          <FormField label="Horaire de travail">
-            <FormSelect {...register('workScheduleId')} id="emp-workScheduleId">
-              <option value="">Par défaut (8h/jour)</option>
-              {schedules.map((s: { id: string; name: string; dailyHours?: number }) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.dailyHours || 8}h/j)
-                </option>
-              ))}
-            </FormSelect>
-          </FormField>
-        </FormGrid>
-      </FormCard>
+        {currentStepId === 'professional' && (
+          <FormGrid>
+            <FormField label="Date d'embauche" required error={errors.hireDate?.message}>
+              <FormInput
+                {...register('hireDate')}
+                type="date"
+                id="emp-hireDate"
+                hasError={!!errors.hireDate}
+              />
+            </FormField>
+            <FormField label="Type de contrat" required>
+              <FormSelect {...register('contractType')} id="emp-contractType">
+                <option value="CDI">CDI</option>
+                <option value="CDD">CDD</option>
+                <option value="internship">Stage</option>
+                <option value="freelance">Freelance</option>
+              </FormSelect>
+            </FormField>
+            <FormField label="Fonction">
+              <FormInput {...register('function')} placeholder="Fonction" id="emp-function" />
+            </FormField>
+            <FormField label="Département">
+              <FormInput
+                {...register('department')}
+                placeholder="Département"
+                list="department-options"
+                id="emp-department"
+              />
+              <datalist id="department-options">
+                {departments.map((d) => (
+                  <option key={d} value={d} />
+                ))}
+              </datalist>
+            </FormField>
+            <FormField label="Statut">
+              <FormSelect {...register('status')} id="emp-status">
+                <option value="active">Actif</option>
+                <option value="inactive">Inactif</option>
+                <option value="terminated">Résilié</option>
+              </FormSelect>
+            </FormField>
+            <FormField label="Horaire de travail">
+              <FormSelect {...register('workScheduleId')} id="emp-workScheduleId">
+                <option value="">Par défaut (8h/jour)</option>
+                {schedules.map((s: { id: string; name: string; dailyHours?: number }) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.dailyHours || 8}h/j)
+                  </option>
+                ))}
+              </FormSelect>
+            </FormField>
+          </FormGrid>
+        )}
 
-      {isSuperAdmin && (
-        <FormCard title="Rémunération">
+        {currentStepId === 'compensation' && isSuperAdmin && (
           <FormField label="Salaire (MAD)" error={errors.salary?.message}>
             <FormInput
               {...register('salary', { valueAsNumber: true })}
@@ -227,14 +290,8 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
               hasError={!!errors.salary}
             />
           </FormField>
-        </FormCard>
-      )}
-
-      <FormFooter
-        onCancel={onCancel}
-        submitText={employee ? 'Enregistrer' : "Créer l'employé"}
-        isLoading={isSubmitting}
-      />
+        )}
+      </FormWizard>
     </form>
   );
 };

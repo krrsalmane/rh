@@ -17,13 +17,27 @@ export const FormField: React.FC<FormFieldProps> = ({
   children,
   className,
   htmlFor,
-}) => (
-  <div className={cn('form-field', className)}>
-    <label className="form-label" htmlFor={htmlFor}>
-      {label}
-      {required && <span className="form-required">*</span>}
-    </label>
-    {children}
-    {error && <p className="form-error">{error}</p>}
-  </div>
-);
+}) => {
+  // If htmlFor not provided, try to derive from child's name prop and inject an id
+  let child = children as React.ReactNode;
+  let derivedId: string | undefined = htmlFor;
+
+  if (!htmlFor && React.isValidElement(children)) {
+    const childProps: any = (children as any).props || {};
+    if (!childProps.id && childProps.name) {
+      derivedId = `${childProps.name}-field`;
+      child = React.cloneElement(children as React.ReactElement, { id: derivedId });
+    }
+  }
+
+  return (
+    <div className={cn('form-field', className)}>
+      <label className="form-label" htmlFor={derivedId}>
+        {label}
+        {required && <span className="form-required">*</span>}
+      </label>
+      {child}
+      {error && <p className="form-error">{error}</p>}
+    </div>
+  );
+};

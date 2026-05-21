@@ -139,3 +139,11 @@ export async function deleteLeaveType(id: string) {
   await axiosInstance.delete(`/leave-types/${id}`);
 }
 
+
+
+
+
+
+
+
+

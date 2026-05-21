@@ -7,10 +7,17 @@ import type { EmployeeFilters, CreateEmployeeDto, UpdateEmployeeDto } from '../t
 const EMPLOYEES_KEY = 'employees';
 const DEPARTMENTS_KEY = 'employee-departments';
 
-export function useEmployees(filters: EmployeeFilters) {
+const DEFAULT_EMPLOYEE_FILTERS: EmployeeFilters = {
+  page: 1,
+  limit: 100,
+  status: 'active',
+};
+
+export function useEmployees(filters: Partial<EmployeeFilters> = {}) {
+  const resolved: EmployeeFilters = { ...DEFAULT_EMPLOYEE_FILTERS, ...filters };
   return useQuery({
-    queryKey: [EMPLOYEES_KEY, filters],
-    queryFn: () => employeesApi.getEmployees(filters),
+    queryKey: [EMPLOYEES_KEY, resolved],
+    queryFn: () => employeesApi.getEmployees(resolved),
     placeholderData: (prev) => prev,
   });
 }

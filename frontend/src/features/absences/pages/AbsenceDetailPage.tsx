@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { UserX, ArrowLeft, Loader2, FileText, Upload, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { FileUploadZone, FormField, FormFooter } from '@/shared/components/forms';
 import { useAbsence, useJustifyAbsence, useMarkUnjustified } from '../hooks/useAbsences';
 import { useAppSelector } from '@/store/hooks';
 import { format } from 'date-fns';
@@ -169,15 +170,9 @@ export const AbsenceDetailPage: React.FC = () => {
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-slate-700">Documents justificatifs (Max 5)</label>
                     <div className="flex items-center justify-center w-full">
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer hover:bg-slate-50 hover:border-rose-300 transition-all">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                          <p className="text-sm text-slate-500">
-                            {files ? `${files.length} fichier(s) sélectionné(s)` : 'Cliquez pour uploader ou glissez-déposez'}
-                          </p>
-                        </div>
-                        <input type="file" multiple onChange={(e) => setFiles(e.target.files)} className="hidden" accept=".pdf,.jpg,.jpeg,.png" />
-                      </label>
+                      <FileUploadZone accept=".pdf,.jpg,.jpeg,.png" onDrop={(f) => setFiles(f)}>
+                        <div className="text-sm text-slate-500">{files ? `${files.length} fichier(s) sélectionné(s)` : 'Cliquez pour uploader ou glissez-déposez'}</div>
+                      </FileUploadZone>
                     </div>
                   </div>
 
@@ -191,23 +186,11 @@ export const AbsenceDetailPage: React.FC = () => {
                     />
                   </div>
 
-                  <div className="flex gap-3">
-                    <button 
-                      type="submit" 
-                      disabled={justifyMut.isPending || !files}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                    >
-                      {justifyMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                      Valider comme justifiée
-                    </button>
-                    <button 
-                      type="button"
-                      disabled={markUnjustifiedMut.isPending}
-                      onClick={() => markUnjustifiedMut.mutate(abs.id)}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100 transition-all"
-                    >
+                  <FormFooter onCancel={() => {}} submitText="Valider comme justifiée" isLoading={justifyMut.isPending} />
+                  <div className="mt-3">
+                    <button type="button" disabled={markUnjustifiedMut.isPending} onClick={() => markUnjustifiedMut.mutate(abs.id)} className="btn-form-cancel">
                       {markUnjustifiedMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                      Marquer non justifiée
+                      <span className="ml-2">Marquer non justifiée</span>
                     </button>
                   </div>
                 </form>

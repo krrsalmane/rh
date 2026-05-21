@@ -14,6 +14,8 @@ import {
   FormInput,
   FormSelect,
   FormFooter,
+  FormWizard,
+  type FormWizardStep,
 } from '@/shared/components/forms';
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
@@ -40,6 +42,11 @@ const editSchema = z.object({
   role: z.enum(['super_admin', 'hr_agent', 'manager', 'employee']),
   employeeId: z.string().optional(),
 });
+
+const CREATE_STEPS: FormWizardStep[] = [
+  { id: 'credentials', title: 'Identifiants', description: 'Email et mot de passe de connexion' },
+  { id: 'access', title: 'Rôle et accès', description: 'Permissions et lien employé' },
+];
 
 function getPasswordStrength(pw: string): { label: string; color: string; width: string } {
   if (!pw || pw.length < 8) return { label: 'Faible', color: 'bg-red-400', width: 'w-1/4' };
@@ -68,6 +75,7 @@ interface Props {
 export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
   const isEdit = !!user;
   const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState(0);
   const createMut = useCreateUser();
   const updateMut = useUpdateUser();
   const schema = isEdit ? editSchema : createSchema;
@@ -76,6 +84,7 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
     register,
     handleSubmit,
     watch,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema) as never,
@@ -117,6 +126,87 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
     onClose();
   };
 
+  const handleCreateNext = async () => {
+    const fields = step === 0 ? (['email', 'password'] as const) : ([] as const);
+    const ok = fields.length ? await trigger(fields) : true;
+    if (ok) setStep(1);
+  };
+
+  const credentialsFields = (
+    <>
+      <FormField label="Adresse email" required error={errors.email?.message as string}>
+        <FormInput
+          type="email"
+          {...register('email')}
+          placeholder="utilisateur@entreprise.com"
+          hasError={!!errors.email}
+        />
+      </FormField>
+      <FormField
+        label={isEdit ? 'Mot de passe (optionnel)' : 'Mot de passe'}
+        required={!isEdit}
+        error={errors.password?.message as string}
+      >
+        <div className="relative">
+          <FormInput
+            type={showPassword ? 'text' : 'password'}
+            {...register('password')}
+            placeholder="••••••••"
+            hasError={!!errors.password}
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1A1A2E]"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        {watchedPassword && watchedPassword.length > 0 && (
+          <div className="mt-2">
+            <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E7EB]">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${pwStrength.color} ${pwStrength.width}`}
+              />
+            </div>
+            <p className="mt-1 text-[11px] font-medium text-[#6B7280]">{pwStrength.label}</p>
+          </div>
+        )}
+        <p className="mt-1 text-[11px] text-[#9CA3AF]">
+          Min. 8 caractères avec majuscule, chiffre et caractère spécial
+        </p>
+      </FormField>
+    </>
+  );
+
+  const accessFields = (
+    <>
+      <FormField label="Rôle" required>
+        <FormSelect {...register('role')}>
+          {ROLE_OPTIONS.map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
+        </FormSelect>
+      </FormField>
+      {showEmployeeSelect && (
+        <FormField label="Lier à un employé">
+          <FormSelect {...register('employeeId')}>
+            <option value="">Aucun</option>
+            {employees.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.first_name} {emp.last_name} — {emp.department || 'N/A'}
+              </option>
+            ))}
+          </FormSelect>
+        </FormField>
+      )}
+    </>
+  );
+
   return (
     <Modal
       isOpen
@@ -124,84 +214,33 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
       title={isEdit ? "Modifier l'utilisateur" : 'Nouvel utilisateur'}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FormCard title="Identifiants">
-          <FormField label="Adresse email" required error={errors.email?.message as string}>
-            <FormInput
-              type="email"
-              {...register('email')}
-              placeholder="utilisateur@entreprise.com"
-              hasError={!!errors.email}
+        {isEdit ? (
+          <>
+            <FormCard title="Identifiants">{credentialsFields}</FormCard>
+            <FormCard title="Rôle et accès">{accessFields}</FormCard>
+            <FormFooter
+              onCancel={onClose}
+              submitText="Enregistrer"
+              isLoading={isSubmitting || updateMut.isPending}
             />
-          </FormField>
-
-          <FormField
-            label={isEdit ? 'Mot de passe (optionnel)' : 'Mot de passe'}
-            required={!isEdit}
-            error={errors.password?.message as string}
+          </>
+        ) : (
+          <FormWizard
+            steps={CREATE_STEPS}
+            currentStep={step}
+            onCancel={onClose}
+            onBack={() => setStep(0)}
+            onNext={handleCreateNext}
+            onSubmit={() => void handleSubmit(onSubmit)()}
+            onStepClick={(index) => {
+              if (index < step) setStep(index);
+            }}
+            isLoading={isSubmitting || createMut.isPending}
+            submitText="Créer l'utilisateur"
           >
-            <div className="relative">
-              <FormInput
-                type={showPassword ? 'text' : 'password'}
-                {...register('password')}
-                placeholder="••••••••"
-                hasError={!!errors.password}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1A1A2E]"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {watchedPassword && watchedPassword.length > 0 && (
-              <div className="mt-2">
-                <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E7EB]">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${pwStrength.color} ${pwStrength.width}`}
-                  />
-                </div>
-                <p className="mt-1 text-[11px] font-medium text-[#6B7280]">{pwStrength.label}</p>
-              </div>
-            )}
-            <p className="mt-1 text-[11px] text-[#9CA3AF]">
-              Min. 8 caractères avec majuscule, chiffre et caractère spécial
-            </p>
-          </FormField>
-        </FormCard>
-
-        <FormCard title="Rôle et accès">
-          <FormField label="Rôle" required>
-            <FormSelect {...register('role')}>
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </FormSelect>
-          </FormField>
-
-          {showEmployeeSelect && (
-            <FormField label="Lier à un employé">
-              <FormSelect {...register('employeeId')}>
-                <option value="">Aucun</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name} — {emp.department || 'N/A'}
-                  </option>
-                ))}
-              </FormSelect>
-            </FormField>
-          )}
-        </FormCard>
-
-        <FormFooter
-          onCancel={onClose}
-          submitText={isEdit ? 'Enregistrer' : "Créer l'utilisateur"}
-          isLoading={isSubmitting || createMut.isPending || updateMut.isPending}
-        />
+            {step === 0 ? credentialsFields : accessFields}
+          </FormWizard>
+        )}
       </form>
     </Modal>
   );

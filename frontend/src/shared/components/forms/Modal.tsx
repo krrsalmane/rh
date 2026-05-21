@@ -5,9 +5,10 @@ import { cn } from '@/shared/utils/cn';
 export type ModalSize = 'default' | 'large' | 'wide';
 
 interface ModalProps {
-  isOpen: boolean;
+  isOpen?: boolean; // prefer this, but accept `open` from older usages
+  open?: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: ModalSize;
@@ -24,6 +25,7 @@ const sizeClass: Record<ModalSize, string> = {
 
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
+  open: openProp,
   onClose,
   title,
   children,
@@ -32,18 +34,11 @@ export const Modal: React.FC<ModalProps> = ({
   id,
   hideHeader = false,
 }) => {
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  // Accept both `isOpen` and `open` props for compatibility
+  const open = typeof isOpen !== 'undefined' ? isOpen : !!openProp;
 
-  if (!isOpen) return null;
+  // Do not forcibly lock body scrolling — allow page scroll by default
+  if (!open) return null;
 
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby={id ? `${id}-title` : undefined}>

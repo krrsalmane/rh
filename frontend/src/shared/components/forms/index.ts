@@ -8,3 +8,6 @@ export { FormInput } from './FormInput';
 export { FormSelect } from './FormSelect';
 export { FormTextarea } from './FormTextarea';
 export { FileUploadZone } from './FileUploadZone';
+export { FormWizard } from './FormWizard';
+export { FormWizardNav } from './FormWizardNav';
+export type { FormWizardStep } from './FormWizard';

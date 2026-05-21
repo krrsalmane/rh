@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CalendarRange, Plus, Pencil, Trash2, Loader2, Check, X, Clock } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
+import { FormCard, FormField, FormGrid, FormInput, FormFooter } from '@/shared/components/forms';
 import { useWorkSchedules, useCreateWorkSchedule, useUpdateWorkSchedule, useDeleteWorkSchedule } from '../hooks/useTime';
 import type { WorkSchedule, CreateWorkScheduleDto } from '../types';
 
@@ -84,48 +85,37 @@ export const WorkSchedulesPage: React.FC = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-indigo-100 shadow-sm p-6 space-y-6">
-          <h2 className="text-base font-bold text-slate-800">{editingId ? 'Modifier l\'horaire' : 'Nouvel horaire'}</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Nom de l'horaire</label>
-              <input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="ex: Bureau standard"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Heures hebdo.</label>
-              <input type="number" step="0.5" value={form.weeklyHours} onChange={(e) => setForm(f => ({ ...f, weeklyHours: Number(e.target.value) }))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">Pause (min)</label>
-              <input type="number" value={form.breakMinutes} onChange={(e) => setForm(f => ({ ...f, breakMinutes: Number(e.target.value) }))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
-            </div>
-          </div>
+        <form onSubmit={handleSubmit}>
+          <FormCard title={editingId ? "Modifier l'horaire" : 'Nouvel horaire'}>
+            <FormGrid>
+              <FormField label="Nom de l'horaire" required>
+                <FormInput name="name" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: Bureau standard" />
+              </FormField>
+              <FormField label="Heures hebdo.">
+                <FormInput name="weeklyHours" type="number" step="0.5" value={String(form.weeklyHours)} onChange={(e) => setForm(f => ({ ...f, weeklyHours: Number(e.target.value) }))} />
+              </FormField>
+              <FormField label="Pause (min)">
+                <FormInput name="breakMinutes" type="number" value={String(form.breakMinutes)} onChange={(e) => setForm(f => ({ ...f, breakMinutes: Number(e.target.value) }))} />
+              </FormField>
+            </FormGrid>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Jours travaillés</label>
-            <div className="flex gap-2">
-              {Object.entries(DAYS_FR).map(([en, fr]) => (
-                <button type="button" key={en} onClick={() => toggleDay(en)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all border ${
-                    form.workDays.includes(en) ? 'bg-indigo-500 border-indigo-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'
-                  }`}>
-                  {fr}
-                </button>
-              ))}
+            <div className="space-y-2">
+              <label className="form-label">Jours travaillés</label>
+              <div className="flex gap-2">
+                {Object.entries(DAYS_FR).map(([en, fr]) => (
+                  <button type="button" key={en} onClick={() => toggleDay(en)}
+                    aria-pressed={form.workDays.includes(en)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all border ${
+                      form.workDays.includes(en) ? 'bg-indigo-500 border-indigo-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'
+                    }`}>
+                    {fr}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-            <button type="submit" disabled={createMut.isPending || updateMut.isPending}
-              className="px-6 py-2 bg-indigo-500 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 disabled:opacity-50">
-              {editingId ? 'Mettre à jour' : 'Créer'}
-            </button>
-            <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="px-4 py-2 text-sm text-slate-500">Annuler</button>
-          </div>
+            <FormFooter onCancel={() => { setShowForm(false); setEditingId(null); }} submitText={editingId ? 'Mettre à jour' : 'Créer'} isLoading={createMut.isPending || updateMut.isPending} />
+          </FormCard>
         </form>
       )}
 

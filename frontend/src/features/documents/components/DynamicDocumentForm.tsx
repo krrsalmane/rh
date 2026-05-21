@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import type { VariableSchema } from '../types';
 import {
-  FormCard,
   FormField,
   FormGrid,
   FormInput,
   FormSelect,
   FormTextarea,
+  FormWizardNav,
+  type FormWizardStep,
 } from '@/shared/components/forms';
 
 interface Props {
@@ -14,6 +15,8 @@ interface Props {
   employeeData: Record<string, unknown>;
   formData: Record<string, unknown>;
   onFormDataChange: (data: Record<string, unknown>) => void;
+  /** Notifies parent of inner wizard step (for nested flows like DocumentGenerator) */
+  onInnerStepChange?: (step: number, totalSteps: number) => void;
 }
 
 function resolveValue(obj: Record<string, unknown>, path: string): unknown {
@@ -22,68 +25,6 @@ function resolveValue(obj: Record<string, unknown>, path: string): unknown {
     return undefined;
   }, obj);
 }
-
-export const DynamicDocumentForm: React.FC<Props> = ({
-  variableSchema,
-  employeeData,
-  formData,
-  onFormDataChange,
-}) => {
-  const autoFillVars = variableSchema.filter((v) => v.autoFill);
-  const manualVars = variableSchema.filter((v) => !v.autoFill);
-
-  const handleChange = (name: string, value: unknown) => {
-    onFormDataChange({ ...formData, [name]: value });
-  };
-
-  return (
-    <div id="dynamic-document-form">
-      {autoFillVars.length > 0 && (
-        <FormCard title="Champs pré-remplis depuis le dossier employé">
-          <FormGrid>
-            {autoFillVars.map((v) => {
-              const rawPath = v.name.replace(/^employee\./, '');
-              const val = resolveValue(employeeData, rawPath);
-              return (
-                <div
-                  key={v.name}
-                  className="rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2"
-                >
-                  <span className="form-label mb-1">{v.label}</span>
-                  <p className="text-sm font-medium text-[#1A1A2E]">
-                    {val !== undefined && val !== null && val !== '' ? String(val) : '—'}
-                  </p>
-                </div>
-              );
-            })}
-          </FormGrid>
-        </FormCard>
-      )}
-
-      {manualVars.length > 0 && (
-        <FormCard title="Champs à renseigner">
-          <FormGrid>
-            {manualVars.map((v) => {
-              const fieldName = v.name.replace(/^form\./, '');
-              const currentVal = formData[fieldName] ?? v.defaultValue ?? '';
-
-              return (
-                <FormField
-                  key={v.name}
-                  label={v.label}
-                  required={v.required}
-                  className={v.type === 'textarea' ? 'md:col-span-2' : ''}
-                >
-                  {renderField(v, currentVal, (val) => handleChange(fieldName, val))}
-                </FormField>
-              );
-            })}
-          </FormGrid>
-        </FormCard>
-      )}
-    </div>
-  );
-};
 
 function renderField(
   v: VariableSchema,
@@ -165,3 +106,149 @@ function renderField(
       );
   }
 }
+
+export const DynamicDocumentForm: React.FC<Props> = ({
+  variableSchema,
+  employeeData,
+  formData,
+  onFormDataChange,
+  onInnerStepChange,
+}) => {
+  const autoFillVars = variableSchema.filter((v) => v.autoFill);
+  const manualVars = variableSchema.filter((v) => !v.autoFill);
+
+  const steps: FormWizardStep[] = useMemo(() => {
+    const list: FormWizardStep[] = [];
+    if (autoFillVars.length > 0) {
+      list.push({ id: 'prefill', title: 'Pré-remplis' });
+    }
+    if (manualVars.length > 0) {
+      list.push({ id: 'manual', title: 'À compléter' });
+    }
+    return list;
+  }, [autoFillVars.length, manualVars.length]);
+
+  const [innerStep, setInnerStep] = useState(0);
+
+  const setStep = (next: number) => {
+    setInnerStep(next);
+    onInnerStepChange?.(next, steps.length);
+  };
+
+  const handleChange = (name: string, value: unknown) => {
+    onFormDataChange({ ...formData, [name]: value });
+  };
+
+  if (steps.length <= 1) {
+    return (
+      <div id="dynamic-document-form" className="space-y-4">
+        {autoFillVars.length > 0 && (
+          <FormGrid>
+            {autoFillVars.map((v) => {
+              const rawPath = v.name.replace(/^employee\./, '');
+              const val = resolveValue(employeeData, rawPath);
+              return (
+                <div
+                  key={v.name}
+                  className="rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2"
+                >
+                  <span className="form-label mb-1">{v.label}</span>
+                  <p className="text-sm font-medium text-[#1A1A2E]">
+                    {val !== undefined && val !== null && val !== '' ? String(val) : '—'}
+                  </p>
+                </div>
+              );
+            })}
+          </FormGrid>
+        )}
+        {manualVars.length > 0 && (
+          <FormGrid>
+            {manualVars.map((v) => {
+              const fieldName = v.name.replace(/^form\./, '');
+              const currentVal = formData[fieldName] ?? v.defaultValue ?? '';
+              return (
+                <FormField
+                  key={v.name}
+                  label={v.label}
+                  required={v.required}
+                  className={v.type === 'textarea' ? 'md:col-span-2' : ''}
+                >
+                  {renderField(v, currentVal, (val) => handleChange(fieldName, val))}
+                </FormField>
+              );
+            })}
+          </FormGrid>
+        )}
+      </div>
+    );
+  }
+
+  const currentId = steps[innerStep]?.id;
+
+  return (
+    <div id="dynamic-document-form" className="form-wizard">
+      <FormWizardNav
+        steps={steps}
+        currentStep={innerStep}
+        onStepClick={(index) => {
+          if (index < innerStep) setStep(index);
+        }}
+      />
+      {steps[innerStep]?.description && (
+        <p className="form-wizard-description">{steps[innerStep].description}</p>
+      )}
+
+      <div className="form-wizard-panel">
+        {currentId === 'prefill' && (
+          <FormGrid>
+            {autoFillVars.map((v) => {
+              const rawPath = v.name.replace(/^employee\./, '');
+              const val = resolveValue(employeeData, rawPath);
+              return (
+                <div
+                  key={v.name}
+                  className="rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2"
+                >
+                  <span className="form-label mb-1">{v.label}</span>
+                  <p className="text-sm font-medium text-[#1A1A2E]">
+                    {val !== undefined && val !== null && val !== '' ? String(val) : '—'}
+                  </p>
+                </div>
+              );
+            })}
+          </FormGrid>
+        )}
+        {currentId === 'manual' && (
+          <FormGrid>
+            {manualVars.map((v) => {
+              const fieldName = v.name.replace(/^form\./, '');
+              const currentVal = formData[fieldName] ?? v.defaultValue ?? '';
+              return (
+                <FormField
+                  key={v.name}
+                  label={v.label}
+                  required={v.required}
+                  className={v.type === 'textarea' ? 'md:col-span-2' : ''}
+                >
+                  {renderField(v, currentVal, (val) => handleChange(fieldName, val))}
+                </FormField>
+              );
+            })}
+          </FormGrid>
+        )}
+      </div>
+
+      {innerStep < steps.length - 1 && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="btn-form-submit"
+            onClick={() => setStep(innerStep + 1)}
+          >
+            Continuer vers les champs à compléter
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};

@@ -7,6 +7,7 @@ import type { TimeEntryFilters, TimeEntry } from '../types';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Modal, FormFooter } from '@/shared/components/forms';
+import { TimeEntryCreateForm } from '../components/TimeEntryCreateForm';
 
 export const TimeManagementPage: React.FC = () => {
   const role = useAppSelector((s) => s.auth.role);
@@ -525,188 +526,20 @@ export const TimeManagementPage: React.FC = () => {
         title="Ajouter un pointage"
         size="large"
       >
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-slate-600">Employé <span className="text-red-500">*</span></label>
-                <select
-                  value={createForm.employeeId}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, employeeId: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  required
-                >
-                  <option value="">Sélectionner un employé</option>
-                  {employeesData?.data?.map((emp: any) => (
-                    <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Date <span className="text-red-500">*</span></label>
-                <input
-                  type="date"
-                  value={createForm.date}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, date: e.target.value }))}
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Heure d'entrée (HH:MM)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                  placeholder="09:00"
-                  value={createForm.clockIn}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                      setCreateForm((prev) => ({ ...prev, clockIn: val }));
-                    }
-                  }}
-                  maxLength="5"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Heure de sortie (HH:MM)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                  placeholder="18:00"
-                  value={createForm.clockOut}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                      setCreateForm((prev) => ({ ...prev, clockOut: val }));
-                    }
-                  }}
-                  maxLength="5"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Sortie Déjeuner (HH:MM)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                  placeholder="12:00"
-                  value={createForm.lunchOut}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                      setCreateForm((prev) => ({ ...prev, lunchOut: val }));
-                    }
-                  }}
-                  maxLength="5"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Retour Déjeuner (HH:MM)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                  placeholder="13:00"
-                  value={createForm.lunchIn}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                      setCreateForm((prev) => ({ ...prev, lunchIn: val }));
-                    }
-                  }}
-                  maxLength="5"
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 font-mono text-center text-lg"
-                />
-              </div>
-
-              {/* Multiple Prayer Breaks */}
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <label className="text-sm font-semibold text-slate-700">📿 Pauses de Prière</label>
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">{ALLOWED_PRAYER_BREAKS} autorisées</span>
-                </div>
-                
-                {createForm.prayerBreaks.map((prayerBreak, idx) => (
-                  <div key={idx} className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                    <p className="text-xs font-bold text-blue-900 mb-3">Prière #{idx + 1}</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-slate-600">Départ (HH:MM)</label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                          placeholder="15:00"
-                          value={prayerBreak.out}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                              setCreateForm(prev => {
-                                const newBreaks = [...prev.prayerBreaks];
-                                newBreaks[idx].out = val;
-                                return { ...prev, prayerBreaks: newBreaks };
-                              });
-                            }
-                          }}
-                          maxLength="5"
-                          className="w-full mt-1 px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 font-mono text-center text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-slate-600">Retour (HH:MM)</label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
-                          placeholder="15:30"
-                          value={prayerBreak.in}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (!val || /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val) || val.length <= 5) {
-                              setCreateForm(prev => {
-                                const newBreaks = [...prev.prayerBreaks];
-                                newBreaks[idx].in = val;
-                                return { ...prev, prayerBreaks: newBreaks };
-                              });
-                            }
-                          }}
-                          maxLength="5"
-                          className="w-full mt-1 px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 font-mono text-center text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Prayer Allowance Info */}
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 mt-4">
-                <p className="text-xs font-semibold text-amber-900">ℹ️ Information</p>
-                <p className="text-xs text-amber-700 mt-1">Remplissez jusqu'à <strong>{ALLOWED_PRAYER_BREAKS} pauses de prière</strong>. Vous pouvez laisser certains champs vides si non utilisés.</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-slate-600">Motif</label>
-                <textarea
-                  value={createForm.reason}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, reason: e.target.value }))}
-                  placeholder="Ex: Oubli de pointage..."
-                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-200 h-24"
-                />
-              </div>
-            </div>
-            <FormFooter
-              onCancel={() => setIsCreateOpen(false)}
-              submitText={createMut.isLoading ? 'Création...' : 'Créer'}
-              submitType="button"
-              onSubmit={handleCreateSave}
-              disabled={!createForm.employeeId || !createForm.date || createMut.isLoading}
-              isLoading={createMut.isLoading}
-            />
+        <TimeEntryCreateForm
+          key={isCreateOpen ? 'open' : 'closed'}
+          form={createForm}
+          onChange={setCreateForm}
+          employees={(employeesData?.data ?? []).map((emp: { id: string; firstName: string; lastName: string }) => ({
+            id: emp.id,
+            firstName: emp.firstName,
+            lastName: emp.lastName,
+          }))}
+          allowedPrayerBreaks={ALLOWED_PRAYER_BREAKS}
+          onCancel={() => setIsCreateOpen(false)}
+          onSubmit={handleCreateSave}
+          isLoading={createMut.isPending}
+        />
       </Modal>
 
       <Modal

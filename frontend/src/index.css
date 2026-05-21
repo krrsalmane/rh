@@ -71,13 +71,12 @@
     align-items: center;
     justify-content: center;
     padding: 16px;
+    pointer-events: none;
   }
 
-  .modal-overlay-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(2px);
+  /* No backdrop: allow clicks to pass through outside the modal */
+  .modal-box {
+    pointer-events: auto;
   }
 
   .modal-box {
@@ -89,11 +88,12 @@
     overflow-y: auto;
     background: #ffffff;
     border-radius: 12px;
-    padding: 28px 32px;
+    padding: 24px 28px;
     box-shadow:
-      0 20px 60px rgba(0, 0, 0, 0.15),
-      0 4px 16px rgba(0, 0, 0, 0.08);
+      0 20px 60px rgba(0, 0, 0, 0.08),
+      0 4px 16px rgba(0, 0, 0, 0.06);
     font-family: 'Inter', sans-serif;
+    pointer-events: auto;
   }
 
   .modal-box--large {
@@ -153,7 +153,7 @@
 
   /* ── Form cards & sections ── */
   .form-page {
-    max-width: 860px;
+    max-width: 720px;
     margin: 0 auto;
     width: 100%;
   }
@@ -166,7 +166,7 @@
     margin-bottom: 16px;
   }
 
-  .form-section-title {
+  .form-card-title, .form-section-title {
     font-size: 15px;
     font-weight: 600;
     color: #1a1a2e;
@@ -187,7 +187,7 @@
     margin-bottom: 6px;
   }
 
-  .form-required {
+  .form-label .required, .form-required {
     color: #ef4444;
     margin-left: 2px;
   }
@@ -253,6 +253,17 @@
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 16px;
+  }
+
+  .form-grid-2 { /* alias for two-column grids */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid-2 { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 768px) {
@@ -360,6 +371,12 @@
     text-align: center;
   }
 
+  /* Alias names from spec */
+  .upload-zone { @apply file-upload-zone; }
+  .upload-icon { @apply file-upload-icon; }
+  .upload-title { @apply file-upload-title; }
+  .upload-subtitle { @apply file-upload-subtitle; }
+
   .file-upload-zone:hover {
     border-color: #2563eb;
     background: #eff6ff;
@@ -383,6 +400,128 @@
     font-size: 12px;
     color: #9ca3af;
     margin: 0;
+  }
+
+  /* ── Form wizard ── */
+  .form-wizard {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-wizard-nav {
+    margin-bottom: 4px;
+  }
+
+  .form-wizard-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .form-wizard-step {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .form-wizard-step-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    cursor: default;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .form-wizard-step--active .form-wizard-step-button {
+    border-color: #2563eb;
+    background: #eff6ff;
+    cursor: default;
+  }
+
+  .form-wizard-step--done .form-wizard-step-button {
+    border-color: #93c5fd;
+    background: #f0f9ff;
+    cursor: pointer;
+  }
+
+  .form-wizard-step--done .form-wizard-step-button:disabled {
+    cursor: pointer;
+  }
+
+  .form-wizard-step-index {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e5e7eb;
+    color: #6b7280;
+  }
+
+  .form-wizard-step--active .form-wizard-step-index {
+    background: #2563eb;
+    color: #ffffff;
+  }
+
+  .form-wizard-step--done .form-wizard-step-index {
+    background: #2563eb;
+    color: #ffffff;
+  }
+
+  .form-wizard-step-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    line-height: 1.3;
+  }
+
+  .form-wizard-step--active .form-wizard-step-label {
+    color: #1a1a2e;
+    font-weight: 600;
+  }
+
+  .form-wizard-description {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  .form-wizard-panel {
+    min-height: 80px;
+  }
+
+  .form-wizard-footer {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .form-wizard-footer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-left: auto;
+  }
+
+  @media (max-width: 768px) {
+    .form-wizard-step {
+      min-width: 100%;
+    }
   }
 }
 
