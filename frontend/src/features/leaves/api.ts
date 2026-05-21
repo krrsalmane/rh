@@ -138,12 +138,3 @@ export async function updateLeaveType(id: string, dto: UpdateLeaveTypeDto) {
 export async function deleteLeaveType(id: string) {
   await axiosInstance.delete(`/leave-types/${id}`);
 }
-
-
-
-
-
-
-
-
-
