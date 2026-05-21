@@ -107,7 +107,7 @@ export const LeavesPage: React.FC = () => {
         {['', 'pending', 'approved', 'rejected', 'cancelled'].map((s) => (
           <button key={s} onClick={() => { setStatusFilter(s); setFilters((f) => ({ ...f, page: 1 })); }}
             className={`px-3 py-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-all ${statusFilter === s
-              ? 'bg-violet-500 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+              ? 'bg-[#2563EB] text-white shadow-none' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
             {s === '' ? 'Tous' : STATUS_CONFIG[s]?.label || s}
           </button>
         ))}
@@ -163,7 +163,7 @@ export const LeavesPage: React.FC = () => {
                       {(role === 'super_admin' || role === 'hr_agent' || role === 'manager') && (
                         <button
                           onClick={() => setSelectedRequestId(req.id)}
-                          className="flex-1 px-3 py-2 bg-slate-50 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-100 transition-colors flex items-center justify-center gap-1"
+                          className="btn-form-cancel flex-1"
                         >
                           <Info className="w-4 h-4" /> Détails
                         </button>
@@ -175,18 +175,18 @@ export const LeavesPage: React.FC = () => {
                         {canApprove && (
                           <>
                             <button onClick={() => handleApprove(req.id)} disabled={approveMut.isPending}
-                              className="flex-1 px-3 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1">
+                              className="btn-primary flex-1">
                               <Check className="w-4 h-4" /> Approuver
                             </button>
                             <button onClick={() => setReviewingId(isReviewing ? null : req.id)}
-                              className="flex-1 px-3 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-medium hover:bg-rose-100 transition-colors flex items-center justify-center gap-1">
+                              className="btn-form-danger flex-1">
                               <X className="w-4 h-4" /> Refuser
                             </button>
                           </>
                         )}
                         {canCancel && (
                         <button onClick={() => cancelMut.mutate(req.id)} disabled={cancelMut.isPending}
-                          className="p-2 bg-slate-50 text-slate-500 rounded-lg hover:bg-slate-100 transition-colors" title="Annuler">
+                          className="btn-form-cancel" title="Annuler">
                           <Ban className="w-3.5 h-3.5" />
                         </button>
                         )}
@@ -200,11 +200,11 @@ export const LeavesPage: React.FC = () => {
                           className="w-full px-3 py-2 rounded-lg border border-rose-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
                         <div className="flex gap-2">
                           <button onClick={() => handleReject(req.id)} disabled={rejectMut.isPending}
-                            className="flex-1 px-3 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition-colors">
+                            className="btn-form-danger flex-1">
                             Confirmer le refus
                           </button>
                           <button onClick={() => { setReviewingId(null); setReviewNote(''); }}
-                            className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg">
+                            className="btn-form-cancel">
                             Annuler
                           </button>
                         </div>
@@ -261,7 +261,7 @@ export const LeavesPage: React.FC = () => {
                             {(role === 'super_admin' || role === 'hr_agent' || role === 'manager') && (
                               <button
                                 onClick={() => setSelectedRequestId(req.id)}
-                                className="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors"
+                                className="btn-icon"
                                 title="Détails"
                               >
                                 <Info className="w-4 h-4" />
@@ -272,17 +272,17 @@ export const LeavesPage: React.FC = () => {
                                 {canApprove && (
                                   <>
                                     <button onClick={() => handleApprove(req.id)} disabled={approveMut.isPending}
-                                      className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors" title="Approuver">
+                                      className="btn-icon" title="Approuver">
                                       <Check className="w-4 h-4" />
                                     </button>
                                     <button onClick={() => setReviewingId(isReviewing ? null : req.id)}
-                                      className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Refuser">
+                                      className="btn-icon" title="Refuser">
                                       <X className="w-4 h-4" />
                                     </button>
                                   </>
                                 )}
                                 {canCancel && <button onClick={() => cancelMut.mutate(req.id)} disabled={cancelMut.isPending}
-                                  className="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors" title="Annuler">
+                                  className="btn-icon" title="Annuler">
                                   <Ban className="w-3.5 h-3.5" />
                                 </button>}
                               </>
@@ -299,11 +299,11 @@ export const LeavesPage: React.FC = () => {
                               placeholder="Motif du refus (optionnel)..."
                               className="flex-1 px-3 py-2 rounded-lg border border-rose-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
                             <button onClick={() => handleReject(req.id)} disabled={rejectMut.isPending}
-                              className="px-4 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition-colors">
+                              className="btn-form-danger">
                               Confirmer le refus
                             </button>
                             <button onClick={() => { setReviewingId(null); setReviewNote(''); }}
-                              className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700">Annuler</button>
+                              className="btn-form-cancel">Annuler</button>
                           </div>
                         </td>
                       </tr>
@@ -406,7 +406,7 @@ export const LeavesPage: React.FC = () => {
                       {canApprove && (
                         <button
                           onClick={() => { handleApprove(selectedRequest.id); setSelectedRequestId(null); }}
-                          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
+                          className="btn-primary"
                         >
                           <Check className="h-4 w-4" /> Approuver
                         </button>
@@ -414,7 +414,7 @@ export const LeavesPage: React.FC = () => {
                       {canApprove && (
                         <button
                           onClick={() => { setReviewingId(selectedRequest.id); setSelectedRequestId(null); }}
-                          className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600"
+                          className="btn-form-danger"
                         >
                           <X className="h-4 w-4" /> Refuser
                         </button>

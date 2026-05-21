@@ -44,15 +44,6 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby={id ? `${id}-title` : undefined}>
       <div className="modal-overlay-backdrop" onClick={onClose} aria-hidden="true" />
       <div className={cn('modal-box', sizeClass[size])} id={id}>
-        <button
-          type="button"
-          className="modal-close"
-          onClick={onClose}
-          aria-label="Fermer"
-        >
-          <X className="w-5 h-5" strokeWidth={2} />
-        </button>
-
         {!hideHeader && (
           <div className="modal-header">
             <h2 className="modal-title" id={id ? `${id}-title` : undefined}>
@@ -60,6 +51,15 @@ export const Modal: React.FC<ModalProps> = ({
             </h2>
           </div>
         )}
+
+        <button
+          type="button"
+          className="modal-close btn-icon"
+          onClick={onClose}
+          aria-label="Fermer"
+        >
+          <X className="w-5 h-5" strokeWidth={2} />
+        </button>
 
         <div className={cn(!hideHeader && 'modal-body')}>{children}</div>
 

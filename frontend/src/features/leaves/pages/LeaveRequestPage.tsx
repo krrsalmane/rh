@@ -232,7 +232,7 @@ export const LeaveRequestPage: React.FC = () => {
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center transition-colors hover:border-violet-300 hover:bg-violet-50/60">
             <Paperclip className="w-5 h-5 text-violet-500" />
             <span className="text-sm font-medium text-slate-700">
-              {supportingDocument ? supportingDocument.name : 'Importer un PDF, JPG ou PNG'}
+              {supportingDocument?.name || 'Importer un PDF, JPG ou PNG'}
             </span>
             <span className="text-xs text-slate-400">Le fichier sert de justificatif pour le service RH</span>
             <input
@@ -249,14 +249,14 @@ export const LeaveRequestPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/leaves')}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors"
+            className="btn-form-cancel"
           >
             Annuler
           </button>
           <button
             type="submit"
             disabled={createMut.isPending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-violet-500 text-white rounded-xl text-sm font-semibold hover:bg-violet-600 transition-all shadow-lg shadow-violet-500/20 disabled:opacity-50"
+            className="btn-primary"
           >
             {createMut.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
             Soumettre la demande

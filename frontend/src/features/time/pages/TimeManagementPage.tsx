@@ -257,7 +257,7 @@ export const TimeManagementPage: React.FC = () => {
             type="button"
             disabled={exportMut.isLoading}
             onClick={() => handleExport('csv')}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-medium text-sm hover:bg-slate-50 transition-all disabled:opacity-50"
+            className="btn-export-csv"
           >
             <Download className="w-4 h-4" />
             {exportMut.isLoading ? 'Export en cours...' : 'Export CSV'}
@@ -266,7 +266,7 @@ export const TimeManagementPage: React.FC = () => {
             type="button"
             disabled={exportMut.isLoading}
             onClick={() => handleExport('pdf')}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-xl font-medium text-sm hover:bg-sky-700 transition-all disabled:opacity-50"
+            className="btn-primary"
           >
             <Download className="w-4 h-4" />
             {exportMut.isLoading ? 'Export en cours...' : 'Export PDF'}
@@ -275,7 +275,7 @@ export const TimeManagementPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCreateOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-medium text-sm hover:bg-emerald-700 transition-all"
+              className="btn-primary"
             >
               Ajouter pointage
             </button>

@@ -151,8 +151,8 @@ export const LeaveTypesPage: React.FC = () => {
                       {deleteConfirm === lt.id ? (
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => deleteMut.mutate(lt.id, { onSuccess: () => setDeleteConfirm(null) })} disabled={deleteMut.isPending}
-                            className="px-3 py-1 bg-rose-500 text-white rounded-lg text-xs font-medium hover:bg-rose-600">Confirmer</button>
-                          <button onClick={() => setDeleteConfirm(null)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs">Non</button>
+                            className="btn-form-danger text-xs">Confirmer</button>
+                          <button onClick={() => setDeleteConfirm(null)} className="btn-form-cancel text-xs">Non</button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-1.5">

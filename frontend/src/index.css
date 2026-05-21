@@ -51,7 +51,29 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-500 text-white font-semibold transition-all duration-200 hover:bg-primary-400 hover:shadow-lg hover:shadow-primary-500/25 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 6px;
+    background: #2563EB;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #1D4ED8;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .input-field {
@@ -283,21 +305,24 @@
     border-top: 1px solid #e5e7eb;
   }
 
-  .btn-form-cancel {
+  .btn-form-cancel,
+  .btn-secondary,
+  .btn-outline {
     background: transparent;
-    border: 1px solid #d1d5db;
-    color: #6b7280;
+    border: 1px solid #D1D5DB;
+    color: #6B7280;
     font-size: 14px;
     font-weight: 500;
     padding: 9px 18px;
     border-radius: 6px;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
-    transition: background 0.2s ease;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   }
 
   .btn-form-cancel:hover:not(:disabled) {
-    background: #f4f6f9;
+    background: #F4F6F9;
+    border-color: #9CA3AF;
   }
 
   .btn-form-cancel:disabled {
@@ -305,25 +330,27 @@
     cursor: not-allowed;
   }
 
-  .btn-form-submit {
+  .btn-form-submit,
+  .btn-submit,
+  .btn-confirm {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #2563eb;
+    background: #2563EB;
     border: none;
-    color: #ffffff;
+    color: #FFFFFF;
     font-size: 14px;
     font-weight: 500;
     padding: 9px 18px;
     border-radius: 6px;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
-    transition: background 0.2s ease;
+    transition: background 0.12s ease;
   }
 
   .btn-form-submit:hover:not(:disabled) {
-    background: #1d4ed8;
+    background: #1D4ED8;
   }
 
   .btn-form-submit:disabled {
@@ -331,25 +358,26 @@
     cursor: not-allowed;
   }
 
-  .btn-form-danger {
+  .btn-form-danger,
+  .btn-danger {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #ef4444;
+    background: #EF4444;
     border: none;
-    color: #ffffff;
+    color: #FFFFFF;
     font-size: 14px;
     font-weight: 500;
     padding: 9px 18px;
     border-radius: 6px;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
-    transition: background 0.2s ease;
+    transition: background 0.12s ease;
   }
 
   .btn-form-danger:hover:not(:disabled) {
-    background: #dc2626;
+    background: #DC2626;
   }
 
   .btn-form-danger:disabled {
@@ -358,7 +386,9 @@
   }
 
   /* Icon-only button (search, filter, download) */
-  .btn-icon {
+  .btn-icon,
+  .btn-icon-only,
+  .button-icon {
     background: transparent;
     border: none;
     color: #6B7280;
@@ -368,18 +398,44 @@
     justify-content: center;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.12s ease, color 0.12s ease;
+    transition: color 0.12s ease, background 0.12s ease;
   }
 
-  .btn-icon:hover:not(:disabled) {
-    background: rgba(107, 114, 128, 0.06);
-    color: #374151;
+  .btn-icon:hover:not(:disabled),
+  .btn-icon-only:hover:not(:disabled),
+  .button-icon:hover:not(:disabled) {
+    background: transparent;
+    color: #1A1A2E;
   }
 
-  .btn-icon svg {
-    width: 18px;
-    height: 18px;
+  .btn-icon svg,
+  .btn-icon-only svg,
+  .button-icon svg {
+    width: 20px;
+    height: 20px;
     color: inherit;
+  }
+
+  .btn-export-csv {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid #D1D5DB;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+
+  .btn-export-csv:hover:not(:disabled) {
+    background: #F4F6F9;
+    border-color: #9CA3AF;
   }
 
   .file-upload-zone {

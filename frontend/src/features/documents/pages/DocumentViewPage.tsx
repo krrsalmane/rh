@@ -124,10 +124,7 @@ export const DocumentViewPage: React.FC = () => {
             <Printer className="w-4 h-4" />
           </button>
           <div className="h-4 w-px bg-slate-800 mx-2" />
-          <button
-            onClick={handleDownload}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-xl text-xs font-bold hover:bg-sky-500 transition-all shadow-lg shadow-sky-900/40"
-          >
+          <button onClick={handleDownload} className="btn-primary text-xs">
             <Download className="w-3.5 h-3.5" /> Télécharger
           </button>
         </div>

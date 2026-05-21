@@ -60,7 +60,7 @@ export function Notifications() {
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        className="btn-icon relative"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
@@ -95,7 +95,7 @@ export function Notifications() {
                       e.stopPropagation();
                       handleMarkAllAsRead();
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                    className="btn-form-cancel text-[11px]"
                     title="Tout marquer comme lu"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
@@ -104,7 +104,7 @@ export function Notifications() {
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="btn-icon"
                 >
                   <X className="w-4 h-4" />
                 </button>

@@ -64,7 +64,7 @@ export const PDFPreviewModal: React.FC<Props> = ({ isOpen, documentId, documentN
           <button type="button" className="btn-form-cancel" onClick={onClose}>
             Fermer
           </button>
-          <button type="button" className="btn-form-submit inline-flex items-center gap-2" onClick={handleDownload}>
+          <button type="button" className="btn-primary" onClick={handleDownload}>
             <Download className="h-4 w-4" /> Télécharger
           </button>
         </>

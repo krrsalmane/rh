@@ -103,14 +103,14 @@ export const NotificationSettings: React.FC = () => {
             </div>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-6 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-sky-500/20"
+              className="btn-primary"
             >
               <Save className="w-4 h-4" />
               Sauvegarder
             </button>
           </div>
-        </div>
       </div>
     </div>
+  </div>
   );
 };

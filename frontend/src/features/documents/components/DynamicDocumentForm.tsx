@@ -242,7 +242,7 @@ export const DynamicDocumentForm: React.FC<Props> = ({
         <div className="flex justify-end">
           <button
             type="button"
-            className="btn-form-submit"
+            className="btn-primary"
             onClick={() => setStep(innerStep + 1)}
           >
             Continuer vers les champs à compléter

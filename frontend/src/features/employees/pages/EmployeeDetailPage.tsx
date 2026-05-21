@@ -54,7 +54,7 @@ export const EmployeeDetailPage: React.FC = () => {
         <p className="text-sm text-slate-400 mb-4">L'employé demandé n'existe pas ou a été supprimé.</p>
         <button
           onClick={() => navigate('/employees')}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-sky-600 bg-sky-50 hover:bg-sky-100 rounded-xl transition-colors"
+          className="btn-form-cancel"
         >
           <ArrowLeft className="w-4 h-4" />
           Retour à la liste
@@ -68,7 +68,7 @@ export const EmployeeDetailPage: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => navigate('/employees')}
-        className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-sky-600 transition-colors"
+        className="btn-form-cancel"
         id="employee-back-btn"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -78,8 +78,8 @@ export const EmployeeDetailPage: React.FC = () => {
       {/* Employee Card */}
       <EmployeeCard
         employee={employee}
-        onEdit={canManage ? () => setIsEditOpen(true) : undefined}
-        onDelete={canManage ? () => setIsDeleteOpen(true) : undefined}
+        onEdit={() => canManage && setIsEditOpen(true)}
+        onDelete={() => canManage && setIsDeleteOpen(true)}
       />
 
       {/* Digital File Tabs */}

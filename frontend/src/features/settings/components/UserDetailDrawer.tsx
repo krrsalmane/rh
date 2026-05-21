@@ -131,7 +131,7 @@ export const UserDetailDrawer: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => onDeactivate(user)}
-                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                className="btn-form-danger w-full justify-start"
               >
                 <PowerOff className="h-4 w-4" /> Désactiver
               </button>
@@ -139,7 +139,7 @@ export const UserDetailDrawer: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => onReactivate(user)}
-                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-emerald-600 transition-colors hover:bg-emerald-50"
+                className="btn-form-cancel w-full justify-start"
               >
                 <Power className="h-4 w-4" /> Réactiver
               </button>

@@ -45,15 +45,15 @@ export const DocumentsPage: React.FC = () => {
             </p>
           )}
         </div>
-        <button
-          onClick={() => navigate('/documents/generate')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-4 sm:py-2 bg-sky-500 text-white rounded-xl font-bold text-xs transition-all shadow-lg shadow-sky-500/20 hover:bg-sky-600 hover:-translate-y-0.5 w-full sm:w-auto justify-center"
-          id="generate-doc-btn"
-        >
-          <Zap className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Générer un document</span><span className="sm:hidden">Générer</span>
         <button onClick={() => navigate('/documents/generate')} className="btn-primary" id="generate-doc-btn">
           <Zap className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Générer un document</span><span className="sm:hidden">Générer</span>
         </button>
+      </div>
+
+      {/* Document List */}
+      <DocumentList
+        documents={data?.data || []}
+        isLoading={isLoading}
         onPreview={(doc) => navigate(ROUTES.DOCUMENT_VIEW.replace(':id', doc.id))}
         onDownload={handleDownload}
         onArchive={handleArchive}

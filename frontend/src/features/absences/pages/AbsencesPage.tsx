@@ -62,7 +62,7 @@ export const AbsencesPage: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all">
+          <button onClick={() => setIsModalOpen(true)} className="btn-primary">
             <Plus className="w-4 h-4" /> Signaler une absence
           </button>
         </div>
@@ -135,7 +135,7 @@ export const AbsencesPage: React.FC = () => {
         {['', 'pending', 'justified', 'unjustified'].map((s) => (
           <button key={s} onClick={() => { setStatusFilter(s); setFilters((f) => ({ ...f, page: 1 })); }}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${statusFilter === s
-              ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+              ? 'bg-[#2563EB] text-white shadow-none' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
             {s === '' ? 'Toutes' : STATUS_CONFIG[s]?.label || s}
           </button>
         ))}
@@ -188,19 +188,19 @@ export const AbsencesPage: React.FC = () => {
                       <div className="flex items-center justify-center gap-1.5">
                         <button 
                           onClick={() => navigate(`/absences/${abs.id}`)}
-                          className="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors" title="Détails">
+                          className="btn-icon" title="Détails">
                           <Info className="w-4 h-4" />
                         </button>
                         {canManage && abs.justificationStatus === 'pending' && (
                           <>
                             <button 
                               onClick={() => navigate(`/absences/${abs.id}`)} 
-                              className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors" title="Justifier">
+                              className="btn-icon" title="Justifier">
                               <FileCheck className="w-4 h-4" />
                             </button>
                             <button 
                               onClick={() => markUnjustifiedMut.mutate(abs.id)}
-                              className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Marquer non justifiée">
+                              className="btn-icon" title="Marquer non justifiée">
                               <FileX className="w-4 h-4" />
                             </button>
                           </>

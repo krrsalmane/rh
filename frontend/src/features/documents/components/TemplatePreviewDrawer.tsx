@@ -106,7 +106,7 @@ export const TemplatePreviewDrawer: React.FC<Props> = ({
             <Pencil className="mr-2 inline h-4 w-4" />
             Modifier le modèle
           </button>
-          <button type="button" className="btn-form-submit w-full sm:w-auto" onClick={() => onGenerate(template)}>
+          <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => onGenerate(template)}>
             <Zap className="mr-2 inline h-4 w-4" />
             Utiliser ce modèle
           </button>

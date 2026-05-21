@@ -171,7 +171,7 @@ export const EmployeePortalPage: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-900">Mes congés</h2>
                 <button
                   onClick={() => navigate('/leaves/request')}
-                  className="bg-purple-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-600 transition-colors"
+                  className="btn-primary"
                 >
                   Nouvelle demande
                 </button>
@@ -213,7 +213,7 @@ export const EmployeePortalPage: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-900">Mes documents</h2>
                 <button
                   onClick={() => navigate('/documents')}
-                  className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                  className="btn-primary"
                 >
                   Voir tous les documents
                 </button>

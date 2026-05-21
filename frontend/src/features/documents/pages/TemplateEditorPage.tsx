@@ -88,7 +88,7 @@ export function TemplateEditorPage() {
         <p className="text-slate-500 mt-2 mb-6">{error}</p>
         <button
           onClick={() => navigate('/templates')}
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-sky-500 text-white font-bold rounded-xl hover:bg-sky-600 transition-all"
+          className="btn-primary"
         >
           <ArrowLeft className="w-4 h-4" /> Retour aux modèles
         </button>

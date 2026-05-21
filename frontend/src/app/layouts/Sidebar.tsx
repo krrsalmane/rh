@@ -74,7 +74,7 @@ export function Sidebar() {
         <div className="hidden md:flex items-center gap-4 shrink-0">
           <button
             type="button"
-            className="text-white/90 hover:text-white transition-opacity"
+            className="btn-icon text-white/90 hover:text-white"
             title="Langue"
           >
             <Globe className="w-5 h-5" />
@@ -119,7 +119,7 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => setMobileOpen((value) => !value)}
-          className="md:hidden text-white"
+          className="btn-icon md:hidden text-white"
           aria-label="Ouvrir le menu"
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

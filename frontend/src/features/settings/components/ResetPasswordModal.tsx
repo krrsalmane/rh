@@ -23,7 +23,7 @@ export const ResetPasswordModal: React.FC<Props> = ({ email, password, onClose }
       onClose={onClose}
       title="Mot de passe réinitialisé"
       footer={
-        <button type="button" className="btn-form-submit" onClick={onClose}>
+        <button type="button" className="btn-primary" onClick={onClose}>
           Fermer
         </button>
       }
@@ -41,7 +41,7 @@ export const ResetPasswordModal: React.FC<Props> = ({ email, password, onClose }
           <button
             type="button"
             onClick={handleCopy}
-            className="rounded p-1.5 text-[#6B7280] transition-colors hover:bg-[#EFF6FF] hover:text-[#2563EB]"
+            className="btn-icon"
             title="Copier"
           >
             {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}

@@ -156,13 +156,13 @@ export const PublicHolidaysPage: React.FC = () => {
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                     {deleteConfirm === h.id ? (
                       <div className="flex items-center gap-2">
-                        <button onClick={() => deleteMut.mutate(h.id, { onSuccess: () => setDeleteConfirm(null) })} className="px-3 py-1 bg-rose-500 text-white text-xs font-bold rounded-lg">Oui</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-lg">Non</button>
+                        <button onClick={() => deleteMut.mutate(h.id, { onSuccess: () => setDeleteConfirm(null) })} className="btn-form-danger text-xs">Oui</button>
+                        <button onClick={() => setDeleteConfirm(null)} className="btn-form-cancel text-xs">Non</button>
                       </div>
                     ) : (
                       <>
-                        <button onClick={() => handleEdit(h)} className="p-2 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-xl"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteConfirm(h.id)} className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-xl"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(h)} className="btn-icon"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => setDeleteConfirm(h.id)} className="btn-icon"><Trash2 className="w-4 h-4" /></button>
                       </>
                     )}
                   </div>

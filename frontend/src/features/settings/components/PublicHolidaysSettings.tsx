@@ -76,7 +76,7 @@ export const PublicHolidaysSettings: React.FC = () => {
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-semibold transition-all shadow-md shadow-sky-500/20"
+          className="btn-primary"
         >
           <Plus className="w-4 h-4" />
           Ajouter une date
@@ -110,14 +110,14 @@ export const PublicHolidaysSettings: React.FC = () => {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 bg-sky-500 hover:bg-sky-600 text-white py-2.5 rounded-xl font-bold transition-colors"
+                className="btn-primary flex-1"
               >
                 Confirmer
               </button>
               <button
                 type="button"
                 onClick={() => setShowAdd(false)}
-                className="px-4 py-2.5 border border-sky-200 text-sky-600 hover:bg-sky-100 rounded-xl font-bold transition-colors"
+                className="btn-form-cancel"
               >
                 Annuler
               </button>
@@ -148,7 +148,7 @@ export const PublicHolidaysSettings: React.FC = () => {
               </div>
               <button
                 onClick={() => handleDelete(h.id)}
-                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                className="btn-icon opacity-0 group-hover:opacity-100"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

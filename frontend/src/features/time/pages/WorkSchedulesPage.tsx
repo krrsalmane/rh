@@ -160,8 +160,8 @@ export const WorkSchedulesPage: React.FC = () => {
             {deleteConfirm === s.id && (
               <div className="pt-2 flex items-center gap-2 border-t border-slate-50">
                 <p className="text-xs text-rose-500 font-medium">Supprimer ?</p>
-                <button onClick={() => deleteMut.mutate(s.id, { onSuccess: () => setDeleteConfirm(null) })} className="px-2 py-1 bg-rose-500 text-white text-[10px] font-bold rounded">Oui</button>
-                <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded">Non</button>
+                <button onClick={() => deleteMut.mutate(s.id, { onSuccess: () => setDeleteConfirm(null) })} className="btn-form-danger text-xs">Oui</button>
+                <button onClick={() => setDeleteConfirm(null)} className="btn-form-cancel text-xs">Non</button>
               </div>
             )}
           </div>

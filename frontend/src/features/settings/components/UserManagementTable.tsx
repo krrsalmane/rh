@@ -78,7 +78,7 @@ export const UserManagementTable: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold transition-all shadow-md shadow-sky-500/20 hover:-translate-y-0.5"
+          className="btn-primary"
         >
           <UserPlus className="w-4 h-4" />
           Nouvel utilisateur
@@ -222,14 +222,14 @@ export const UserManagementTable: React.FC = () => {
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => setEditUser(user)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                            className="btn-icon"
                             title="Modifier"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleResetPassword(user)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            className="btn-icon"
                             title="Réinitialiser le mot de passe"
                           >
                             <KeyRound className="w-4 h-4" />
@@ -237,7 +237,7 @@ export const UserManagementTable: React.FC = () => {
                           <div className="relative">
                             <button
                               onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                              className="btn-icon"
                             >
                               <MoreHorizontal className="w-4 h-4" />
                             </button>
@@ -256,7 +256,7 @@ export const UserManagementTable: React.FC = () => {
                                     ) : (
                                       <button
                                         onClick={() => { reactivateMut.mutate(user.id); setOpenMenuId(null); }}
-                                        className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                                       >
                                         <Power className="w-4 h-4" /> Réactiver
                                       </button>
