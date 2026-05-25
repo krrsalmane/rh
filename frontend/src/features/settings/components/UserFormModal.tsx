@@ -107,8 +107,9 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
     staleTime: 60_000,
   });
 
-  const employees: { id: string; first_name: string; last_name: string; department: string }[] =
-    employeesData?.data ?? [];
+  const employees: { id: string; first_name: string; last_name: string; department: string }[] = Array.from(
+    new Map(((employeesData?.data ?? []) as { id: string; first_name: string; last_name: string; department: string }[]).map((employee) => [employee.id, employee])).values()
+  );
 
   const onSubmit = async (data: Record<string, string>) => {
     if (isEdit) {

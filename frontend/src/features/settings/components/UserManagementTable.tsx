@@ -5,7 +5,6 @@ import type { User, UserFilters } from '../types';
 import { ROLE_LABELS, ROLE_COLORS } from '../types';
 import { UserFormModal } from '@/features/settings/components/UserFormModal.tsx';
 import { ResetPasswordModal } from '@/features/settings/components/ResetPasswordModal.tsx';
-import { DeleteUserConfirm } from '@/features/settings/components/DeleteUserConfirm.tsx';
 import { UserDetailDrawer } from '@/features/settings/components/UserDetailDrawer.tsx';
 import {
   Search, UserPlus, Pencil, KeyRound, MoreHorizontal,
@@ -43,7 +42,6 @@ export const UserManagementTable: React.FC = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [resetPwResult, setResetPwResult] = useState<{ email: string; password: string } | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [detailUser, setDetailUser] = useState<User | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -264,7 +262,7 @@ export const UserManagementTable: React.FC = () => {
                                   )}
                                   {!isSelf && (
                                     <button
-                                      onClick={() => { setDeleteTarget(user); setOpenMenuId(null); }}
+                                      onClick={() => { deleteMut.mutate(user.id); setOpenMenuId(null); }}
                                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                                     >
                                       <Trash2 className="w-4 h-4" /> Supprimer
@@ -336,14 +334,6 @@ export const UserManagementTable: React.FC = () => {
           email={resetPwResult.email}
           password={resetPwResult.password}
           onClose={() => setResetPwResult(null)}
-        />
-      )}
-
-      {deleteTarget && (
-        <DeleteUserConfirm
-          user={deleteTarget}
-          onConfirm={() => { deleteMut.mutate(deleteTarget.id); setDeleteTarget(null); }}
-          onClose={() => setDeleteTarget(null)}
         />
       )}
 

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { FileSignature, FileCheck, Mail, File, Pencil, Trash2, Eye, FileText, Archive, RotateCcw } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 import { TemplatePreviewDrawer } from './TemplatePreviewDrawer';
 import { useDeleteTemplate } from '../hooks/useTemplates';
 import type { Template } from '../types';
@@ -80,9 +79,6 @@ export const TemplateList: React.FC<Props> = ({
   const isHrAgent = userRole === 'hr_agent';
   const canDelete = isSuperAdmin || isHrAgent;
 
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [deleteTemplateName, setDeleteTemplateName] = useState<string>('');
-  const [deleteUsageCount, setDeleteUsageCount] = useState<number>(0);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   const deleteTemplate = useDeleteTemplate();
@@ -231,12 +227,7 @@ export const TemplateList: React.FC<Props> = ({
                 )}
                 {canDelete && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteId(tpl.id);
-                      setDeleteTemplateName(tpl.name);
-                      setDeleteUsageCount(tpl.usageCount);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); deleteTemplate.mutate({ id: tpl.id, force: tpl.usageCount > 0 }); }}
                     className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-slate-200 shadow-none hover:shadow-sm"
                     title="Supprimer"
                   >
@@ -254,51 +245,6 @@ export const TemplateList: React.FC<Props> = ({
           );
         })}
       </div>
-
-      {/* Delete Confirmation */}
-      <ConfirmDialog
-        isOpen={!!deleteId}
-        onClose={() => {
-          setDeleteId(null);
-          setDeleteTemplateName('');
-          setDeleteUsageCount(0);
-        }}
-        onConfirm={() => {
-          if (deleteId) {
-            deleteTemplate.mutate({ id: deleteId, force: deleteUsageCount > 0 }, {
-              onSettled: () => {
-                setDeleteId(null);
-                setDeleteTemplateName('');
-                setDeleteUsageCount(0);
-              }
-            });
-          }
-        }}
-        title={deleteUsageCount > 0 ? "Suppression permanente" : "Supprimer le modèle"}
-        message={
-          <>
-            <p>Êtes-vous sûr de vouloir supprimer le modèle "{deleteTemplateName}" ? Cette action est irréversible.</p>
-            {deleteUsageCount > 0 ? (
-              <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-left">
-                <p className="text-sm text-red-700 font-semibold mb-1 flex items-center gap-2">
-                  ⚠️ Attention : Modèle utilisé {deleteUsageCount} fois
-                </p>
-                <p className="text-[11px] text-red-600 leading-relaxed">
-                  Ce modèle est lié à des documents existants. La suppression rompra ce lien 
-                  (les documents resteront accessibles mais leur référence au modèle sera effacée).
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500 mt-2">
-                Ce modèle n'a jamais été utilisé et peut être supprimé en toute sécurité.
-              </p>
-            )}
-          </>
-        }
-        confirmText="Supprimer"
-        variant="danger"
-        isLoading={deleteTemplate.isPending}
-      />
 
       {/* Preview Side Panel */}
       <TemplatePreviewDrawer

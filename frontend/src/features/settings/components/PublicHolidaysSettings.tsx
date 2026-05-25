@@ -49,7 +49,6 @@ export const PublicHolidaysSettings: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Supprimer ce jour férié ?')) return;
     try {
       await holidaysApi.delete(id);
       toast.success('Jour férié supprimé');

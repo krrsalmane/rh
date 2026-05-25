@@ -179,8 +179,13 @@ export async function recordTimeAction(user: any, action: string, actionTime?: s
   if (!effectiveEmployeeId) {
     throw new AppError('Employee ID is required', 400);
   }
+
+  const employee = await employeesRepository.findById(effectiveEmployeeId, companyId);
+  if (!employee) {
+    throw new AppError('Employee profile not found', 400);
+  }
+
   if (role === 'manager') {
-    const employee = await employeesRepository.findById(effectiveEmployeeId, companyId);
     if (!employee || employee.manager_id !== userId) throw new AppError('Access denied', 403);
   }
 
@@ -398,3 +403,4 @@ export async function generateDefaultTimeEntries(date: string, user: any) {
     throw new AppError(`Erreur lors de la génération: ${error.message}`, 500);
   }
 }
+

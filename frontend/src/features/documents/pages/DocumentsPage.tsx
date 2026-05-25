@@ -29,9 +29,7 @@ export const DocumentsPage: React.FC = () => {
   };
 
   const handleArchive = (doc: GeneratedDocument) => archiveMutation.mutate(doc.id);
-  const handleDelete = (doc: GeneratedDocument) => {
-    if (window.confirm('Supprimer ce document ?')) deleteMutation.mutate(doc.id);
-  };
+  const handleDelete = (doc: GeneratedDocument) => deleteMutation.mutate(doc.id);
 
   return (
     <div className="space-y-6 animate-fade-in-up" id="documents-page">

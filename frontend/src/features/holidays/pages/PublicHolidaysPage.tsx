@@ -28,7 +28,6 @@ export const PublicHolidaysPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreatePublicHolidayDto>(EMPTY_FORM);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const handleEdit = (h: PublicHoliday) => {
     setEditingId(h.id);
@@ -154,17 +153,8 @@ export const PublicHolidaysPage: React.FC = () => {
                 </div>
                 {canEdit && (
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                    {deleteConfirm === h.id ? (
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => deleteMut.mutate(h.id, { onSuccess: () => setDeleteConfirm(null) })} className="btn-form-danger text-xs">Oui</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="btn-form-cancel text-xs">Non</button>
-                      </div>
-                    ) : (
-                      <>
-                        <button onClick={() => handleEdit(h)} className="btn-icon"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteConfirm(h.id)} className="btn-icon"><Trash2 className="w-4 h-4" /></button>
-                      </>
-                    )}
+                    <button onClick={() => handleEdit(h)} className="btn-icon"><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => deleteMut.mutate(h.id)} className="btn-icon"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 )}
               </div>

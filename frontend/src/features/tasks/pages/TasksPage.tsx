@@ -142,7 +142,7 @@ export const TasksPage: React.FC = () => {
                             <Edit2 className="w-3 h-3" />
                           </button>
                           <button 
-                            onClick={() => { if(confirm('Supprimer cette tâche ?')) deleteTaskMutation.mutate(task.id) }}
+                            onClick={() => deleteTaskMutation.mutate(task.id)}
                             className="p-1 hover:bg-slate-50 text-slate-400 hover:text-rose-600 rounded-lg"
                           >
                             <Trash2 className="w-3 h-3" />

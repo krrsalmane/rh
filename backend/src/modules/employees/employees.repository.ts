@@ -59,7 +59,7 @@ export async function findAll(filters: EmployeeFiltersInput, companyId: string):
   const whereClause = conditions.join(' AND ');
 
   const countResult = await query<{ count: string }>(
-    `SELECT COUNT(*) as count FROM employees e WHERE ${whereClause}`,
+    `SELECT COUNT(DISTINCT e.id) as count FROM employees e WHERE ${whereClause}`,
     params
   );
   const total = parseInt(countResult.rows[0].count, 10);
@@ -79,8 +79,11 @@ export async function findAll(filters: EmployeeFiltersInput, companyId: string):
     [...params, filters.limit, offset]
   );
 
+  // Deduplicate rows in case of multiple work_schedules per employee
+  const uniqueEmployees = Array.from(new Map(result.rows.map(r => [r.id, r])).values());
+
   return {
-    items: result.rows,
+    items: uniqueEmployees,
     pagination: { page: filters.page, limit: filters.limit, total, totalPages: Math.ceil(total / filters.limit) },
   };
 }

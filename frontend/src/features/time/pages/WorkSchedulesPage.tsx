@@ -30,7 +30,6 @@ export const WorkSchedulesPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateWorkScheduleDto>(EMPTY_FORM);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const handleEdit = (s: WorkSchedule) => {
     setEditingId(s.id);
@@ -129,7 +128,7 @@ export const WorkSchedulesPage: React.FC = () => {
               {canEdit && (
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                   <button onClick={() => handleEdit(s)} className="p-1.5 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg"><Pencil className="w-4 h-4" /></button>
-                  <button onClick={() => setDeleteConfirm(s.id)} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => deleteMut.mutate(s.id)} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                 </div>
               )}
             </div>
@@ -156,14 +155,6 @@ export const WorkSchedulesPage: React.FC = () => {
                 </span>
               ))}
             </div>
-
-            {deleteConfirm === s.id && (
-              <div className="pt-2 flex items-center gap-2 border-t border-slate-50">
-                <p className="text-xs text-rose-500 font-medium">Supprimer ?</p>
-                <button onClick={() => deleteMut.mutate(s.id, { onSuccess: () => setDeleteConfirm(null) })} className="btn-form-danger text-xs">Oui</button>
-                <button onClick={() => setDeleteConfirm(null)} className="btn-form-cancel text-xs">Non</button>
-              </div>
-            )}
           </div>
         ))}
       </div>

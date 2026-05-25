@@ -34,9 +34,12 @@ export const TimeManagementPage: React.FC = () => {
   const { data: summary } = useTimeSummary({ startDate: filters.startDate, endDate: filters.endDate });
 
   const entries: TimeEntry[] = data?.data || [];
+  const uniqueEmployees = Array.from(
+    new Map((employeesData?.data ?? []).map((employee: any) => [employee.id, employee])).values()
+  );
   const employeeList = role === 'employee'
-    ? employeesData?.data?.filter((emp: any) => emp.id === effectiveAuthId) ?? []
-    : employeesData?.data ?? [];
+    ? uniqueEmployees.filter((emp: any) => emp.id === effectiveAuthId)
+    : uniqueEmployees;
   const pagination = data?.pagination;
 
   const [statusFilter, setStatusFilter] = useState<'all' | 'arrive_late' | 'left_early' | 'late_lunch'>('all');
@@ -178,6 +181,20 @@ export const TimeManagementPage: React.FC = () => {
     if (!time) return '';
     const trimmed = time.trim();
     return trimmed.length >= 5 ? trimmed.slice(0, 5) : trimmed;
+  };
+
+  const pointageButtonClass = (recorded: boolean, canPerform: boolean) => {
+    const base = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border';
+
+    if (recorded) {
+      return `${base} bg-slate-100 border-slate-200 text-slate-700 cursor-default`;
+    }
+
+    if (canPerform) {
+      return `${base} bg-blue-600 border-blue-700 text-white hover:bg-blue-700 shadow-sm`;
+    }
+
+    return `${base} bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed`;
   };
 
 
@@ -381,7 +398,7 @@ export const TimeManagementPage: React.FC = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'morning-in'); }}
                         disabled={!canPerform('morning-in')}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isRecorded('morning-in') ? 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-default' : canPerform('morning-in') ? 'bg-emerald-500 border-emerald-600 text-white hover:bg-emerald-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        className={pointageButtonClass(isRecorded('morning-in'), canPerform('morning-in'))}
                       >
                         {isRecorded('morning-in') && <CheckCircle className="w-3.5 h-3.5" />} Entrée
                       </button>
@@ -389,7 +406,7 @@ export const TimeManagementPage: React.FC = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'morning-out'); }}
                         disabled={!canPerform('morning-out')}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isRecorded('morning-out') ? 'bg-slate-100 border-slate-300 text-slate-700 cursor-default' : canPerform('morning-out') ? 'bg-slate-700 border-slate-800 text-white hover:bg-slate-800 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        className={pointageButtonClass(isRecorded('morning-out'), canPerform('morning-out'))}
                       >
                         {isRecorded('morning-out') && <CheckCircle className="w-3.5 h-3.5" />} Sortie
                       </button>
@@ -397,7 +414,7 @@ export const TimeManagementPage: React.FC = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'lunch-out'); }}
                         disabled={!canPerform('lunch-out')}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isRecorded('lunch-out') ? 'bg-amber-50 border-amber-200 text-amber-600 cursor-default' : canPerform('lunch-out') ? 'bg-amber-500 border-amber-600 text-white hover:bg-amber-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        className={pointageButtonClass(isRecorded('lunch-out'), canPerform('lunch-out'))}
                       >
                         {isRecorded('lunch-out') && <CheckCircle className="w-3.5 h-3.5" />} Départ Déj.
                       </button>
@@ -405,7 +422,7 @@ export const TimeManagementPage: React.FC = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, 'lunch-in'); }}
                         disabled={!canPerform('lunch-in')}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isRecorded('lunch-in') ? 'bg-sky-50 border-sky-200 text-sky-600 cursor-default' : canPerform('lunch-in') ? 'bg-sky-500 border-sky-600 text-white hover:bg-sky-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        className={pointageButtonClass(isRecorded('lunch-in'), canPerform('lunch-in'))}
                       >
                         {isRecorded('lunch-in') && <CheckCircle className="w-3.5 h-3.5" />} Retour Déj.
                       </button>
@@ -413,7 +430,7 @@ export const TimeManagementPage: React.FC = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, !rowEntry?.prayerOut ? 'prayer-out' : 'prayer2-out'); }}
                         disabled={!canPerformPrayerOut}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isAllPrayerOutRecorded ? 'bg-violet-50 border-violet-200 text-violet-600 cursor-default' : canPerformPrayerOut ? 'bg-violet-500 border-violet-600 text-white hover:bg-violet-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        className={pointageButtonClass(isAllPrayerOutRecorded, canPerformPrayerOut)}
                       >
                         {isAllPrayerOutRecorded && <CheckCircle className="w-3.5 h-3.5" />} Départ Prière
                       </button>
@@ -421,7 +438,7 @@ export const TimeManagementPage: React.FC = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleTimeAction(emp.id, (rowEntry?.prayerOut && !rowEntry?.prayerIn) ? 'prayer-in' : 'prayer2-in'); }}
                         disabled={!canPerformPrayerIn}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-[13px] transition-all border ${isAllPrayerInRecorded ? 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600 cursor-default' : canPerformPrayerIn ? 'bg-fuchsia-500 border-fuchsia-600 text-white hover:bg-fuchsia-600 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'}`}
+                        className={pointageButtonClass(isAllPrayerInRecorded, canPerformPrayerIn)}
                       >
                         {isAllPrayerInRecorded && <CheckCircle className="w-3.5 h-3.5" />} Retour Prière
                       </button>
@@ -441,7 +458,7 @@ export const TimeManagementPage: React.FC = () => {
                             type="button"
                             onClick={(e) => { e.stopPropagation(); if (rowEntry) handleEditClick(rowEntry); }}
                             disabled={!rowEntry}
-                            className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${rowEntry ? 'bg-slate-100 text-sky-600 hover:bg-slate-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} transition`}
+                            className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${rowEntry ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} transition`}
                             aria-label="Modifier"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -450,7 +467,7 @@ export const TimeManagementPage: React.FC = () => {
                             type="button"
                             onClick={(e) => { e.stopPropagation(); if (rowEntry) handleDeleteEntry(rowEntry.id); }}
                             disabled={!rowEntry}
-                            className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${rowEntry ? 'bg-slate-100 text-rose-600 hover:bg-slate-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} transition`}
+                            className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${rowEntry ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} transition`}
                             aria-label="Supprimer"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -530,7 +547,7 @@ export const TimeManagementPage: React.FC = () => {
           key={isCreateOpen ? 'open' : 'closed'}
           form={createForm}
           onChange={setCreateForm}
-          employees={(employeesData?.data ?? []).map((emp: { id: string; firstName: string; lastName: string }) => ({
+          employees={uniqueEmployees.map((emp: { id: string; firstName: string; lastName: string }) => ({
             id: emp.id,
             firstName: emp.firstName,
             lastName: emp.lastName,

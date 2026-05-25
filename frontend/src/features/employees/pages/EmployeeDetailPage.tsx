@@ -6,7 +6,6 @@ import { useEmployee, useUpdateEmployee, useDeleteEmployee } from '../hooks/useE
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeDigitalFile } from '../components/EmployeeDigitalFile';
 import { EmployeeFormModal } from '../components/EmployeeFormModal';
-import { DeleteEmployeeConfirm } from '../components/DeleteEmployeeConfirm';
 import type { CreateEmployeeDto } from '../types';
 
 export const EmployeeDetailPage: React.FC = () => {
@@ -20,7 +19,6 @@ export const EmployeeDetailPage: React.FC = () => {
   const deleteMutation = useDeleteEmployee();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const employee = data?.data;
 
@@ -30,12 +28,6 @@ export const EmployeeDetailPage: React.FC = () => {
         { id, data: formData },
         { onSuccess: () => setIsEditOpen(false) }
       );
-    }
-  };
-
-  const handleDeleteConfirm = () => {
-    if (id) {
-      deleteMutation.mutate(id);
     }
   };
 
@@ -79,7 +71,7 @@ export const EmployeeDetailPage: React.FC = () => {
       <EmployeeCard
         employee={employee}
         onEdit={() => canManage && setIsEditOpen(true)}
-        onDelete={() => canManage && setIsDeleteOpen(true)}
+        onDelete={() => canManage && id && deleteMutation.mutate(id)}
       />
 
       {/* Digital File Tabs */}
@@ -94,14 +86,6 @@ export const EmployeeDetailPage: React.FC = () => {
         isSubmitting={updateMutation.isPending}
       />
 
-      {/* Delete Confirm */}
-      <DeleteEmployeeConfirm
-        isOpen={isDeleteOpen}
-        employee={employee}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setIsDeleteOpen(false)}
-        isDeleting={deleteMutation.isPending}
-      />
     </div>
   );
 };

@@ -71,6 +71,7 @@ export const TimeEntryCreateForm: React.FC<Props> = ({
   isLoading,
 }) => {
   const [step, setStep] = useState(0);
+  const uniqueEmployees = Array.from(new Map(employees.map((employee) => [employee.id, employee])).values());
 
   const handleNext = () => {
     if (step === 0 && (!form.employeeId || !form.date)) return;
@@ -114,7 +115,7 @@ export const TimeEntryCreateForm: React.FC<Props> = ({
               <option value="">
                 {employeesLoading ? 'Chargement...' : 'Sélectionner un employé'}
               </option>
-              {employees.map((emp) => (
+              {uniqueEmployees.map((emp) => (
                 <option key={emp.id} value={emp.id}>
                   {emp.firstName} {emp.lastName}
                 </option>

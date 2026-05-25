@@ -18,7 +18,10 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }>
 export const AbsencesPage: React.FC = () => {
   const navigate = useNavigate();
   const role = useAppSelector((s) => s.auth.role);
-  const canManage = role === 'super_admin' || role === 'hr_agent';
+  const authUser = useAppSelector((s) => s.auth.user);
+  const canChooseEmployee = role === 'super_admin' || role === 'hr_agent' || role === 'manager';
+  const canManage = role === 'super_admin' || role === 'hr_agent' || role === 'manager';
+  const selfEmployeeId = authUser?.employeeId || authUser?.id || '';
 
   const [filters, setFilters] = useState<AbsenceFilters>({ page: 1, limit: 20 });
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -31,6 +34,7 @@ export const AbsencesPage: React.FC = () => {
     limit: 100,
     status: 'active',
   });
+  const uniqueEmployees = Array.from(new Map((employeesData?.data ?? []).map((employee: any) => [employee.id, employee])).values());
   const createMut = useCreateAbsence();
   const markUnjustifiedMut = useMarkUnjustified();
   const deleteMut = useDeleteAbsence();
@@ -44,8 +48,12 @@ export const AbsencesPage: React.FC = () => {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAbsence.employeeId || !newAbsence.startDate || !newAbsence.endDate) return;
-    createMut.mutate(newAbsence, { onSuccess: () => { setIsModalOpen(false); setNewAbsence({ employeeId: '', startDate: '', endDate: '', type: '', reason: '' }); } });
+    const employeeId = canChooseEmployee ? newAbsence.employeeId : selfEmployeeId;
+    if (!employeeId || !newAbsence.startDate || !newAbsence.endDate) return;
+    createMut.mutate(
+      { ...newAbsence, employeeId },
+      { onSuccess: () => { setIsModalOpen(false); setNewAbsence({ employeeId: '', startDate: '', endDate: '', type: '', reason: '' }); } }
+    );
   };
 
   return (
@@ -75,28 +83,35 @@ export const AbsencesPage: React.FC = () => {
       >
         <form onSubmit={handleCreate}>
           <FormCard title="Informations">
-            <FormField label="Employé" required>
-              <FormSelect
-                name="employeeId"
-                value={newAbsence.employeeId || ''}
-                onChange={(e) => setNewAbsence({ ...newAbsence, employeeId: e.target.value })}
-                disabled={employeesLoading}
-                required
-              >
-                <option value="">
-                  {employeesLoading
-                    ? 'Chargement des employés...'
-                    : employeesError
-                      ? 'Erreur de chargement'
-                      : 'Sélectionner un employé...'}
-                </option>
-                {(employeesData?.data ?? []).map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName}
+            {canChooseEmployee ? (
+              <FormField label="Employé" required>
+                <FormSelect
+                  name="employeeId"
+                  value={newAbsence.employeeId || ''}
+                  onChange={(e) => setNewAbsence({ ...newAbsence, employeeId: e.target.value })}
+                  disabled={employeesLoading}
+                  required
+                >
+                  <option value="">
+                    {employeesLoading
+                      ? 'Chargement des employés...'
+                      : employeesError
+                        ? 'Erreur de chargement'
+                        : 'Sélectionner un employé...'}
                   </option>
-                ))}
-              </FormSelect>
-            </FormField>
+                  {uniqueEmployees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormField>
+            ) : (
+              <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-700">Employé</p>
+                <p className="text-sm text-slate-500">Absence pour votre propre compte</p>
+              </div>
+            )}
 
             <FormGrid>
               <FormField label="Date de début" required>
@@ -125,7 +140,7 @@ export const AbsencesPage: React.FC = () => {
             onCancel={() => setIsModalOpen(false)}
             submitText="Enregistrer l'absence"
             isLoading={createMut.isPending}
-            disabled={employeesLoading}
+            disabled={employeesLoading && canChooseEmployee}
           />
         </form>
       </Modal>

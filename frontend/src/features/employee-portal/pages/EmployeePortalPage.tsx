@@ -248,7 +248,7 @@ export const EmployeePortalPage: React.FC = () => {
                     // TODO: Implement clock in/out functionality
                     console.log('Clock in/out clicked');
                   }}
-                  className="bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-600 transition-colors"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                 >
                   Pointer l'entrée
                 </button>

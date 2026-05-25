@@ -5,7 +5,6 @@ import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee }
 import { EmployeeFilters } from '../components/EmployeeFilters';
 import { EmployeeTable } from '../components/EmployeeTable';
 import { EmployeeFormModal } from '../components/EmployeeFormModal';
-import { DeleteEmployeeConfirm } from '../components/DeleteEmployeeConfirm';
 import type { EmployeeFilters as FiltersType, Employee, CreateEmployeeDto } from '../types';
 
 export const EmployeesListPage: React.FC = () => {
@@ -18,7 +17,6 @@ export const EmployeesListPage: React.FC = () => {
   // Modal state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | undefined>(undefined);
-  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
 
   const createMutation = useCreateEmployee();
   const updateMutation = useUpdateEmployee();
@@ -43,14 +41,6 @@ export const EmployeesListPage: React.FC = () => {
     } else {
       createMutation.mutate(formData, {
         onSuccess: () => setIsFormOpen(false),
-      });
-    }
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deletingEmployee) {
-      deleteMutation.mutate(deletingEmployee.id, {
-        onSuccess: () => setDeletingEmployee(null),
       });
     }
   };
@@ -94,7 +84,7 @@ export const EmployeesListPage: React.FC = () => {
         filters={filters}
         onFiltersChange={setFilters}
         onEdit={handleEdit}
-        onDelete={setDeletingEmployee}
+        onDelete={(employee) => deleteMutation.mutate(employee.id)}
       />
 
       {/* Create/Edit Modal */}
@@ -106,14 +96,6 @@ export const EmployeesListPage: React.FC = () => {
         isSubmitting={createMutation.isPending || updateMutation.isPending}
       />
 
-      {/* Delete Confirm */}
-      <DeleteEmployeeConfirm
-        isOpen={!!deletingEmployee}
-        employee={deletingEmployee}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setDeletingEmployee(null)}
-        isDeleting={deleteMutation.isPending}
-      />
     </div>
   );
 };

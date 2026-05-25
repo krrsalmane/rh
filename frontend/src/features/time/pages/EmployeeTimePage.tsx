@@ -24,6 +24,8 @@ export const EmployeeTimePage: React.FC = () => {
     try { return format(new Date(dateString), 'dd MMM yyyy', { locale: fr }); } catch { return dateString; }
   };
 
+  const pointageButtonClass = 'inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50';
+
   return (
     <div className="space-y-6 animate-fade-in-up" id="employee-time-page">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -41,7 +43,7 @@ export const EmployeeTimePage: React.FC = () => {
             type="button"
             onClick={() => clockInMutation.mutate()}
             disabled={clockInMutation.isLoading || clockOutMutation.isLoading}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+            className={pointageButtonClass}
           >
             <ArrowUpRight className="w-4 h-4" />
             Pointer entrée
@@ -50,7 +52,7 @@ export const EmployeeTimePage: React.FC = () => {
             type="button"
             onClick={() => clockOutMutation.mutate()}
             disabled={clockInMutation.isLoading || clockOutMutation.isLoading}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+            className={pointageButtonClass}
           >
             <ArrowDownRight className="w-4 h-4" />
             Pointer sortie

@@ -19,7 +19,6 @@ export const LeaveTypesPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateLeaveTypeDto>(EMPTY_FORM);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const set = (field: keyof CreateLeaveTypeDto, val: string | number | boolean) =>
     setForm((f) => ({ ...f, [field]: val }));
@@ -148,18 +147,10 @@ export const LeaveTypesPage: React.FC = () => {
                   </td>
                   {canEdit && (
                     <td className="px-6 py-4 text-center">
-                      {deleteConfirm === lt.id ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => deleteMut.mutate(lt.id, { onSuccess: () => setDeleteConfirm(null) })} disabled={deleteMut.isPending}
-                            className="btn-form-danger text-xs">Confirmer</button>
-                          <button onClick={() => setDeleteConfirm(null)} className="btn-form-cancel text-xs">Non</button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button onClick={() => handleEdit(lt)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"><Pencil className="w-4 h-4" /></button>
-                          {canDelete && <button onClick={() => setDeleteConfirm(lt.id)} className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4" /></button>}
-                        </div>
-                      )}
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button onClick={() => handleEdit(lt)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"><Pencil className="w-4 h-4" /></button>
+                        {canDelete && <button onClick={() => deleteMut.mutate(lt.id)} className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4" /></button>}
+                      </div>
                     </td>
                   )}
                 </tr>

@@ -60,9 +60,10 @@ export async function getEmployees(filters: EmployeeFilters) {
   if (filters.contractType) params.contractType = filters.contractType;
 
   const { data } = await axiosInstance.get<PaginatedResponse<Record<string, unknown>>>('/employees', { params });
+  const uniqueEmployees = Array.from(new Map(data.data.map((employee) => [employee.id as string, employee])).values());
   return {
     ...data,
-    data: data.data.map(mapEmployee),
+    data: uniqueEmployees.map(mapEmployee),
   };
 }
 
