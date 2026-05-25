@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee } from '../hooks/useEmployees';
 import { EmployeeFilters } from '../components/EmployeeFilters';
@@ -49,17 +49,7 @@ export const EmployeesListPage: React.FC = () => {
     <div className="space-y-6 animate-fade-in-up" id="employees-list-page">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center">
-            <Users className="w-5 h-5 text-sky-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Employés</h1>
-            {data?.pagination && (
-              <p className="text-sm text-slate-400">{data.pagination.total} employé{data.pagination.total !== 1 ? 's' : ''} au total</p>
-            )}
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold text-slate-800">Employés</h1>
 
         {canCreate && (
           <button onClick={handleCreate} className="btn-primary" id="new-employee-btn">

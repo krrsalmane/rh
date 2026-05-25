@@ -85,28 +85,6 @@ export const EmployeePortalPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-purple-500" />
-                  Activité récente
-                </h3>
-                <div className="space-y-3">
-                  {notifications.slice(0, 3).map((notification) => (
-                    <div key={notification.id} className="p-3 bg-gray-50 rounded-lg border-l-4 border-gray-200">
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-blue-100 rounded-full flex items-center justify-center">
-                          <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                          <p className="text-xs text-gray-500">{notification.message}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         );

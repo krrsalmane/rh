@@ -1,7 +1,7 @@
 import { useDashboardData } from '../api';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Users, Clock, UserX, UserCog, Activity, TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
+import { Users, Clock, UserX, UserCog, TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line 
@@ -39,7 +39,6 @@ export function SuperAdminDashboard() {
   const distribution = data?.distribution || [];
   const trends = data?.trends || [];
   const alerts = data?.alerts || [];
-  const recentActivity = data?.recentActivity || [];
 
   const statCards = [
     { title: 'Total employés', value: stats.totalEmployees, icon: Users, color: 'text-sky-500 bg-sky-50' },
@@ -218,39 +217,7 @@ export function SuperAdminDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-500" />
-            Activité récente
-          </h3>
-          <div className="space-y-6">
-            {recentActivity.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">Aucune activité récente</p>
-            ) : (
-              recentActivity.map((log: any) => (
-                <div key={log.id} className="flex gap-4 relative">
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 relative z-10">
-                      <Activity className="w-4 h-4 text-slate-400" />
-                    </div>
-                    <div className="w-0.5 flex-1 bg-slate-50 -mb-6" />
-                  </div>
-                  <div className="pb-6">
-                    <p className="text-sm text-gray-800 font-medium">
-                      {log.action} <span className="text-gray-400">sur</span> {log.entity}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {log.user_email || 'Système'} · {format(new Date(log.timestamp), 'dd MMM HH:mm', { locale: fr })}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }

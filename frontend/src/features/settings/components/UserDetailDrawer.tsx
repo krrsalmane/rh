@@ -6,7 +6,7 @@ import type { User } from '../types';
 import { ROLE_LABELS, ROLE_COLORS } from '../types';
 import {
   Pencil, KeyRound, Power, PowerOff,
-  Mail, Shield, Calendar, Clock, Activity,
+  Mail, Shield, Calendar, Clock,
   User as UserIcon, Briefcase,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -147,29 +147,7 @@ export const UserDetailDrawer: React.FC<Props> = ({
         </div>
       </FormCard>
 
-      <FormCard title="Activité récente">
-        {auditLogs.length === 0 ? (
-          <p className="text-xs text-[#9CA3AF]">Aucune activité enregistrée</p>
-        ) : (
-          <ul className="space-y-3">
-            {auditLogs.map((log) => (
-              <li key={log.id} className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#F4F6F9]">
-                  <Activity className="h-3 w-3 text-[#9CA3AF]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#374151]">
-                    {log.action} — {log.entity}
-                  </p>
-                  <p className="text-[11px] text-[#9CA3AF]">
-                    {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true, locale: fr })}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </FormCard>
+
     </Modal>
   );
 };

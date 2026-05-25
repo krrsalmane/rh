@@ -28,7 +28,6 @@ export function ManagerDashboard() {
   };
 
   const stats = data?.stats || defaultStats;
-  const recentActivity = data?.recentActivity || [];
 
   const statCards = [
     { title: 'Taille de l\'équipe', value: stats.teamSize || 0, icon: Users, color: 'text-sky-500 bg-sky-50' },
@@ -58,31 +57,7 @@ export function ManagerDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-sky-500" />
-            Activité de l'équipe
-          </h3>
-          <div className="space-y-4">
-            {recentActivity.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">Aucune activité récente</p>
-            ) : (
-              recentActivity.map((log: any) => (
-                <div key={log.id} className="flex gap-3">
-                  <div className="w-2 h-2 mt-1.5 rounded-full bg-sky-400 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-gray-800">{log.action} <span className="text-gray-400">sur</span> {log.entity}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {format(new Date(log.timestamp), 'dd/MM HH:mm', { locale: fr })}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }

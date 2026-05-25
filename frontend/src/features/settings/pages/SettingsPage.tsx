@@ -23,7 +23,7 @@ export const SettingsPage: React.FC = () => {
       <div className="space-y-8 max-w-[1600px] mx-auto animate-fade-in">
         {/* Page header */}
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Paramètres du Système</h1>
+          <h1 className="text-3xl font-black text-slate-600 tracking-tight">Paramètres du Système</h1>
           <p className="text-slate-500 font-medium">Gérez la configuration globale et les accès de votre plateforme</p>
         </div>
 

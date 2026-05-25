@@ -37,7 +37,6 @@ export function HRAgentDashboard() {
   const stats = data?.stats || defaultStats;
   const distribution = data?.distribution || [];
   const trends = data?.trends || [];
-  const recentActivity = data?.recentActivity || [];
 
   const statCards = [
     { title: 'Effectif total', value: stats.totalEmployees, icon: Users, color: 'text-sky-500 bg-sky-50' },

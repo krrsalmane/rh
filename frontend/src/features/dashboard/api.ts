@@ -27,7 +27,6 @@ export interface DashboardData {
   trends: AbsenceTrend[];
   alerts: any[];
   nextHoliday: { name: string; date: string } | null;
-  recentActivity: any[];
 }
 
 export async function getDashboardData(): Promise<DashboardData> {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, Phone, Calendar, Briefcase, Pencil, Trash2 } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
+import { HiddenSalary } from './HiddenSalary';
 import type { Employee } from '../types';
 
 interface Props {
@@ -13,9 +14,9 @@ const contractLabels: Record<string, string> = {
   CDI: 'CDI', CDD: 'CDD', internship: 'Stage', freelance: 'Freelance',
 };
 const contractColors: Record<string, string> = {
-  CDI: 'bg-blue-50 text-blue-700 border-blue-200',
-  CDD: 'bg-amber-50 text-amber-700 border-amber-200',
-  internship: 'bg-purple-50 text-purple-700 border-purple-200',
+  CDI: 'bg-slate-100 text-slate-600 border-slate-200',
+  CDD: 'bg-slate-100 text-slate-600 border-slate-200',
+  internship: 'bg-slate-100 text-slate-600 border-slate-200',
   freelance: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 const statusLabels: Record<string, string> = {
@@ -35,11 +36,6 @@ function formatDate(dateStr: string) {
   try {
     return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
   } catch { return '—'; }
-}
-
-function formatSalary(salary?: number) {
-  if (!salary) return '—';
-  return salary.toLocaleString('fr-FR') + ' MAD';
 }
 
 export const EmployeeCard: React.FC<Props> = ({ employee, onEdit, onDelete }) => {
@@ -151,7 +147,9 @@ export const EmployeeCard: React.FC<Props> = ({ employee, onEdit, onDelete }) =>
                 <Briefcase className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
                   <p className="text-slate-400 text-xs">Salaire</p>
-                  <p className="text-slate-700 font-semibold">{formatSalary(employee.salary)}</p>
+                  <div className="mt-1">
+                    <HiddenSalary salary={employee.salary} />
+                  </div>
                 </div>
               </div>
             )}

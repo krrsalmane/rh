@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, ChevronUp, ChevronDown, Users } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
+import { HiddenSalary } from './HiddenSalary';
 import type { Employee, EmployeeFilters } from '../types';
 
 interface Props {
@@ -20,9 +21,9 @@ const contractLabels: Record<string, string> = {
   CDI: 'CDI', CDD: 'CDD', internship: 'Stage', freelance: 'Freelance',
 };
 const contractColors: Record<string, string> = {
-  CDI: 'bg-blue-50 text-blue-700 border-blue-200',
-  CDD: 'bg-amber-50 text-amber-700 border-amber-200',
-  internship: 'bg-purple-50 text-purple-700 border-purple-200',
+  CDI: 'bg-slate-100 text-slate-600 border-slate-200',
+  CDD: 'bg-slate-100 text-slate-600 border-slate-200',
+  internship: 'bg-slate-100 text-slate-600 border-slate-200',
   freelance: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 const statusLabels: Record<string, string> = {
@@ -36,11 +37,6 @@ function formatDate(dateStr: string) {
   try {
     return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   } catch { return '—'; }
-}
-
-function formatSalary(salary?: number) {
-  if (!salary) return '—';
-  return salary.toLocaleString('fr-FR') + ' MAD';
 }
 
 function getInitials(firstName: string, lastName: string) {
@@ -197,7 +193,9 @@ export const EmployeeTable: React.FC<Props> = ({
                 <td className="px-4 py-3 text-sm text-slate-600">{formatDate(emp.hireDate)}</td>
                 {/* Salary */}
                 {isSuperAdmin && (
-                  <td className="px-4 py-3 text-sm text-slate-600 font-mono">{formatSalary(emp.salary)}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    <HiddenSalary salary={emp.salary} />
+                  </td>
                 )}
                 {/* Actions */}
                 <td className="px-4 py-3">

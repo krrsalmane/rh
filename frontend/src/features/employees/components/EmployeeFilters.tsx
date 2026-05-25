@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useDepartments } from '../hooks/useEmployees';
 import type { EmployeeFilters as Filters } from '../types';
 
@@ -98,14 +98,6 @@ export const EmployeeFilters: React.FC<Props> = ({ filters, onFiltersChange, tot
           </button>
         )}
       </div>
-
-      {/* Results count */}
-      {totalCount !== undefined && (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <Filter className="w-3.5 h-3.5" />
-          <span>{totalCount} employé{totalCount !== 1 ? 's' : ''} trouvé{totalCount !== 1 ? 's' : ''}</span>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Clock, Loader2, ChevronLeft, ChevronRight, Filter, Download, Edit3, Trash2, CheckCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Clock, Loader2, ChevronLeft, ChevronRight, Filter, Download, Edit3, Trash2, CheckCircle, ChevronDown } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { useTimeEntries, useTimeSummary, useExportTimeReport, useUpdateTimeEntry, useCreateTimeEntry, useRecordTimeAction, useDeleteTimeEntry } from '../hooks/useTime';
 import { useEmployees } from '@/features/employees/hooks/useEmployees';
@@ -43,6 +43,18 @@ export const TimeManagementPage: React.FC = () => {
   const pagination = data?.pagination;
 
   const [statusFilter, setStatusFilter] = useState<'all' | 'arrive_late' | 'left_early' | 'late_lunch'>('all');
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const filteredEmployeeList = employeeList.filter((emp: any) => {
     if (statusFilter === 'all') return true;
@@ -270,24 +282,46 @@ export const TimeManagementPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={exportMut.isLoading}
-            onClick={() => handleExport('csv')}
-            className="btn-export-csv"
-          >
-            <Download className="w-4 h-4" />
-            {exportMut.isLoading ? 'Export en cours...' : 'Export CSV'}
-          </button>
-          <button
-            type="button"
-            disabled={exportMut.isLoading}
-            onClick={() => handleExport('pdf')}
-            className="btn-primary"
-          >
-            <Download className="w-4 h-4" />
-            {exportMut.isLoading ? 'Export en cours...' : 'Export PDF'}
-          </button>
+          <div ref={exportMenuRef} className="relative">
+            <button
+              type="button"
+              disabled={exportMut.isLoading}
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="btn-primary inline-flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              {exportMut.isLoading ? 'Export en cours...' : 'Exporter'}
+              <ChevronDown className={`w-4 h-4 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
+            </button>
+            {showExportMenu && (
+              <div className="absolute top-full mt-1 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-10 overflow-hidden">
+                <button
+                  type="button"
+                  disabled={exportMut.isLoading}
+                  onClick={() => {
+                    handleExport('csv');
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  CSV
+                </button>
+                <button
+                  type="button"
+                  disabled={exportMut.isLoading}
+                  onClick={() => {
+                    handleExport('pdf');
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-2 border-t border-slate-100 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  PDF
+                </button>
+              </div>
+            )}
+          </div>
           {canManage && (
             <button
               type="button"
