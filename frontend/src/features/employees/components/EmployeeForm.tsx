@@ -173,9 +173,7 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
         onBack={() => setStep((s) => Math.max(0, s - 1))}
         onNext={handleNext}
         onSubmit={handleSubmit(handleFormSubmit)}
-        onStepClick={(index) => {
-          if (index < step) setStep(index);
-        }}
+        onStepClick={(index) => setStep(index)}
         isLoading={isSubmitting}
         submitText={employee ? 'Enregistrer' : "Créer l'employé"}
       >
@@ -245,17 +243,14 @@ export const EmployeeForm: React.FC<Props> = ({ employee, onSubmit, isSubmitting
               <FormInput {...register('function')} placeholder="Fonction" id="emp-function" />
             </FormField>
             <FormField label="Département">
-              <FormInput
-                {...register('department')}
-                placeholder="Département"
-                list="department-options"
-                id="emp-department"
-              />
-              <datalist id="department-options">
+              <FormSelect {...register('department')} id="emp-department">
+                <option value="">Sélectionner un département</option>
                 {departments.map((d) => (
-                  <option key={d} value={d} />
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
                 ))}
-              </datalist>
+              </FormSelect>
             </FormField>
             <FormField label="Statut">
               <FormSelect {...register('status')} id="emp-status">

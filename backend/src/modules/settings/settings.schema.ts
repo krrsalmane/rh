@@ -9,3 +9,10 @@ export const UpdateSettingsSchema = z.object({
 });
 
 export type UpdateSettingsInput = z.infer<typeof UpdateSettingsSchema>;
+
+export const CreateDepartmentSchema = z.object({
+  name: z.string().min(1).max(255),
+});
+
+export type CreateDepartmentInput = z.infer<typeof CreateDepartmentSchema>;
+

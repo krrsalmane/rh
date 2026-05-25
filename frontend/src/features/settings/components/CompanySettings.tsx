@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { companyApi } from '../api';
-import { Building2, MapPin, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Building2, MapPin, Loader2, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
 import {
   FormField,
   FormGrid,
@@ -23,12 +23,19 @@ const WIZARD_STEPS: FormWizardStep[] = [
     title: 'Localisation',
     description: 'Coordonnées pour le calcul des pauses de prière',
   },
+  {
+    id: 'departments',
+    title: 'Départements',
+    description: 'Créez et gérez les départements de votre entreprise',
+  },
 ];
 
 export const CompanySettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(0);
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [newDepartmentName, setNewDepartmentName] = useState('');
   const [data, setData] = useState({
     name: '',
     address: '',
@@ -43,6 +50,14 @@ export const CompanySettings: React.FC = () => {
       .then((res) => setData(res))
       .catch(() => toast.error('Erreur lors du chargement des paramètres'))
       .finally(() => setLoading(false));
+
+    // Load existing departments
+    companyApi
+      .getDepartments()
+      .then((depts) => setDepartments(depts))
+      .catch(() => {
+        // Silently fail, departments are optional
+      });
   }, []);
 
   const handleSave = async () => {
@@ -68,6 +83,31 @@ export const CompanySettings: React.FC = () => {
       return;
     }
     setStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1));
+  };
+
+  const handleAddDepartment = async () => {
+    if (!newDepartmentName.trim()) {
+      toast.error('Le nom du département est requis');
+      return;
+    }
+    try {
+      const result = await companyApi.createDepartment({ name: newDepartmentName });
+      setDepartments([...departments, result]);
+      setNewDepartmentName('');
+      toast.success('Département ajouté');
+    } catch {
+      toast.error('Erreur lors de l\'ajout du département');
+    }
+  };
+
+  const handleDeleteDepartment = async (id: string) => {
+    try {
+      await companyApi.deleteDepartment(id);
+      setDepartments(departments.filter((d) => d.id !== id));
+      toast.success('Département supprimé');
+    } catch {
+      toast.error('Erreur lors de la suppression du département');
+    }
   };
 
   if (loading) {
@@ -97,9 +137,7 @@ export const CompanySettings: React.FC = () => {
         onBack={() => setStep((s) => Math.max(0, s - 1))}
         onNext={handleNext}
         onSubmit={handleSave}
-        onStepClick={(index) => {
-          if (index < step) setStep(index);
-        }}
+        onStepClick={(index) => setStep(index)}
         isLoading={saving}
         submitText="Enregistrer les modifications"
       >
@@ -187,6 +225,59 @@ export const CompanySettings: React.FC = () => {
               </FormField>
             </FormGrid>
           </>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <FormInput
+                value={newDepartmentName}
+                onChange={(e) => setNewDepartmentName(e.target.value)}
+                placeholder="Nom du département (ex: IT, RH, Ventes)"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddDepartment();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAddDepartment}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#2563EB] px-4 py-2.5 font-medium text-white hover:bg-[#1D4ED8] transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter
+              </button>
+            </div>
+
+            {departments.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-[#6B7280]">Départements créés:</p>
+                <div className="space-y-2">
+                  {departments.map((dept) => (
+                    <div
+                      key={dept.id}
+                      className="flex items-center justify-between rounded-lg border border-[#E5E7EB] bg-white p-3"
+                    >
+                      <span className="text-sm font-medium text-[#1A1A2E]">{dept.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDepartment(dept.id)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                        aria-label="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] p-6 text-center">
+                <p className="text-sm text-[#6B7280]">Aucun département créé pour le moment</p>
+              </div>
+            )}
+          </div>
         )}
       </FormWizard>
     </div>

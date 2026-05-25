@@ -233,9 +233,7 @@ export const UserFormModal: React.FC<Props> = ({ user, onClose }) => {
             onBack={() => setStep(0)}
             onNext={handleCreateNext}
             onSubmit={() => void handleSubmit(onSubmit)()}
-            onStepClick={(index) => {
-              if (index < step) setStep(index);
-            }}
+            onStepClick={(index) => setStep(index)}
             isLoading={isSubmitting || createMut.isPending}
             submitText="Créer l'utilisateur"
           >

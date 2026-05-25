@@ -49,7 +49,7 @@ export function HRAgentDashboard() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Espace RH 🏢</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Espace RH</h1>
           <p className="text-sm text-gray-500">{format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}</p>
         </div>
       </div>

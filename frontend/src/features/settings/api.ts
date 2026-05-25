@@ -31,6 +31,12 @@ export const companyApi = {
   get: () => api.get('/settings').then((r) => r.data.data),
   update: (data: { name?: string; address?: string; logoUrl?: string; latitude?: number; longitude?: number }) =>
     api.put('/settings', data).then((r) => r.data.data),
+  getDepartments: () =>
+    api.get('/settings/departments').then((r) => r.data.data || []),
+  createDepartment: (data: { name: string }) =>
+    api.post('/settings/departments', data).then((r) => r.data.data),
+  deleteDepartment: (id: string) =>
+    api.delete(`/settings/departments/${id}`).then((r) => r.data),
 };
 
 export const holidaysApi = {

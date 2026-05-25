@@ -21,6 +21,8 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   className,
   children,
 }) => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -34,19 +36,25 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     }
   };
 
+  const handleClick = () => {
+    inputRef.current?.click();
+    onClick?.();
+  };
+
   return (
     <div
       className={cn('file-upload-zone', className)}
-      onClick={onClick}
+      onClick={handleClick}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onClick?.();
+        if (e.key === 'Enter' || e.key === ' ') handleClick();
       }}
     >
       <input
+        ref={inputRef}
         type="file"
         className="sr-only"
         accept={accept}

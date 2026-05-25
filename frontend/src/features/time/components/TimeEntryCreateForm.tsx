@@ -96,9 +96,7 @@ export const TimeEntryCreateForm: React.FC<Props> = ({
       onBack={() => setStep((s) => Math.max(0, s - 1))}
       onNext={handleNext}
       onSubmit={onSubmit}
-      onStepClick={(index) => {
-        if (index < step) setStep(index);
-      }}
+      onStepClick={(index) => setStep(index)}
       isLoading={isLoading}
       submitText="Créer"
       nextDisabled={step === 0 && (!form.employeeId || !form.date)}

@@ -88,8 +88,13 @@ export async function deleteEmployee(id: string) {
 }
 
 export async function getDepartments() {
-  const { data } = await axiosInstance.get<{ status: string; data: string[] }>('/employees/departments');
-  return data.data;
+  try {
+    const { data } = await axiosInstance.get<{ status: string; data: { id: string; name: string }[] }>('/settings/departments');
+    return data.data?.map((d) => d.name) || [];
+  } catch {
+    // Fallback to empty array if endpoint fails
+    return [];
+  }
 }
 
 export async function getLeaveBalances(employeeId: string) {

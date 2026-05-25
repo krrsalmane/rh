@@ -51,7 +51,7 @@ export const FormWizard: React.FC<FormWizardProps> = ({
           {steps.map((s, index) => {
             const isActive = index === currentStep;
             const isDone = index < currentStep;
-            const canClick = onStepClick && (isDone || isActive);
+            const canClick = onStepClick && (isDone || isActive || index > currentStep);
 
             return (
               <li

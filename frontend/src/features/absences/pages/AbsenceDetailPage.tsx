@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UserX, ArrowLeft, Loader2, FileText, Upload, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2, FileText, Upload, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { FileUploadZone, FormField, FormFooter } from '@/shared/components/forms';
 import { useAbsence, useJustifyAbsence, useMarkUnjustified } from '../hooks/useAbsences';
 import { useAppSelector } from '@/store/hooks';
@@ -65,14 +65,9 @@ export const AbsenceDetailPage: React.FC = () => {
           className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-            <UserX className="w-5 h-5 text-rose-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Détails de l'absence</h1>
-            <p className="text-sm text-slate-400">{abs.employeeName}</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Détails de l'absence</h1>
+          <p className="text-sm text-slate-400">{abs.employeeName}</p>
         </div>
       </div>
 

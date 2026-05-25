@@ -190,9 +190,7 @@ export const DynamicDocumentForm: React.FC<Props> = ({
       <FormWizardNav
         steps={steps}
         currentStep={innerStep}
-        onStepClick={(index) => {
-          if (index < innerStep) setStep(index);
-        }}
+        onStepClick={(index) => setStep(index)}
       />
       {steps[innerStep]?.description && (
         <p className="form-wizard-description">{steps[innerStep].description}</p>

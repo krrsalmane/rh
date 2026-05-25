@@ -167,11 +167,7 @@ export const exportTimeEntries = asyncHandler(async (req: Request, res: Response
           .highlight-brown { background-color: #FDBF8F !important; }
           .summary { margin-top: 20px; text-align: right; font-weight: bold; }
           .legend { margin-top: 20px; font-size: 11px; }
-          .legend-item { margin: 5px 0; padding: 3px 8px; border-radius: 3px; }
-          .legend-late { background-color: #FEE2E2; }
-          .legend-early { background-color: #FED7AA; }
-          .legend-lunch { background-color: #FEF08A; }
-          .legend-prayer { background-color: #FDBF8F; }
+          .legend-item { margin: 5px 0; padding: 3px 8px; }
         </style>
       </head>
       <body>
