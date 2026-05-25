@@ -9,14 +9,13 @@ interface Holiday {
   id: string;
   name: string;
   date: string;
-  is_recurring: boolean;
 }
 
 export const PublicHolidaysSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [newHoliday, setNewHoliday] = useState({ name: '', date: '', isRecurring: false });
+  const [newHoliday, setNewHoliday] = useState({ name: '', date: '' });
 
   const fetchHolidays = async () => {
     try {
@@ -40,7 +39,7 @@ export const PublicHolidaysSettings: React.FC = () => {
       await holidaysApi.create({ ...newHoliday, year });
       toast.success('Jour férié ajouté');
       setShowAdd(false);
-      setNewHoliday({ name: '', date: '', isRecurring: false });
+      setNewHoliday({ name: '', date: '' });
       fetchHolidays();
     } catch (error) {
       const message = (error as any)?.response?.data?.message || 'Erreur lors de l\'ajout';

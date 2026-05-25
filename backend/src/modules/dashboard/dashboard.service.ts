@@ -41,7 +41,6 @@ export async function getDashboardData(user: any) {
     }));
   }
 
-  const recentActivity = await auditRepository.findAll({ page: 1, limit: 5 }, companyId);
   const nextHoliday = await publicHolidaysRepository.findNextHoliday(companyId);
 
   return {
@@ -49,7 +48,6 @@ export async function getDashboardData(user: any) {
     distribution,
     trends,
     alerts,
-    nextHoliday,
-    recentActivity: recentActivity.items
+    nextHoliday
   };
 }

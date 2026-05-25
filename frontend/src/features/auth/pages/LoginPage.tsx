@@ -129,14 +129,6 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {import.meta.env.DEV && (
-            <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-              <p className="font-medium text-slate-700 mb-1">Compte de démonstration</p>
-              <p>Email : <span className="font-mono">admin@hrms.com</span></p>
-              <p>Mot de passe : <span className="font-mono">Admin@1234</span></p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Email */}
             <div>
